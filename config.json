@@ -1,0 +1,5 @@
+{
+  "base_path": "~/.sstimap/",
+  "log_response": false,
+  "time_based_blind_delay": 4
+}
