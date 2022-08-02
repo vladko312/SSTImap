@@ -86,7 +86,7 @@ class Channel:
 
     def _parse_post(self, all_injectable=False):
         if self.args.get('data'):
-            params_dict_list = parse.parse_qs(self.args.get('data'), keep_blank_values=True)
+            params_dict_list = parse.parse_qs('&'.join(self.args.get('data')), keep_blank_values=True)
             for param, value_list in params_dict_list.items():
                 self.post_params[param] = value_list
                 if self.tag in param:
