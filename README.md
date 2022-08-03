@@ -27,7 +27,7 @@ Differences with Tplmap
 Even though this software is based on Tplmap's code, backwards compatibility is not provided.
 - Interactive mode (`-i`) allowing for easier exploitation and detection
 - Base language _eval()_-like shell (`-x`) or single command (`-X`) execution
-- Added new payload for _Smarty_ without enabled `{php}{/php}`. Old payload is availible as `Smarty_unsecure`.
+- Added new payload for _Smarty_ without enabled `{php}{/php}`. Old payload is available as `Smarty_unsecure`.
 - User-Agent can be randomly selected from a list of desktop browser agents using `-A`
 - SSL verification can now be enabled using `-V`
 - Short versions added to all arguments
@@ -38,7 +38,7 @@ Even though this software is based on Tplmap's code, backwards compatibility is 
 Server-Side Template Injection
 ------------------------------
 
-This is an example of a simple website written in Python using [Flask][6] framework and [Jinja2][7] template engine. It integrates user-supplied variable `name` in an unsafe way, as it is cincatenated to the template string before rendering.
+This is an example of a simple website written in Python using [Flask][6] framework and [Jinja2][7] template engine. It integrates user-supplied variable `name` in an unsafe way, as it is concatenated to the template string before rendering.
 
 ```python3
 from flask import Flask, request, render_template_string
@@ -266,6 +266,7 @@ If you plan to contribute something big from this list, inform me to avoid worki
 - [ ] Engine plugins as objects of _Plugin_ class?
 - [ ] JSON/plaintext API modes for scripting integrations?
 - [ ] Argument to remove escape codes?
+- [ ] Spider/crawler automation
 
 [1]: https://artsploit.blogspot.co.uk/2016/08/pprce2.html
 [2]: https://opsecx.com/index.php/2016/07/03/server-side-template-injection-in-tornado/

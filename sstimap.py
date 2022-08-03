@@ -7,7 +7,7 @@ from core.interactive import InteractiveShell
 from utils.loggers import log
 import traceback
 
-version = '1.0.0'
+version = '1.0.1'
 
 
 def main():
