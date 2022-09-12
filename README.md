@@ -267,6 +267,9 @@ If you plan to contribute something big from this list, inform me to avoid worki
 - [ ] JSON/plaintext API modes for scripting integrations?
 - [ ] Argument to remove escape codes?
 - [ ] Spider/crawler automation
+- [ ] Better integration for Python scripts
+- [ ] More POST data types support
+- [ ] Payload processing scripts
 
 [1]: https://artsploit.blogspot.co.uk/2016/08/pprce2.html
 [2]: https://opsecx.com/index.php/2016/07/03/server-side-template-injection-in-tornado/

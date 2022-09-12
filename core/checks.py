@@ -192,9 +192,12 @@ def check_template_injection(channel):
     if local_remote_paths:
         if channel.data.get('write'):
             local_path, remote_path = local_remote_paths
-            with open(local_path, 'rb') as f:
-                data = f.read()
-            current_plugin.write(data, remote_path)
+            try:
+                with open(local_path, 'rb') as f:
+                    data = f.read()
+                current_plugin.write(data, remote_path)
+            except FileNotFoundError:
+                log.log(25, f'Local file not found: {local_path}')
         else:
             log.log(22, 'No file upload capabilities have been detected on the target')
     # Perform file read
