@@ -499,6 +499,9 @@ Exploitation:
                 try:
                     telnetlib.Telnet(url.hostname.decode(), port, timeout=5).interact()
                     return
+                except (KeyboardInterrupt, EOFError):
+                    print()
+                    log.log(26, 'Exiting bind shell')
                 except Exception as e:
                     log.debug(f"Error connecting to {url.hostname}:{port} {e}")
         else:
@@ -522,6 +525,9 @@ Exploitation:
             self.current_plugin.reverse_shell(host, port)
             try:
                 TcpServer(int(port), timeout)
+            except (KeyboardInterrupt, EOFError):
+                print()
+                log.log(26, 'Exiting reverse shell')
             except socket.timeout:
                 log.log(22, f"No incoming TCP shells after {timeout}s, quitting.")
         else:
@@ -549,9 +555,14 @@ Exploitation:
             return
         if self.channel.data.get('write'):
             local_path, remote_path = paths
-            with open(local_path, 'rb') as f:
-                data = f.read()
-            self.current_plugin.write(data, remote_path)
+            try:
+                with open(local_path, 'rb') as f:
+                    data = f.read()
+                self.current_plugin.write(data, remote_path)
+            except FileNotFoundError:
+                log.log(25, f'Local file not found: {local_path}')
+            except (KeyboardInterrupt, EOFError):
+                log.log(26, 'Exiting file upload')
         else:
             log.log(22, 'No file upload capabilities have been detected on the target')
 
@@ -566,9 +577,12 @@ Exploitation:
             return
         if self.channel.data.get('read'):
             remote_path, local_path = paths
-            content = self.current_plugin.read(remote_path)
-            with open(local_path, 'wb') as f:
-                f.write(content)
+            try:
+                content = self.current_plugin.read(remote_path)
+                with open(local_path, 'wb') as f:
+                    f.write(content)
+            except (KeyboardInterrupt, EOFError):
+                log.log(26, 'Exiting file download')
         else:
             log.log(22, 'No file download capabilities have been detected on the target')
 

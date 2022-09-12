@@ -51,7 +51,7 @@ class TcpServer:
                 buffer = self.socket.recv(100)
                 while buffer != '':
                     self.socket_state = True
-                    sys.stdout.write(buffer)
+                    sys.stdout.write(buffer.decode())
                     sys.stdout.flush()
                     buffer = self.socket.recv(100)
                 if buffer == '':
