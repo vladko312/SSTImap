@@ -65,5 +65,5 @@ class TcpServer:
                 c = sys.stdin.read(1)
                 if c == '':
                     return
-                if self.socket.sendall(c) is not None:
+                if self.socket.sendall(c.encode()) is not None:
                     return
