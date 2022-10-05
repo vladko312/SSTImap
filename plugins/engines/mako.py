@@ -1,14 +1,21 @@
 from plugins.languages import python
+from utils import rand
 
 
 class Mako(python.Python):
     def init(self):
         self.update_actions({
             'render': {
-                'render': '${{{code}}}',
+                'render': '{code}',
                 'header': '${{{header}}}',
-                'trailer': '${{{trailer}}}'
+                'trailer': '${{{trailer}}}',
+                'test_render': f"""${{'{rand.randstrings[0]}'.join('{rand.randstrings[1]}')}}${{"%" | u}}""",
+                'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}%25'
             },
+            'evaluate': {
+                # A way to check for actual Mako syntax
+                'evaluate': """${{'' | u}}${{{code}}}"""
+            }
         })
 
         self.set_contexts([
