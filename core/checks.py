@@ -1,4 +1,5 @@
 from plugins.engines.mako import Mako
+from plugins.engines.cheetah import Cheetah
 from plugins.engines.jinja2 import Jinja2
 from plugins.engines.twig import Twig
 from plugins.engines.freemarker import Freemarker
@@ -35,6 +36,7 @@ def plugins(legacy=False):
     plugin_list.extend([
         Smarty,
         Mako,
+        Cheetah,
         Python,
         Tornado,
         Jinja2,
