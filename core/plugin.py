@@ -11,6 +11,7 @@ import utils.config
 
 loaded_plugins = {}
 
+
 def _recursive_update(d, u):
     # Update value of a nested dictionary of varying depth
     for k, v in u.items():

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import importlib
+import os
 import sys
 from utils import cliparser
 from core import checks
@@ -6,7 +8,6 @@ from core.channel import Channel
 from core.interactive import InteractiveShell
 from utils.loggers import log
 import traceback
-from core.plugin import loaded_plugins
 
 version = '1.0.2'
 
@@ -26,8 +27,20 @@ def main():
         checks.check_template_injection(Channel(args))
 
 
+def load_plugins():
+    groups = os.scandir("plugins")
+    groups = filter(lambda x: x.is_dir(), groups)
+    for g in groups:
+        modules = os.scandir(f"plugins/{g.name}")
+        modules = filter(lambda x: (x.name.endswith(".py") and not x.name.startswith("_")), modules)
+        for m in modules:
+            importlib.import_module(f"plugins.{g.name}.{m.name[:-3]}")
+
+
 if __name__ == '__main__':
     print(cliparser.banner())
+    load_plugins()
+    from core.plugin import loaded_plugins
     log.log(26, f"Loaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}\n")
     if sys.version_info.major != 3:
         log.critical(f'SSTImap was created for Python3. Python{sys.version_info.major} is not supported!')
