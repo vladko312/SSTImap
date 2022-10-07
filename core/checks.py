@@ -34,7 +34,7 @@ def plugins(legacy=False):
     plugin_list = []
     if new:
         if legacy:
-            plugin_list += loaded_plugins.get("legacy", [])
+            plugin_list += loaded_plugins.get("legacy_engines", [])
         plugin_list += loaded_plugins.get("languages", [])
         plugin_list += loaded_plugins.get("engines", [])
         plugin_list += loaded_plugins.get("custom", [])
