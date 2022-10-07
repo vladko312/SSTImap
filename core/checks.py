@@ -34,10 +34,10 @@ def plugins(legacy=False):
     plugin_list = []
     if new:
         if legacy:
-            plugin_list += loaded_plugins["legacy"]
-        plugin_list += loaded_plugins["languages"]
-        plugin_list += loaded_plugins["engines"]
-        plugin_list += loaded_plugins["custom"]
+            plugin_list += loaded_plugins.get("legacy", [])
+        plugin_list += loaded_plugins.get("languages", [])
+        plugin_list += loaded_plugins.get("engines", [])
+        plugin_list += loaded_plugins.get("custom", [])
     else:
         if legacy:
             plugin_list.extend([
