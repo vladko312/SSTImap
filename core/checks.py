@@ -25,36 +25,46 @@ from core.tcpserver import TcpServer
 import telnetlib
 from urllib import parse
 import socket
+from core.plugin import loaded_plugins
+
+new = True # TODO: Check with all plugins, add custom toggle
 
 
 def plugins(legacy=False):
     plugin_list = []
-    if legacy:
+    if new:
+        if legacy:
+            plugin_list += loaded_plugins["legacy"]
+        plugin_list += loaded_plugins["languages"]
+        plugin_list += loaded_plugins["engines"]
+        plugin_list += loaded_plugins["custom"]
+    else:
+        if legacy:
+            plugin_list.extend([
+                Smarty_unsecure,
+            ])
         plugin_list.extend([
-            Smarty_unsecure,
+            Smarty,
+            Mako,
+            Cheetah,
+            Python,
+            Tornado,
+            Jinja2,
+            Twig,
+            Freemarker,
+            Velocity,
+            Slim,
+            Erb,
+            Pug,
+            Nunjucks,
+            Dot,
+            Dust,
+            Marko,
+            Javascript,
+            Php,
+            Ruby,
+            Ejs
         ])
-    plugin_list.extend([
-        Smarty,
-        Mako,
-        Cheetah,
-        Python,
-        Tornado,
-        Jinja2,
-        Twig,
-        Freemarker,
-        Velocity,
-        Slim,
-        Erb,
-        Pug,
-        Nunjucks,
-        Dot,
-        Dust,
-        Marko,
-        Javascript,
-        Php,
-        Ruby,
-        Ejs
-    ])
     return plugin_list
 
 
@@ -102,7 +112,7 @@ def print_injection_summary(channel):
 def detect_template_injection(channel):
     for i in range(len(channel.injs)):
         log.log(23, f"Testing if {channel.injs[channel.inj_idx]['field']} parameter '{channel.injs[channel.inj_idx]['param']}' is injectable")
-        for plugin in plugins(channel.args.get('legacy')):
+        for plugin in plugins(legacy=channel.args.get('legacy')):
             current_plugin = plugin(channel)
             if channel.args.get('engine') and channel.args.get('engine').lower() != current_plugin.plugin.lower():
                 continue

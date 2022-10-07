@@ -9,6 +9,7 @@ import threading
 import time
 import utils.config
 
+loaded_plugins = {}
 
 def _recursive_update(d, u):
     # Update value of a nested dictionary of varying depth
@@ -49,6 +50,14 @@ class Plugin(object):
         # Call user-defined inits
         self.language_init()
         self.init()
+
+    def __init_subclass__(cls, **kwargs):
+        module = cls.__module__.split(".")
+        if module[0] == "plugins":
+            if module[1] in loaded_plugins:
+                loaded_plugins[module[1]].append(cls)
+            else:
+                loaded_plugins[module[1]] = [cls]
 
     def language_init(self):
         # To be overridden. This can call self.update_actions
