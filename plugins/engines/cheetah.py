@@ -9,12 +9,13 @@ class Cheetah(python.Python):
                 'render': '{code}',
                 'header': '${{{header}}}',
                 'trailer': '${{{trailer}}}',
-                'test_render': f"""${{'{rand.randstrings[0]}'.join('{rand.randstrings[1]}')}}""",
+                # ${{getVar('a', '').replace($getVar('a', ''), '')}} is a way to trigger getVar and get empty result
+                'test_render': f"""${{getVar('a', '').replace($getVar('a', ''), '')}}${{'{rand.randstrings[0]}'.join('{rand.randstrings[1]}')}}""",
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
             },
             'evaluate': {
                 # A way to check for actual Mako syntax
-                'evaluate': """${{{code}}}"""
+                'evaluate': """${{getVar('a', '').replace($getVar('a', ''), '')}}${{{code}}}"""
             }
         })
 
