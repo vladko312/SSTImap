@@ -18,7 +18,7 @@ def banner():
            f"\n\033[91m[!] LEGAL DISCLAIMER\033[0m: Usage of SSTImap for attacking targets without prior mutual " \
            f"consent is illegal.\nIt is the end user's responsibility to obey all applicable local, state and " \
            f"federal laws.\nDevelopers assume no liability and are not responsible for any misuse or damage " \
-           f"caused by this program\n\n"
+           f"caused by this program"
     return msg
 
 

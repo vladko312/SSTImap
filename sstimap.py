@@ -6,6 +6,7 @@ from core.channel import Channel
 from core.interactive import InteractiveShell
 from utils.loggers import log
 import traceback
+from core.plugin import loaded_plugins
 
 version = '1.0.2'
 
@@ -27,6 +28,7 @@ def main():
 
 if __name__ == '__main__':
     print(cliparser.banner())
+    log.log(26, f"Loaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}\n")
     if sys.version_info.major != 3:
         log.critical(f'SSTImap was created for Python3. Python{sys.version_info.major} is not supported!')
         sys.exit()
