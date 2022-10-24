@@ -4,10 +4,10 @@ from core.tcpserver import TcpServer
 import telnetlib
 from urllib import parse
 import socket
-from core.plugin import loaded_plugins
 
 
 def plugins(legacy=False):
+    from core.plugin import loaded_plugins
     plugin_list = []
     if legacy:
         plugin_list += loaded_plugins.get("legacy_engines", [])

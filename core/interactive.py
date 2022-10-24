@@ -596,10 +596,11 @@ SSTImap:
 
     def do_reload_modules(self, line):
         """Reload all modules"""
-        from core.plugin import unload_plugins, loaded_plugins
+        from core.plugin import unload_plugins
         from sstimap import load_plugins
         unload_plugins()
         load_plugins()
+        from core.plugin import loaded_plugins
         log.log(24, f"Reloaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
 
     do_reload = do_reload_modules

@@ -31,6 +31,7 @@ def main():
 
 
 def load_plugins():
+    importlib.invalidate_caches()
     groups = os.scandir("plugins")
     groups = filter(lambda x: x.is_dir(), groups)
     for g in groups:
