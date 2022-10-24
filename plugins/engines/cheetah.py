@@ -21,12 +21,19 @@ class Cheetah(python.Python):
 
         self.set_contexts([
             # Text context, no closures
+            # Reflecting tag name $inject is also escaped by non-letter symbols, which $ is
             {'level': 0},
-            # Normal reflecting tag ${}
+            # Normal reflecting tags ${}, $[], $()
             {'level': 1, 'prefix': '{closure}}}', 'suffix': '', 'closures': python.ctx_closures},
+            {'level': 1, 'prefix': '{closure}]', 'suffix': '', 'closures': python.ctx_closures},
+            {'level': 1, 'prefix': '{closure})', 'suffix': '', 'closures': python.ctx_closures},
+            # comments
+            {'level': 2, 'prefix': '*#\n', 'suffix': '', 'closures': python.ctx_closures},
+            # comment out part of syntax, like in IF oneliners
+            {'level': 2, 'prefix': '{closure}', 'suffix': ' ##', 'closures': python.ctx_closures},
             # Code blocks
             # This covers <% %s %>, <%! %s %>, <% %s=1 %>
-            {'level': 1, 'prefix': '{closure}%>', 'suffix': '<%#', 'closures': python.ctx_closures},
+            {'level': 2, 'prefix': '{closure}%>', 'suffix': '<%#', 'closures': python.ctx_closures},
             # If and for blocks
             # % if %s:\n% endif
             # % for a in %s:\n% endfor
