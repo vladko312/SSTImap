@@ -28,7 +28,7 @@ class Cheetah(python.Python):
             {'level': 1, 'prefix': '{closure}]', 'suffix': '', 'closures': python.ctx_closures},
             {'level': 1, 'prefix': '{closure})', 'suffix': '', 'closures': python.ctx_closures},
             # comments
-            {'level': 2, 'prefix': '*#\n', 'suffix': '', 'closures': python.ctx_closures},
+            {'level': 1, 'prefix': '*#\n', 'suffix': '', 'closures': python.ctx_closures},
             # comment out part of syntax, like in IF oneliners
             {'level': 2, 'prefix': '{closure}', 'suffix': ' ##', 'closures': python.ctx_closures},
             # Code blocks

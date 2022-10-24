@@ -7,9 +7,19 @@ import base64
 import collections
 import threading
 import time
+import sys
 import utils.config
 
 loaded_plugins = {}
+
+
+def unload_plugins():
+    global loaded_plugins
+    for k in loaded_plugins:
+        for p in loaded_plugins[k]:
+            if p.__module__ in sys.modules:
+                del sys.modules[p.__module__]
+    loaded_plugins = {}
 
 
 def _recursive_update(d, u):

@@ -78,7 +78,10 @@ Exploitation:
   reverse, reverse_shell [HOST] [PORT]    Run a system shell and back-connect to local HOST PORT
   overwrite, force_overwrite              Toggle file overwrite when uploading
   up, upload [LOCAL] [REMOTE]             Upload LOCAL to REMOTE files
-  down, download [REMOTE] [LOCAL]         Download REMOTE to LOCAL files""")
+  down, download [REMOTE] [LOCAL]         Download REMOTE to LOCAL files
+
+SSTImap:
+  reload, reload_plugins                  Reload all SSTImap plugins""")
 
     def do_version(self, line):
         """Show current SSTImap version"""
@@ -588,3 +591,15 @@ Exploitation:
 
     do_up = do_upload
     do_down = do_download
+
+# SSTImap commands
+
+    def do_reload_modules(self, line):
+        """Reload all modules"""
+        from core.plugin import unload_plugins, loaded_plugins
+        from sstimap import load_plugins
+        unload_plugins()
+        load_plugins()
+        log.log(24, f"Reloaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
+
+    do_reload = do_reload_modules
