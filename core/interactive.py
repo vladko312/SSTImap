@@ -601,6 +601,6 @@ SSTImap:
         unload_plugins()
         load_plugins()
         from core.plugin import loaded_plugins
-        log.log(24, f"Reloaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
+        log.log(23, f"Reloaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
 
     do_reload = do_reload_modules
