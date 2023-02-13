@@ -7,7 +7,6 @@ See the file 'LICENSE' for copying permission
 
 import re
 import urllib
-import http
 import html
 import requests
 
@@ -32,19 +31,18 @@ def crawl(target, args):
             visited.add(current)
         
         content = None
-        try:
-            if current:
+        if current:
+            try:
                 content = requests.request(method='GET', url=current, proxies={'http': args.get('proxy'), 'https': args.get('proxy')}, verify=args.get('verify_ssl')).text
-        except http.client.InvalidURL as ex:
-            errMsg = "invalid URL detected ('%s'). skipping " % ex
-            errMsg += "URL '%s'" % current
-            log.log(23, errMsg)
-        except urllib.error.HTTPError:  # unavailable page
-            pass
-        except urllib.error.URLError:
-            pass
-        except TimeoutError:
-            pass
+            except requests.exceptions.ConnectionError as e:
+                if e and e.args[0] and e.args[0].args[0] == 'Connection aborted.':
+                    log.log(25, 'Error: connection aborted, bad status line.')
+                    return
+                elif e and e.args[0] and 'Max retries exceeded' in e.args[0].args[0]:
+                    log.log(25, 'Error: max retries exceeded for a connection.')
+                    return
+                else:
+                    raise
             
         
         if content:
@@ -114,37 +112,23 @@ def findPageForms(url, args):
         request = requests.request(method='GET', url=url, proxies={'http': args.get('proxy'), 'https': args.get('proxy')}, verify=args.get('verify_ssl'))
         raw = request.content
         content = request.text
-    except UnicodeDecodeError:
-        return set()
-    except http.client.InvalidURL as ex:
-        errMsg = "invalid URL detected ('%s'). skipping " % ex
-        errMsg += "URL '%s'" % url
-        log.log(23, errMsg)
-        return set()
-    except urllib.error.HTTPError:  # unavailable page
-        return set()
-    except urllib.error.URLError:
-        return set()
-    except http.client.InvalidURL:
-        return set()
-    except TimeoutError:
-        return set()
+    except requests.exceptions.ConnectionError as e:
+        if e and e.args[0] and e.args[0].args[0] == 'Connection aborted.':
+            log.log(25, 'Error: connection aborted, bad status line.')
+            return set()
+        elif e and e.args[0] and 'Max retries exceeded' in e.args[0].args[0]:
+            log.log(25, 'Error: max retries exceeded for a connection.')
+            return set()
+        else:
+            raise
     
     forms = None
-    try:
-        parsed = parse(raw, **{'namespaceHTMLElements': False})
-        forms, global_form = parse_forms(parsed, request.url)
-    except ParseError:
-        if re.search(r"(?i)<!DOCTYPE html|<html", raw or "") and not re.search(r"(?i)\.js(\?|\Z)", url):
-            dbgMsg = "badly formed HTML at the given URL ('%s'). Going to filter it" % url
-            log.log(26, dbgMsg)
-            try:
-                parsed = parse("".join(re.findall(r"(?si)<form(?!.+<form).+?</form>", raw)), **{'namespaceHTMLElements': False})
-                forms, global_form = parse_forms(parsed, request.url)
-            except:
-                errMsg = "no success"
-                log.log(26, errMsg)
-                
+    if raw:
+        try:
+            parsed = parse(raw, **{'namespaceHTMLElements': False})
+            forms, global_form = parse_forms(parsed, request.url)
+        except:
+            raise       # TODO: find out what error types these two functions might raise
 
     retVal = set()
     for form in forms or []:
