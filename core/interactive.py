@@ -1,4 +1,5 @@
 import cmd
+from utils.crawler import crawl, findPageForms
 from utils.loggers import log
 from urllib import parse
 from core import checks
@@ -48,6 +49,9 @@ Information:
 
 Target:
   url, target [URL]                       Set target URL (e.g. 'https://example.com/?name=test')
+  crawl [DEPTH]                           Crawl up to depth
+  exclude [PATTERN]                       Regex pattern to exclude from crawler
+  forms                                   Search page(s) for forms
   run, test, check                        Run SSTI detection on the target
 
 Request:
@@ -150,14 +154,59 @@ SSTImap:
 
     do_target = do_url
 
+    def do_crawl(self, line):
+        if not self.sstimap_options["url"]:
+            log.log(22, 'Target URL cannot be empty.')
+            return
+        self.sstimap_options['crawlDepth'] = int(line)
+        
+    def do_exclude(self, line):
+        self.sstimap_options['crawlDepth'] = line
+    
+    do_crawl_exclude = do_exclude
+    do_crawlexclude = do_exclude
+        
+    def do_forms(self, line):
+        if self.sstimap_options['forms'] == False:
+            self.sstimap_options['forms'] = True
+            log.log(24, f'SSTImap will scan for forms')
+        elif self.sstimap_options['forms'] == True:
+            self.sstimap_options['forms'] = False
+            log.log(26, f'Disabling form scan')
+
     def do_run(self, line):
         """Check target URL for SSTI vulnerabilities"""
         if not self.sstimap_options["url"]:
             log.log(22, 'Target URL cannot be empty.')
             return
         try:
-            self.channel = Channel(self.sstimap_options)
-            self.current_plugin = checks.check_template_injection(self.channel)
+            if self.sstimap_options['crawlDepth'] or self.sstimap_options['forms']:
+                # crawler mode
+                urls = set([self.sstimap_options['url']])
+                if self.sstimap_options['crawlDepth']:
+                    crawled_urls = set()
+                    for url in urls:
+                        crawled_urls.update(crawl(url, self.sstimap_options))
+                    urls.update(crawled_urls)
+                if not self.sstimap_options['forms']:
+                    for url in urls:
+                        self.sstimap_options['url'] = url
+                        self.channel = Channel(self.sstimap_options)
+                        self.current_plugin = checks.check_template_injection(self.channel)
+                else:
+                    forms = set()
+                    for url in urls:
+                        forms.update(findPageForms(url, self.sstimap_options))
+                    for form in forms:
+                        self.sstimap_options['url'] = form[0]
+                        self.sstimap_options['method'] = form[1]
+                        self.sstimap_options['data'] = parse.parse_qs(form[2], keep_blank_values=True)
+                        self.channel = Channel(self.sstimap_options)
+                        self.current_plugin = checks.check_template_injection(self.channel)
+            else:
+                # predetermined mode
+                self.channel = Channel(self.sstimap_options)
+                self.current_plugin = checks.check_template_injection(self.channel)
         except (KeyboardInterrupt, EOFError):
             log.log(26, 'Exiting SSTI detection')
         self.checked = True

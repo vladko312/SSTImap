@@ -33,6 +33,12 @@ target.add_argument("-u", "--url", dest="url",
                     help="Target URL (e.g. 'https://example.com/?name=test')")
 target.add_argument("-i", "--interactive", action="store_true", dest="interactive",
                     help="Run SSTImap in interactive mode")
+target.add_argument("--crawl", dest="crawlDepth", type=int,
+                    help="Depth to crawl (default: don't crawl)", default=0)
+target.add_argument("--crawl-exclude", dest="crawlExclude",
+                    help="Regex in URLs to not crawl")
+target.add_argument("--forms", action="store_true", dest="forms",
+                    help="Scan page(s) for forms")
 
 
 request = parser.add_argument_group(title="request", description="These options can specify how to connect to the "
@@ -46,7 +52,7 @@ request.add_argument("-H", "--header", action="append", dest="headers", metavar=
 request.add_argument("-c", "--cookie", action="append", dest="cookies", metavar="COOKIE",
                      help="Cookie to send (e.g. 'Field=Value') [Stackable]", default=[])
 request.add_argument("-m", "--method", dest="method",
-                     help="HTTP method to use (default 'GET')", default='GET')
+                     help="HTTP method to use (default 'GET')")
 request.add_argument("-a", "--user-agent", dest="user_agent",
                      help="User-Agent header value to use", default=f'SSTImap/{version}')
 request.add_argument("-A", "--random-user-agent", action="store_true", dest="random_agent",
