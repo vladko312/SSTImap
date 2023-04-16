@@ -1,23 +1,3 @@
-from plugins.engines.mako import Mako
-from plugins.engines.jinja2 import Jinja2
-from plugins.engines.twig import Twig
-from plugins.engines.freemarker import Freemarker
-from plugins.engines.velocity import Velocity
-from plugins.engines.pug import Pug
-from plugins.engines.nunjucks import Nunjucks
-from plugins.engines.dust import Dust
-from plugins.engines.dot import Dot
-from plugins.engines.tornado import Tornado
-from plugins.engines.marko import Marko
-from plugins.engines.slim import Slim
-from plugins.engines.erb import Erb
-from plugins.engines.ejs import Ejs
-from plugins.engines.smarty import Smarty
-from plugins.languages.javascript import Javascript
-from plugins.languages.php import Php
-from plugins.languages.python import Python
-from plugins.languages.ruby import Ruby
-from plugins.legacy_engines.smarty_unsecure import Smarty_unsecure
 from utils.loggers import log
 from core.clis import Shell, MultilineShell
 from core.tcpserver import TcpServer
@@ -27,32 +7,16 @@ import socket
 
 
 def plugins(legacy=False):
+    from core.plugin import loaded_plugins
     plugin_list = []
     if legacy:
-        plugin_list.extend([
-            Smarty_unsecure,
-        ])
-    plugin_list.extend([
-        Smarty,
-        Mako,
-        Python,
-        Tornado,
-        Jinja2,
-        Twig,
-        Freemarker,
-        Velocity,
-        Slim,
-        Erb,
-        Pug,
-        Nunjucks,
-        Dot,
-        Dust,
-        Marko,
-        Javascript,
-        Php,
-        Ruby,
-        Ejs
-    ])
+        plugin_list += loaded_plugins.get("legacy_engines", [])
+    plugin_list += loaded_plugins.get("engines", [])
+    plugin_list += loaded_plugins.get("languages", [])
+    plugin_list += loaded_plugins.get("custom", [])
+    for group in loaded_plugins:
+        if group not in ["legacy_engines", "engines", "languages", "custom"]:
+            plugin_list += loaded_plugins.get(group, [])
     return plugin_list
 
 
@@ -100,7 +64,7 @@ def print_injection_summary(channel):
 def detect_template_injection(channel):
     for i in range(len(channel.injs)):
         log.log(23, f"Testing if {channel.injs[channel.inj_idx]['field']} parameter '{channel.injs[channel.inj_idx]['param']}' is injectable")
-        for plugin in plugins(channel.args.get('legacy')):
+        for plugin in plugins(legacy=channel.args.get('legacy')):
             current_plugin = plugin(channel)
             if channel.args.get('engine') and channel.args.get('engine').lower() != current_plugin.plugin.lower():
                 continue

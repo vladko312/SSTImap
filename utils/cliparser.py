@@ -5,10 +5,10 @@ from sstimap import version
 def banner():
     msg = """\033[93m
     ╔══════╦══════╦═══════╗ ▀█▀
-    ║ ╔════╣ ╔════╩══╗ ╔══╝═╗\033[41m▀\033[40m╔═
-    ║ ╚════╣ ╚════╗  ║ ║    ║\033[41m{\033[40m║ \033[94m _ __ ___   __ _ _ __\033[93m
-    ╚════╗ ╠════╗ ║  ║ ║    ║\033[41m*\033[40m║ \033[94m| '_ ` _ \\ / _` | '_ \\\033[93m
-    ╔════╝ ╠════╝ ║  ║ ║    ║\033[41m}\033[40m║ \033[94m| | | | | | (_| | |_) |\033[93m
+    ║ ╔════╣ ╔════╩══╗ ╔══╝═╗\033[41m▀\033[49m╔═
+    ║ ╚════╣ ╚════╗  ║ ║    ║\033[41m{\033[49m║ \033[94m _ __ ___   __ _ _ __\033[93m
+    ╚════╗ ╠════╗ ║  ║ ║    ║\033[41m*\033[49m║ \033[94m| '_ ` _ \\ / _` | '_ \\\033[93m
+    ╔════╝ ╠════╝ ║  ║ ║    ║\033[41m}\033[49m║ \033[94m| | | | | | (_| | |_) |\033[93m
     ╚══════╩══════╝  ╚═╝    ╚╦╝\033[94m |_| |_| |_|\\__,_| .__/\033[93m
                              │                  \033[94m| |
                                                 |_|\033[0m"""
@@ -18,7 +18,7 @@ def banner():
            f"\n\033[91m[!] LEGAL DISCLAIMER\033[0m: Usage of SSTImap for attacking targets without prior mutual " \
            f"consent is illegal.\nIt is the end user's responsibility to obey all applicable local, state and " \
            f"federal laws.\nDevelopers assume no liability and are not responsible for any misuse or damage " \
-           f"caused by this program\n\n"
+           f"caused by this program"
     return msg
 
 

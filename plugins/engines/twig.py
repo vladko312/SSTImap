@@ -16,8 +16,8 @@ class Twig(php.Php):
                 'trailer': '{{{{{trailer}}}}}',
                 # {{7*'7'}} and a{#b#}c work in freemarker as well
                 # {%% set a=%i*%i %%}{{a}} works in Nunjucks as well
-                'test_render': f'{{{{"{rand.randstrings[0]}\n"|nl2br}}}}',
-                'test_render_expected': f'{rand.randstrings[0]}<br />'
+                'test_render': f'{{{{(1..3)|join("")}}}}{{{{"{rand.randstrings[0]}\n"|nl2br}}}}',
+                'test_render_expected': f'123{rand.randstrings[0]}<br />'
             },
             'write': {
                 'call': 'inject',

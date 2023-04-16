@@ -1,12 +1,12 @@
 SSTImap
 ======
 
-[![Version 1.0](https://img.shields.io/badge/version-1.0-green.svg?logo=github)](https://github.com/vladko312/sstimap)
-[![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg?logo=python)](https://www.python.org/downloads/release/python-3100/)
+[![Version 1.1](https://img.shields.io/badge/version-1.1-green.svg?logo=github)](https://github.com/vladko312/sstimap)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg?logo=python)](https://www.python.org/downloads/release/python-3110/)
 [![Python 3.6](https://img.shields.io/badge/python-3.6+-yellow.svg?logo=python)](https://www.python.org/downloads/release/python-360/)
 [![GitHub](https://img.shields.io/github/license/vladko312/sstimap?color=green&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.txt)
 [![GitHub last commit](https://img.shields.io/github/last-commit/vladko312/sstimap?color=green&logo=github)](https://github.com/vladko312/sstimap/commits/)
-[![Maintenance](https://img.shields.io/maintenance/yes/2022?logo=github)](https://github.com/vladko312/sstimap)
+[![Maintenance](https://img.shields.io/maintenance/yes/2023?logo=github)](https://github.com/vladko312/sstimap)
 
 > This project is based on [Tplmap](https://github.com/epinna/tplmap/).
 
@@ -108,7 +108,7 @@ $ ./sstimap.py -u https://example.com/page?name=John
     ╚══════╩══════╝  ╚═╝    ╚╦╝ |_| |_| |_|\__,_| .__/
                              │                  | |
                                                 |_|
-[*] Version: 1.0
+[*] Version: 1.1.0
 [*] Author: @vladko312
 [*] Based on Tplmap
 [!] LEGAL DISCLAIMER: Usage of SSTImap for attacking targets without prior mutual consent is illegal. 
@@ -163,7 +163,7 @@ $ ./sstimap.py -u https://example.com/page?name=John --os-shell
     ╚══════╩══════╝  ╚═╝    ╚╦╝ |_| |_| |_|\__,_| .__/
                              │                  | |
                                                 |_|
-[*] Version: 0.6#dev
+[*] Version: 1.1.0
 [*] Author: @vladko312
 [*] Based on Tplmap
 [!] LEGAL DISCLAIMER: Usage of SSTImap for attacking targets without prior mutual consent is illegal. 
@@ -226,6 +226,7 @@ New payloads are welcome in PRs.
 | Engine                         | RCE | Blind | Code evaluation | File read | File write |
 |--------------------------------|-----|-------|-----------------|-----------|------------|
 | Mako                           | ✓   | ✓     | Python          | ✓         | ✓          |
+| Cheetah                        | ✓   | ✓     | Python          | ✓         | ✓          |
 | Jinja2                         | ✓   | ✓     | Python          | ✓         | ✓          |
 | Python (code eval)             | ✓   | ✓     | Python          | ✓         | ✓          |
 | Tornado                        | ✓   | ✓     | Python          | ✓         | ✓          |
@@ -262,14 +263,17 @@ If you plan to contribute something big from this list, inform me to avoid worki
 - [ ] Make template and base language evaluation functionality more uniform
 - [ ] Add more payloads for different engines
 - [ ] Short arguments as interactive commands?
-- [ ] Automatic languages and engines import
 - [ ] Engine plugins as objects of _Plugin_ class?
 - [ ] JSON/plaintext API modes for scripting integrations?
 - [ ] Argument to remove escape codes?
-- [ ] Spider/crawler automation
 - [ ] Better integration for Python scripts
 - [ ] More POST data types support
 - [ ] Payload processing scripts
+- [ ] Better config functionality
+- [ ] Saving found vulnerabilities
+- [ ] Reports in HTML or other format
+- [x] Spider/crawler automation (by [fantesykikachu](https://github.com/fantesykikachu))
+- [x] Automatic languages and engines import
 
 [1]: https://artsploit.blogspot.co.uk/2016/08/pprce2.html
 [2]: https://opsecx.com/index.php/2016/07/03/server-side-template-injection-in-tornado/
