@@ -1,5 +1,5 @@
 import cmd
-from utils.crawler import crawl, findPageForms
+from utils.crawler import crawl, find_page_forms
 from utils.loggers import log
 from urllib import parse
 from core import checks
@@ -196,6 +196,7 @@ SSTImap:
                 # crawler mode
                 urls = set([self.sstimap_options['url']])
                 if self.sstimap_options['crawl_depth']:
+                    print(1)
                     crawled_urls = set()
                     for url in urls:
                         crawled_urls.update(crawl(url, self.sstimap_options))
@@ -211,8 +212,10 @@ SSTImap:
                             break  # TODO: save vulnerabilities
                 else:
                     forms = set()
+                    print(2)
                     for url in urls:
-                        forms.update(findPageForms(url, self.sstimap_options))
+                        forms.update(find_page_forms(url, self.sstimap_options))
+                    print(3)
                     for form in forms:
                         print()
                         log.log(23, f'Scanning form with url: {form[0]}')
@@ -223,6 +226,8 @@ SSTImap:
                         self.current_plugin = checks.check_template_injection(self.channel)
                         if self.channel.data.get('engine'):
                             break  # TODO: save vulnerabilities
+                    if not forms:
+                        log.log(22, f'No forms were detected to scan')
             else:
                 # predetermined mode
                 self.channel = Channel(self.sstimap_options)

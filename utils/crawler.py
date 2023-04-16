@@ -122,7 +122,10 @@ def crawl(target, args):
         log.log(26, "User aborted during crawling. SSTImap will use partial list")
         return results
 
-def findPageForms(url, args):
+def find_page_forms(url, args):
+    retVal = set()
+    target = (url, "GET", "")
+    retVal.add(target)
     try:
         request = requests.request(method='GET', url=url, proxies={'http': args.get('proxy'), 'https': args.get('proxy')}, verify=args.get('verify_ssl'))
         raw = request.content
@@ -130,10 +133,10 @@ def findPageForms(url, args):
     except requests.exceptions.ConnectionError as e:
         if e and e.args[0] and e.args[0].args[0] == 'Connection aborted.':
             log.log(25, 'Error: connection aborted, bad status line.')
-            return set()
+            return retVal
         elif e and e.args[0] and 'Max retries exceeded' in e.args[0].args[0]:
             log.log(25, 'Error: max retries exceeded for a connection.')
-            return set()
+            return retVal
         else:
             raise
     forms = None
@@ -143,7 +146,6 @@ def findPageForms(url, args):
             forms, global_form = parse_forms(parsed, request.url)
         except:
             raise       # TODO: find out what error types these two functions might raise
-    retVal = set()
     for form in forms or []:
         try:
             request = form.click()
