@@ -14,7 +14,6 @@ class Cheetah(python.Python):
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
             },
             'evaluate': {
-                # A way to check for actual Mako syntax
                 'evaluate': """${{getVar('a', '').replace($getVar('a', ''), '')}}${{{code}}}"""
             }
         })
@@ -32,15 +31,13 @@ class Cheetah(python.Python):
             # comment out part of syntax, like in IF oneliners
             {'level': 2, 'prefix': '{closure}', 'suffix': ' ##', 'closures': python.ctx_closures},
             # Code blocks
-            # This covers <% %s %>, <%! %s %>, <% %s=1 %>
-            {'level': 2, 'prefix': '{closure}%>', 'suffix': '<%#', 'closures': python.ctx_closures},
+            # This covers <%= %s %>, <% %s %>
+            {'level': 2, 'prefix': '{closure}%>', 'suffix': '<%', 'closures': python.ctx_closures},
             # If and for blocks
-            # % if %s:\n% endif
-            # % for a in %s:\n% endfor
-            {'level': 5, 'prefix': '{closure}#\n', 'suffix': '\n', 'closures': python.ctx_closures},
+            {'level': 5, 'prefix': '{closure}##\n', 'suffix': '\n', 'closures': python.ctx_closures},
             # Cheetah blocks
-            {'level': 5, 'prefix': '</%doc>', 'suffix': '<%doc>'},
-            {'level': 5, 'prefix': '</%def>', 'suffix': '<%def name="t(x)">', 'closures': python.ctx_closures},
-            {'level': 5, 'prefix': '</%block>', 'suffix': '<%block>', 'closures': python.ctx_closures},
-            {'level': 5, 'prefix': '#endraw ', 'suffix': ' #raw', 'closures': python.ctx_closures},
+            {'level': 5, 'prefix': '#end cache', 'suffix': '#cache'},
+            {'level': 5, 'prefix': '#end def', 'suffix': '#def t(x)', 'closures': python.ctx_closures},
+            {'level': 5, 'prefix': '#end block', 'suffix': '#block', 'closures': python.ctx_closures},
+            {'level': 5, 'prefix': '#end raw ', 'suffix': ' #raw', 'closures': python.ctx_closures},
         ])
