@@ -263,14 +263,17 @@ If you plan to contribute something big from this list, inform me to avoid worki
 - [ ] Make template and base language evaluation functionality more uniform
 - [ ] Add more payloads for different engines
 - [ ] Short arguments as interactive commands?
-- [ ] Automatic languages and engines import
 - [ ] Engine plugins as objects of _Plugin_ class?
 - [ ] JSON/plaintext API modes for scripting integrations?
 - [ ] Argument to remove escape codes?
-- [ ] Spider/crawler automation
 - [ ] Better integration for Python scripts
 - [ ] More POST data types support
 - [ ] Payload processing scripts
+- [ ] Better config functionality
+- [ ] Saving found vulnerabilities
+- [ ] Reports in HTML or other format
+- [x] Spider/crawler automation (by [fantesykikachu](https://github.com/fantesykikachu))
+- [x] Automatic languages and engines import
 
 [1]: https://artsploit.blogspot.co.uk/2016/08/pprce2.html
 [2]: https://opsecx.com/index.php/2016/07/03/server-side-template-injection-in-tornado/
