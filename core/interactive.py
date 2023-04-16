@@ -7,7 +7,6 @@ from core.channel import Channel
 from core.clis import Shell, MultilineShell
 from core.tcpserver import TcpServer
 from core.tcpclient import TcpClient
-import telnetlib
 import socket
 
 
@@ -587,7 +586,6 @@ SSTImap:
                     log.log(24, f'Shell with payload {idx+1} seems stable')
                     break
             try:
-                #telnetlib.Telnet(url.hostname.decode(), port, timeout=5).interact()
                 a = TcpClient(url.hostname, port, timeout=5)
                 a.shell()
                 return
