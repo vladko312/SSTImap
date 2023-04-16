@@ -1,3 +1,5 @@
 argparse~=1.4.0
 requests~=2.27.1
 urllib3~=1.26.9
+mechanize~=0.4.8
+html5lib~=1.1

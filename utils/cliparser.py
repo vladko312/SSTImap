@@ -5,10 +5,10 @@ from sstimap import version
 def banner():
     msg = """\033[93m
     ╔══════╦══════╦═══════╗ ▀█▀
-    ║ ╔════╣ ╔════╩══╗ ╔══╝═╗\033[41m▀\033[40m╔═
-    ║ ╚════╣ ╚════╗  ║ ║    ║\033[41m{\033[40m║ \033[94m _ __ ___   __ _ _ __\033[93m
-    ╚════╗ ╠════╗ ║  ║ ║    ║\033[41m*\033[40m║ \033[94m| '_ ` _ \\ / _` | '_ \\\033[93m
-    ╔════╝ ╠════╝ ║  ║ ║    ║\033[41m}\033[40m║ \033[94m| | | | | | (_| | |_) |\033[93m
+    ║ ╔════╣ ╔════╩══╗ ╔══╝═╗\033[41m▀\033[49m╔═
+    ║ ╚════╣ ╚════╗  ║ ║    ║\033[41m{\033[49m║ \033[94m _ __ ___   __ _ _ __\033[93m
+    ╚════╗ ╠════╗ ║  ║ ║    ║\033[41m*\033[49m║ \033[94m| '_ ` _ \\ / _` | '_ \\\033[93m
+    ╔════╝ ╠════╝ ║  ║ ║    ║\033[41m}\033[49m║ \033[94m| | | | | | (_| | |_) |\033[93m
     ╚══════╩══════╝  ╚═╝    ╚╦╝\033[94m |_| |_| |_|\\__,_| .__/\033[93m
                              │                  \033[94m| |
                                                 |_|\033[0m"""
@@ -18,7 +18,7 @@ def banner():
            f"\n\033[91m[!] LEGAL DISCLAIMER\033[0m: Usage of SSTImap for attacking targets without prior mutual " \
            f"consent is illegal.\nIt is the end user's responsibility to obey all applicable local, state and " \
            f"federal laws.\nDevelopers assume no liability and are not responsible for any misuse or damage " \
-           f"caused by this program\n\n"
+           f"caused by this program"
     return msg
 
 
@@ -33,6 +33,10 @@ target.add_argument("-u", "--url", dest="url",
                     help="Target URL (e.g. 'https://example.com/?name=test')")
 target.add_argument("-i", "--interactive", action="store_true", dest="interactive",
                     help="Run SSTImap in interactive mode")
+target.add_argument("-c", "--crawl", dest="crawl_depth", type=int,
+                    help="Depth to crawl (default/0: don't crawl)", default=0)
+target.add_argument("-f", "--forms", action="store_true", dest="forms",
+                    help="Scan page(s) for forms")
 
 
 request = parser.add_argument_group(title="request", description="These options can specify how to connect to the "
@@ -43,10 +47,10 @@ request.add_argument("-d", "--data", action="append", dest="data",
                      help="POST data param to send (e.g. 'param=value') [Stackable]", default=[])
 request.add_argument("-H", "--header", action="append", dest="headers", metavar="HEADER",
                      help="Header to send (e.g. 'Header: Value') [Stackable]", default=[])
-request.add_argument("-c", "--cookie", action="append", dest="cookies", metavar="COOKIE",
+request.add_argument("-C", "--cookie", action="append", dest="cookies", metavar="COOKIE",
                      help="Cookie to send (e.g. 'Field=Value') [Stackable]", default=[])
 request.add_argument("-m", "--method", dest="method",
-                     help="HTTP method to use (default 'GET')", default='GET')
+                     help="HTTP method to use (default 'GET')")
 request.add_argument("-a", "--user-agent", dest="user_agent",
                      help="User-Agent header value to use", default=f'SSTImap/{version}')
 request.add_argument("-A", "--random-user-agent", action="store_true", dest="random_agent",
@@ -69,6 +73,9 @@ detection.add_argument("-r", "--technique", dest="technique",
                        help="Techniques R(endered) T(ime-based blind). Default: RT", default="RT")
 detection.add_argument("-P", "--legacy", "--legacy-payloads", dest="legacy", action="store_true",
                        help="Include old payloads, that no longer work with newer versions of the engines")
+detection.add_argument("--crawl-exclude", dest="crawl_exclude", help="Regex in URLs to not crawl")
+detection.add_argument("--crawl-domains", dest="crawl_domains", default="S",
+                       help="Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S")
 
 
 payload = parser.add_argument_group(title="payload",

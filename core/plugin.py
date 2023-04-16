@@ -7,7 +7,19 @@ import base64
 import collections
 import threading
 import time
+import sys
 import utils.config
+
+loaded_plugins = {}
+
+
+def unload_plugins():
+    global loaded_plugins
+    for k in loaded_plugins:
+        for p in loaded_plugins[k]:
+            if p.__module__ in sys.modules:
+                del sys.modules[p.__module__]
+    loaded_plugins = {}
 
 
 def _recursive_update(d, u):
@@ -49,6 +61,14 @@ class Plugin(object):
         # Call user-defined inits
         self.language_init()
         self.init()
+
+    def __init_subclass__(cls, **kwargs):
+        module = cls.__module__.split(".")
+        if module[0] == "plugins":
+            if module[1] in loaded_plugins:
+                loaded_plugins[module[1]].append(cls)
+            else:
+                loaded_plugins[module[1]] = [cls]
 
     def language_init(self):
         # To be overridden. This can call self.update_actions

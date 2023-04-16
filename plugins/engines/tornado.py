@@ -8,11 +8,14 @@ class Tornado(python.Python):
 
         self.update_actions({
             'render': {
-                'render': '{{{{{code}}}}}',
+                'render': '{code}',
                 'header': '{{{{{header}}}}}',
                 'trailer': '{{{{{trailer}}}}}',
-                'test_render': f"""'{rand.randstrings[0]}'}}}}{{% raw '{rand.randstrings[0]}'.join('{rand.randstrings[1]}') %}}{{{{'{rand.randstrings[1]}'""",
+                'test_render': f"""{{{{'{rand.randstrings[0]}'}}}}{{% raw '{rand.randstrings[0]}'.join('{rand.randstrings[1]}') %}}{{{{'{rand.randstrings[1]}'}}}}""",
                 'test_render_expected': f'{rand.randstrings[0] + rand.randstrings[0].join(rand.randstrings[1]) + rand.randstrings[1]}'
+            },
+            'evaluate': {
+                'evaluate': """{{{{{code}}}}}"""
             }
         })
 

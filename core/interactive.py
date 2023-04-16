@@ -1,11 +1,12 @@
 import cmd
+from utils.crawler import crawl, find_page_forms
 from utils.loggers import log
 from urllib import parse
 from core import checks
 from core.channel import Channel
 from core.clis import Shell, MultilineShell
 from core.tcpserver import TcpServer
-import telnetlib
+from core.tcpclient import TcpClient
 import socket
 
 
@@ -47,6 +48,8 @@ Information:
 
 Target:
   url, target [URL]                       Set target URL (e.g. 'https://example.com/?name=test')
+  crawl [DEPTH]                           Crawl up to depth (0 - do not crawl)
+  forms                                   Search page(s) for forms
   run, test, check                        Run SSTI detection on the target
 
 Request:
@@ -66,6 +69,8 @@ Detection:
   engine [ENGINE]                         Check only this backend template engine. For all, use '*'
   technique [TECHNIQUE]                   Use techniques R(endered) T(ime-based blind). Default: RT
   legacy                                  Toggle including old payloads, that no longer work with newer versions of the engines
+  exclude [PATTERN]                       Regex pattern to exclude from crawler
+  domains [DOMAINS]                       Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S
 
 Exploitation:
   tpl, tpl_shell                          Prompt for an interactive shell on the template engine
@@ -78,7 +83,10 @@ Exploitation:
   reverse, reverse_shell [HOST] [PORT]    Run a system shell and back-connect to local HOST PORT
   overwrite, force_overwrite              Toggle file overwrite when uploading
   up, upload [LOCAL] [REMOTE]             Upload LOCAL to REMOTE files
-  down, download [REMOTE] [LOCAL]         Download REMOTE to LOCAL files""")
+  down, download [REMOTE] [LOCAL]         Download REMOTE to LOCAL files
+
+SSTImap:
+  reload, reload_plugins                  Reload all SSTImap plugins""")
 
     def do_version(self, line):
         """Show current SSTImap version"""
@@ -86,6 +94,7 @@ Exploitation:
 
     def do_options(self, line):
         """Show current SSTImap options"""
+        crawl_domains = {"Y": "Yes", "S": "Subdomains only", "N": "No"}
         log.log(23, f'Current SSTImap {self.sstimap_options["version"]} interactive mode options:')
         if not self.sstimap_options["url"]:
             log.log(25, f'URL is not set.')
@@ -116,6 +125,14 @@ Exploitation:
             log.log(26, f'Level: {self.sstimap_options["level"]}')
         log.log(26, f'Engine: {self.sstimap_options["engine"] if self.sstimap_options["engine"] else "*"}'
                     f'{"+" if not self.sstimap_options["engine"] and self.sstimap_options["legacy"] else ""}')
+        if self.sstimap_options["crawl_depth"] > 0:
+            log.log(26, f'Crawler depth: {self.sstimap_options["crawl_depth"]}')
+        else:
+            log.log(26, 'Crawler depth: no crawl')
+        if self.sstimap_options["crawl_exclude"]:
+            log.log(26, f'Crawler exclude RE: "{self.sstimap_options["crawl_exclude"]}"')
+        log.log(26, f'Crawl other domains: {crawl_domains.get(self.sstimap_options["crawl_exclude"].upper())}')
+        log.log(26, f'Form detection: {self.sstimap_options["forms"]}')
         log.log(26, f'Attack technique: {self.sstimap_options["technique"]}')
         log.log(26, f'Force overwrite files: {self.sstimap_options["force_overwrite"]}')
 
@@ -146,14 +163,74 @@ Exploitation:
 
     do_target = do_url
 
+    def do_crawl(self, line):
+        self.sstimap_options['crawl_depth'] = int(line)
+        if int(line):
+            log.log(24, f'Crawling depth is set to {line}.')
+        else:
+            log.log(24, 'Crawling disabled.')
+        
+    def do_exclude(self, line):
+        self.sstimap_options['crawl_exclude'] = line
+        if line:
+            log.log(24, f'Crawler exclude RE is set to "{line}".')
+        else:
+            log.log(24, 'Crawler exclude RE disabled.')
+    
+    do_crawl_exclude = do_exclude
+    do_crawlexclude = do_exclude
+        
+    def do_forms(self, line):
+        overwrite = not self.sstimap_options['forms']
+        log.log(24, f'Form detection {"en" if overwrite else "dis"}abled.')
+        self.sstimap_options['forms'] = overwrite
+
     def do_run(self, line):
         """Check target URL for SSTI vulnerabilities"""
         if not self.sstimap_options["url"]:
             log.log(22, 'Target URL cannot be empty.')
             return
         try:
-            self.channel = Channel(self.sstimap_options)
-            self.current_plugin = checks.check_template_injection(self.channel)
+            if self.sstimap_options['crawl_depth'] or self.sstimap_options['forms']:
+                # crawler mode
+                urls = set([self.sstimap_options['url']])
+                if self.sstimap_options['crawl_depth']:
+                    print(1)
+                    crawled_urls = set()
+                    for url in urls:
+                        crawled_urls.update(crawl(url, self.sstimap_options))
+                    urls.update(crawled_urls)
+                if not self.sstimap_options['forms']:
+                    for url in urls:
+                        print()
+                        log.log(23, f'Scanning url: {url}')
+                        self.sstimap_options['url'] = url
+                        self.channel = Channel(self.sstimap_options)
+                        self.current_plugin = checks.check_template_injection(self.channel)
+                        if self.channel.data.get('engine'):
+                            break  # TODO: save vulnerabilities
+                else:
+                    forms = set()
+                    print(2)
+                    for url in urls:
+                        forms.update(find_page_forms(url, self.sstimap_options))
+                    print(3)
+                    for form in forms:
+                        print()
+                        log.log(23, f'Scanning form with url: {form[0]}')
+                        self.sstimap_options['url'] = form[0]
+                        self.sstimap_options['method'] = form[1]
+                        self.sstimap_options['data'] = parse.parse_qs(form[2], keep_blank_values=True)
+                        self.channel = Channel(self.sstimap_options)
+                        self.current_plugin = checks.check_template_injection(self.channel)
+                        if self.channel.data.get('engine'):
+                            break  # TODO: save vulnerabilities
+                    if not forms:
+                        log.log(22, f'No forms were detected to scan')
+            else:
+                # predetermined mode
+                self.channel = Channel(self.sstimap_options)
+                self.current_plugin = checks.check_template_injection(self.channel)
         except (KeyboardInterrupt, EOFError):
             log.log(26, 'Exiting SSTI detection')
         self.checked = True
@@ -320,6 +397,17 @@ Exploitation:
             return
         log.log(24, f'Attack technique is set to {line}')
         self.sstimap_options["technique"] = line
+
+    def do_crawl_domains(self, line):
+        """Set crawling DOMAINS behaviour"""
+        line = line.upper()
+        if line not in ["Y", "S", "N"]:
+            log.log(22, 'Invalid DOMAINS value. It should be \'Y\', \'S\' or \'N\'.')
+            return
+        log.log(24, f'Domain crawling is set to {line}')
+        self.sstimap_options["crawl_domains"] = line
+
+    do_domains = do_crawl_domains
 
     def do_legacy(self, line):
         """Switch legacy option"""
@@ -494,16 +582,18 @@ Exploitation:
             for idx, thread in enumerate(self.current_plugin.bind_shell(port)):
                 log.log(26, f'Spawn a shell on remote port {port} with payload {idx+1}')
                 thread.join(timeout=1)
-                if not thread.is_alive():
-                    continue
-                try:
-                    telnetlib.Telnet(url.hostname.decode(), port, timeout=5).interact()
-                    return
-                except (KeyboardInterrupt, EOFError):
-                    print()
-                    log.log(26, 'Exiting bind shell')
-                except Exception as e:
-                    log.debug(f"Error connecting to {url.hostname}:{port} {e}")
+                if thread.is_alive():
+                    log.log(24, f'Shell with payload {idx+1} seems stable')
+                    break
+            try:
+                a = TcpClient(url.hostname, port, timeout=5)
+                a.shell()
+                return
+            except (KeyboardInterrupt, EOFError):
+                print()
+                log.log(26, 'Exiting bind shell')
+            except Exception as e:
+                log.log(25, f"Error connecting to {url.hostname}:{port} {e}")
         else:
             log.log(22, 'No TCP shell opening capabilities have been detected on the target')
 
@@ -588,3 +678,16 @@ Exploitation:
 
     do_up = do_upload
     do_down = do_download
+
+# SSTImap commands
+
+    def do_reload_modules(self, line):
+        """Reload all modules"""
+        from core.plugin import unload_plugins
+        from sstimap import load_plugins
+        unload_plugins()
+        load_plugins()
+        from core.plugin import loaded_plugins
+        log.log(23, f"Reloaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
+
+    do_reload = do_reload_modules
