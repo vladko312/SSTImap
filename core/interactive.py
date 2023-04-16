@@ -49,8 +49,7 @@ Information:
 
 Target:
   url, target [URL]                       Set target URL (e.g. 'https://example.com/?name=test')
-  crawl [DEPTH]                           Crawl up to depth
-  exclude [PATTERN]                       Regex pattern to exclude from crawler
+  crawl [DEPTH]                           Crawl up to depth (0 - do not crawl)
   forms                                   Search page(s) for forms
   run, test, check                        Run SSTI detection on the target
 
@@ -71,6 +70,8 @@ Detection:
   engine [ENGINE]                         Check only this backend template engine. For all, use '*'
   technique [TECHNIQUE]                   Use techniques R(endered) T(ime-based blind). Default: RT
   legacy                                  Toggle including old payloads, that no longer work with newer versions of the engines
+  exclude [PATTERN]                       Regex pattern to exclude from crawler
+  domains [DOMAINS]                       Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S
 
 Exploitation:
   tpl, tpl_shell                          Prompt for an interactive shell on the template engine
@@ -94,6 +95,7 @@ SSTImap:
 
     def do_options(self, line):
         """Show current SSTImap options"""
+        crawl_domains = {"Y": "Yes", "S": "Subdomains only", "N": "No"}
         log.log(23, f'Current SSTImap {self.sstimap_options["version"]} interactive mode options:')
         if not self.sstimap_options["url"]:
             log.log(25, f'URL is not set.')
@@ -124,6 +126,14 @@ SSTImap:
             log.log(26, f'Level: {self.sstimap_options["level"]}')
         log.log(26, f'Engine: {self.sstimap_options["engine"] if self.sstimap_options["engine"] else "*"}'
                     f'{"+" if not self.sstimap_options["engine"] and self.sstimap_options["legacy"] else ""}')
+        if self.sstimap_options["crawl_depth"] > 0:
+            log.log(26, f'Crawler depth: {self.sstimap_options["crawl_depth"]}')
+        else:
+            log.log(26, 'Crawler depth: no crawl')
+        if self.sstimap_options["crawl_exclude"]:
+            log.log(26, f'Crawler exclude RE: "{self.sstimap_options["crawl_exclude"]}"')
+        log.log(26, f'Crawl other domains: {crawl_domains.get(self.sstimap_options["crawl_exclude"].upper())}')
+        log.log(26, f'Form detection: {self.sstimap_options["forms"]}')
         log.log(26, f'Attack technique: {self.sstimap_options["technique"]}')
         log.log(26, f'Force overwrite files: {self.sstimap_options["force_overwrite"]}')
 
@@ -155,24 +165,26 @@ SSTImap:
     do_target = do_url
 
     def do_crawl(self, line):
-        if not self.sstimap_options["url"]:
-            log.log(22, 'Target URL cannot be empty.')
-            return
-        self.sstimap_options['crawlDepth'] = int(line)
+        self.sstimap_options['crawl_depth'] = int(line)
+        if int(line):
+            log.log(24, f'Crawling depth is set to {line}.')
+        else:
+            log.log(24, 'Crawling disabled.')
         
     def do_exclude(self, line):
-        self.sstimap_options['crawlDepth'] = line
+        self.sstimap_options['crawl_exclude'] = line
+        if line:
+            log.log(24, f'Crawler exclude RE is set to "{line}".')
+        else:
+            log.log(24, 'Crawler exclude RE disabled.')
     
     do_crawl_exclude = do_exclude
     do_crawlexclude = do_exclude
         
     def do_forms(self, line):
-        if self.sstimap_options['forms'] == False:
-            self.sstimap_options['forms'] = True
-            log.log(24, f'SSTImap will scan for forms')
-        elif self.sstimap_options['forms'] == True:
-            self.sstimap_options['forms'] = False
-            log.log(26, f'Disabling form scan')
+        overwrite = not self.sstimap_options['forms']
+        log.log(24, f'Form detection {"en" if overwrite else "dis"}abled.')
+        self.sstimap_options['forms'] = overwrite
 
     def do_run(self, line):
         """Check target URL for SSTI vulnerabilities"""
@@ -180,29 +192,37 @@ SSTImap:
             log.log(22, 'Target URL cannot be empty.')
             return
         try:
-            if self.sstimap_options['crawlDepth'] or self.sstimap_options['forms']:
+            if self.sstimap_options['crawl_depth'] or self.sstimap_options['forms']:
                 # crawler mode
                 urls = set([self.sstimap_options['url']])
-                if self.sstimap_options['crawlDepth']:
+                if self.sstimap_options['crawl_depth']:
                     crawled_urls = set()
                     for url in urls:
                         crawled_urls.update(crawl(url, self.sstimap_options))
                     urls.update(crawled_urls)
                 if not self.sstimap_options['forms']:
                     for url in urls:
+                        print()
+                        log.log(23, f'Scanning url: {url}')
                         self.sstimap_options['url'] = url
                         self.channel = Channel(self.sstimap_options)
                         self.current_plugin = checks.check_template_injection(self.channel)
+                        if self.channel.data.get('engine'):
+                            break  # TODO: save vulnerabilities
                 else:
                     forms = set()
                     for url in urls:
                         forms.update(findPageForms(url, self.sstimap_options))
                     for form in forms:
+                        print()
+                        log.log(23, f'Scanning form with url: {form[0]}')
                         self.sstimap_options['url'] = form[0]
                         self.sstimap_options['method'] = form[1]
                         self.sstimap_options['data'] = parse.parse_qs(form[2], keep_blank_values=True)
                         self.channel = Channel(self.sstimap_options)
                         self.current_plugin = checks.check_template_injection(self.channel)
+                        if self.channel.data.get('engine'):
+                            break  # TODO: save vulnerabilities
             else:
                 # predetermined mode
                 self.channel = Channel(self.sstimap_options)
@@ -373,6 +393,17 @@ SSTImap:
             return
         log.log(24, f'Attack technique is set to {line}')
         self.sstimap_options["technique"] = line
+
+    def do_crawl_domains(self, line):
+        """Set crawling DOMAINS behaviour"""
+        line = line.upper()
+        if line not in ["Y", "S", "N"]:
+            log.log(22, 'Invalid DOMAINS value. It should be \'Y\', \'S\' or \'N\'.')
+            return
+        log.log(24, f'Domain crawling is set to {line}')
+        self.sstimap_options["crawl_domains"] = line
+
+    do_domains = do_crawl_domains
 
     def do_legacy(self, line):
         """Switch legacy option"""

@@ -33,11 +33,9 @@ target.add_argument("-u", "--url", dest="url",
                     help="Target URL (e.g. 'https://example.com/?name=test')")
 target.add_argument("-i", "--interactive", action="store_true", dest="interactive",
                     help="Run SSTImap in interactive mode")
-target.add_argument("--crawl", dest="crawlDepth", type=int,
-                    help="Depth to crawl (default: don't crawl)", default=0)
-target.add_argument("--crawl-exclude", dest="crawlExclude",
-                    help="Regex in URLs to not crawl")
-target.add_argument("--forms", action="store_true", dest="forms",
+target.add_argument("-c", "--crawl", dest="crawl_depth", type=int,
+                    help="Depth to crawl (default/0: don't crawl)", default=0)
+target.add_argument("-f", "--forms", action="store_true", dest="forms",
                     help="Scan page(s) for forms")
 
 
@@ -49,7 +47,7 @@ request.add_argument("-d", "--data", action="append", dest="data",
                      help="POST data param to send (e.g. 'param=value') [Stackable]", default=[])
 request.add_argument("-H", "--header", action="append", dest="headers", metavar="HEADER",
                      help="Header to send (e.g. 'Header: Value') [Stackable]", default=[])
-request.add_argument("-c", "--cookie", action="append", dest="cookies", metavar="COOKIE",
+request.add_argument("-C", "--cookie", action="append", dest="cookies", metavar="COOKIE",
                      help="Cookie to send (e.g. 'Field=Value') [Stackable]", default=[])
 request.add_argument("-m", "--method", dest="method",
                      help="HTTP method to use (default 'GET')")
@@ -75,6 +73,9 @@ detection.add_argument("-r", "--technique", dest="technique",
                        help="Techniques R(endered) T(ime-based blind). Default: RT", default="RT")
 detection.add_argument("-P", "--legacy", "--legacy-payloads", dest="legacy", action="store_true",
                        help="Include old payloads, that no longer work with newer versions of the engines")
+detection.add_argument("--crawl-exclude", dest="crawl_exclude", help="Regex in URLs to not crawl")
+detection.add_argument("--crawl-domains", dest="crawl_domains", default="S",
+                       help="Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S")
 
 
 payload = parser.add_argument_group(title="payload",

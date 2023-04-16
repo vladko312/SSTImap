@@ -28,27 +28,37 @@ def main():
         # interactive mode
         log.log(23, 'Starting SSTImap in interactive mode. Type \'help\' to see the details.')
         InteractiveShell(args).cmdloop()
-    elif args['crawlDepth'] or args['forms']:
+    elif args['crawl_depth'] or args['forms']:
         # crawler mode
         urls = set([args.get('url')])
-        if args['crawlDepth']:
+        if args['crawl_depth']:
             crawled_urls = set()
             for url in urls:
                 crawled_urls.update(crawl(url, args))
             urls.update(crawled_urls)
         if not args['forms']:
             for url in urls:
+                print()
+                log.log(23, f'Scanning url: {url}')
                 args['url'] = url
-                checks.check_template_injection(Channel(args))
+                channel = Channel(args)
+                checks.check_template_injection(channel)
+                if channel.data.get('engine'):
+                    break  # TODO: save vulnerabilities
         else:
             forms = set()
             for url in urls:
                 forms.update(findPageForms(url, args))
             for form in forms:
+                print()
+                log.log(23, f'Scanning form with url: {form[0]}')
                 args['url'] = form[0]
                 args['method'] = form[1]
                 args['data'] = urllib.parse.parse_qs(form[2], keep_blank_values=True)
-                checks.check_template_injection(Channel(args))
+                channel = Channel(args)
+                checks.check_template_injection(channel)
+                if channel.data.get('engine'):
+                    break  # TODO: save vulnerabilities
     else:
         # predetermined mode
         checks.check_template_injection(Channel(args))
