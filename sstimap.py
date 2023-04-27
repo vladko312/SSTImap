@@ -3,6 +3,8 @@ import sys
 if sys.version_info.major != 3 or sys.version_info.minor < 6:
     print('\033[91m[!]\033[0m SSTImap was created for Python3.6 and above. Python'+str(sys.version_info.major)+'.'+str(sys.version_info.minor)+' is not supported!')
     sys.exit()
+if sys.version_info.minor > 11:
+    print('\033[33m[!]\033[0m This version of SSTImap was not tested with Python3.'+str(sys.version_info.minor))
 import urllib
 import importlib
 import os
@@ -12,14 +14,16 @@ from core.channel import Channel
 from core.interactive import InteractiveShell
 from utils.loggers import log
 from utils.crawler import crawl, find_page_forms
+from utils.config import config_args
 import traceback
 
 
-version = '1.1.0'
+version = '1.1.1'
 
 
 def main():
     args = vars(cliparser.options)
+    args = config_args(args)
     args['version'] = version
     if not (args['url'] or args['interactive']):
         # no target specified
@@ -40,8 +44,9 @@ def main():
             for url in urls:
                 print()
                 log.log(23, f'Scanning url: {url}')
-                args['url'] = url
-                channel = Channel(args)
+                url_args = args.copy()
+                url_args['url'] = url
+                channel = Channel(url_args)
                 checks.check_template_injection(channel)
                 if channel.data.get('engine'):
                     break  # TODO: save vulnerabilities
@@ -52,10 +57,11 @@ def main():
             for form in forms:
                 print()
                 log.log(23, f'Scanning form with url: {form[0]}')
-                args['url'] = form[0]
-                args['method'] = form[1]
-                args['data'] = urllib.parse.parse_qs(form[2], keep_blank_values=True)
-                channel = Channel(args)
+                url_args = args.copy()
+                url_args['url'] = form[0]
+                url_args['method'] = form[1]
+                url_args['data'] = urllib.parse.parse_qs(form[2], keep_blank_values=True)
+                channel = Channel(url_args)
                 checks.check_template_injection(channel)
                 if channel.data.get('engine'):
                     break  # TODO: save vulnerabilities
@@ -68,10 +74,10 @@ def main():
 
 def load_plugins():
     importlib.invalidate_caches()
-    groups = os.scandir("plugins")
+    groups = os.scandir(f"{sys.path[0]}/plugins")
     groups = filter(lambda x: x.is_dir(), groups)
     for g in groups:
-        modules = os.scandir(f"plugins/{g.name}")
+        modules = os.scandir(f"{sys.path[0]}/plugins/{g.name}")
         modules = filter(lambda x: (x.name.endswith(".py") and not x.name.startswith("_")), modules)
         for m in modules:
             importlib.import_module(f"plugins.{g.name}.{m.name[:-3]}")

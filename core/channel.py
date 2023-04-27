@@ -3,7 +3,6 @@ import urllib3
 from utils.loggers import log
 from urllib import parse
 from copy import deepcopy
-import utils.config
 from utils.random_agent import get_agent
 
 
@@ -177,7 +176,7 @@ class Channel:
                 result = ""
             else:
                 raise
-        if utils.config.log_response:
+        if self.args.get("log_response", False):
             log.debug(f"< {result}")
         return result
 

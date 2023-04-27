@@ -204,8 +204,9 @@ SSTImap:
                     for url in urls:
                         print()
                         log.log(23, f'Scanning url: {url}')
-                        self.sstimap_options['url'] = url
-                        self.channel = Channel(self.sstimap_options)
+                        url_options = self.sstimap_options.copy()
+                        url_options['url'] = url
+                        self.channel = Channel(url_options)
                         self.current_plugin = checks.check_template_injection(self.channel)
                         if self.channel.data.get('engine'):
                             break  # TODO: save vulnerabilities
@@ -218,10 +219,11 @@ SSTImap:
                     for form in forms:
                         print()
                         log.log(23, f'Scanning form with url: {form[0]}')
-                        self.sstimap_options['url'] = form[0]
-                        self.sstimap_options['method'] = form[1]
-                        self.sstimap_options['data'] = parse.parse_qs(form[2], keep_blank_values=True)
-                        self.channel = Channel(self.sstimap_options)
+                        url_options = self.sstimap_options.copy()
+                        url_options['url'] = form[0]
+                        url_options['method'] = form[1]
+                        url_options['data'] = parse.parse_qs(form[2], keep_blank_values=True)
+                        self.channel = Channel(url_options)
                         self.current_plugin = checks.check_template_injection(self.channel)
                         if self.channel.data.get('engine'):
                             break  # TODO: save vulnerabilities

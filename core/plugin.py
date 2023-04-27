@@ -8,7 +8,6 @@ import collections
 import threading
 import time
 import sys
-import utils.config
 
 loaded_plugins = {}
 
@@ -54,7 +53,7 @@ class Plugin(object):
         self.render_req_tm = collections.deque([0.5], maxlen=5)
         # The delay fortime-based blind injection. This will be added 
         # to the average response time for render values.
-        self.tm_delay = utils.config.time_based_blind_delay
+        self.tm_delay = self.channel.args.get('time_based_blind_delay', 4)
         # Declare object attributes
         self.actions = {}
         self.contexts = []
