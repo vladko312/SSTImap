@@ -34,7 +34,7 @@ target.add_argument("-u", "--url", dest="url",
 target.add_argument("-i", "--interactive", action="store_true", dest="interactive",
                     help="Run SSTImap in interactive mode")
 target.add_argument("-c", "--crawl", dest="crawl_depth", type=int,
-                    help="Depth to crawl (default/0: don't crawl)", default=0)
+                    help="Depth to crawl (default/0: don't crawl)")
 target.add_argument("-f", "--forms", action="store_true", dest="forms",
                     help="Scan page(s) for forms")
 
@@ -42,7 +42,7 @@ target.add_argument("-f", "--forms", action="store_true", dest="forms",
 request = parser.add_argument_group(title="request", description="These options can specify how to connect to the "
                                                                  "target URL and add possible attack vectors")
 request.add_argument("-M", "--marker", dest="marker",
-                     help="Use string as injection marker (default '*')", default='*')
+                     help="Use string as injection marker (default '*')")
 request.add_argument("-d", "--data", action="append", dest="data",
                      help="POST data param to send (e.g. 'param=value') [Stackable]", default=[])
 request.add_argument("-H", "--header", action="append", dest="headers", metavar="HEADER",
@@ -63,18 +63,18 @@ request.add_argument("-V", "--verify-ssl", action="store_true", dest="verify_ssl
 
 detection = parser.add_argument_group(title="detection",
                                       description="These options can be used to customize the detection phase.")
-detection.add_argument("-l", "--level", dest="level", type=int, default=1,
+detection.add_argument("-l", "--level", dest="level", type=int,
                        help="Level of escaping to perform (1-5, Default: 1)")
 detection.add_argument("-L", "--force-level", dest="force_level", metavar=("LEVEL", "CLEVEL",),
                        help="Force a LEVEL and CLEVEL to test", nargs=2)
 detection.add_argument("-e", "--engine", dest="engine",
                        help="Check only this backend template engine")
 detection.add_argument("-r", "--technique", dest="technique",
-                       help="Techniques R(endered) T(ime-based blind). Default: RT", default="RT")
+                       help="Techniques R(endered) T(ime-based blind). Default: RT")
 detection.add_argument("-P", "--legacy", "--legacy-payloads", dest="legacy", action="store_true",
                        help="Include old payloads, that no longer work with newer versions of the engines")
 detection.add_argument("--crawl-exclude", dest="crawl_exclude", help="Regex in URLs to not crawl")
-detection.add_argument("--crawl-domains", dest="crawl_domains", default="S",
+detection.add_argument("--crawl-domains", dest="crawl_domains",
                        help="Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S")
 
 
