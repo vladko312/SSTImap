@@ -5,6 +5,7 @@ See the file 'LICENSE' for copying permission
 
 import re
 import urllib
+import urllib3
 import html
 import requests
 
@@ -30,17 +31,20 @@ CRAWL_EXCLUDE_EXTENSIONS = (
 
 
 def crawl(target, args):
+    log.log(23, 'Starting page crawler...')
+    if not args.get('verify_ssl'):
+        urllib3.disable_warnings()
+    if args.get('crawl_exclude'):
+        try:
+            pattern = re.compile(args.get('crawl_exclude'))
+        except:
+            log.log(22, f'Invalid RE: "{args.get("crawl_exclude")}"')
+            return
     def crawlThread(curr_depth, current):
-        if args.get('crawl_exclude'):
-            try:
-                pattern = re.compile(args.get('crawl_exclude'))
-            except:
-                log.log(22, f'Invalid RE: "{args.get("crawl_exclude")}"')
-                return
         if current in visited:
             return
         elif args.get('crawl_exclude') and pattern.search(current):
-            log.log(26, f"Skipping '{current}'")
+            log.log(26, f"Skipping: {current}")
             return
         else:
             visited.add(current)
@@ -58,7 +62,7 @@ def crawl(target, args):
                 else:
                     raise
             except requests.exceptions.InvalidSchema:
-                log.log(26, f'URL with unsupported scema: {current}')
+                log.log(25, f'URL with unsupported scema: {current}')
                 return
         if content:
             try:
@@ -82,20 +86,21 @@ def crawl(target, args):
                             if url in visited:
                                 continue
                             elif args.get('crawl_exclude') and pattern.search(url):
-                                log.log(26, f"Skipping '{url}'")
+                                log.log(26, f"Skipping: {url}")
                                 visited.add(url)  # Skip silently next time
                                 continue
                             elif args.get('crawl_domains').upper() == "N" and host != target_host:
-                                log.log(26, f"Skipping '{url}'")
+                                log.log(26, f"Skipping: {url}")
                                 visited.add(url)  # Skip silently next time
                                 continue
                             elif args.get('crawl_domains').upper() != "Y" and not (host == target_host or
                                                                                    host.endswith(f".{target_host}")):
-                                log.log(26, f"Skipping '{url}'")
+                                log.log(26, f"Skipping: {url}")
                                 visited.add(url)  # Skip silently next time
                                 continue
                             else:
                                 worker[curr_depth+1].add(url)
+                                log.log(24, f"URL found: {url}")
             except UnicodeEncodeError:  # for non-HTML files
                 pass
             except ValueError:          # for non-valid links
@@ -123,6 +128,8 @@ def crawl(target, args):
         return results
 
 def find_page_forms(url, args):
+    if not args.get('verify_ssl'):
+        urllib3.disable_warnings()
     retVal = set()
     target = (url, "GET", "")
     retVal.add(target)
@@ -157,12 +164,12 @@ def find_page_forms(url, args):
                     data = urllib.parse.unquote(request.data)
                     data = data.lstrip("&=").rstrip('&')
                 elif not data and method and method.upper() == "POST":
-                    log.log(26, "Invalid POST form with blank data detected")
+                    log.log(25, "Invalid POST form with blank data detected")
                     continue
                 target = (url, method, data)
                 retVal.add(target)
         except (ValueError, TypeError) as ex:
-            log.log(26, f"there has been a problem while processing page forms ('{ex}')")
+            log.log(25, f"There has been a problem while processing page forms ('{repr(ex)}')")
     try:
         for match in re.finditer(r"\.post\(['\"]([^'\"]*)['\"],\s*\{([^}]*)\}", content):
             url = urllib.parse.urljoin(url, html.unescape(match.group(1)))

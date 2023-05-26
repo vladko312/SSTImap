@@ -43,5 +43,17 @@ def config_args(args):
     res = defaults.copy()
     config_update(res, config)
     config_update(res, user_config)
+    custom = args.get("config", res.get("config", None))
+    if custom:
+        if os.path.isdir(custom):
+            custom = f"{custom}/config.json"
+        if os.path.exists(custom):
+            custom_config = {}
+            with open(custom, 'r') as stream:
+                try:
+                    custom_config = json.load(stream)
+                except json.JSONDecodeError as e:
+                    print(f'[!][custom config] {e}')
+            config_update(res, custom_config)
     config_update(res, args)
     return res

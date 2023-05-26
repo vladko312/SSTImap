@@ -164,6 +164,8 @@ SSTImap:
     do_target = do_url
 
     def do_crawl(self, line):
+        if not line.isnumeric():
+            line = "0"
         self.sstimap_options['crawl_depth'] = int(line)
         if int(line):
             log.log(24, f'Crawling depth is set to {line}.')
@@ -195,15 +197,13 @@ SSTImap:
                 # crawler mode
                 urls = set([self.sstimap_options['url']])
                 if self.sstimap_options['crawl_depth']:
-                    print(1)
                     crawled_urls = set()
                     for url in urls:
                         crawled_urls.update(crawl(url, self.sstimap_options))
                     urls.update(crawled_urls)
                 if not self.sstimap_options['forms']:
                     for url in urls:
-                        print()
-                        log.log(23, f'Scanning url: {url}')
+                        log.log(27, f'Scanning url: {url}')
                         url_options = self.sstimap_options.copy()
                         url_options['url'] = url
                         self.channel = Channel(url_options)
@@ -212,13 +212,11 @@ SSTImap:
                             break  # TODO: save vulnerabilities
                 else:
                     forms = set()
-                    print(2)
+                    log.log(23, 'Starting form detection...')
                     for url in urls:
                         forms.update(find_page_forms(url, self.sstimap_options))
-                    print(3)
                     for form in forms:
-                        print()
-                        log.log(23, f'Scanning form with url: {form[0]}')
+                        log.log(27, f'Scanning form with url: {form[0]}')
                         url_options = self.sstimap_options.copy()
                         url_options['url'] = form[0]
                         url_options['method'] = form[1]

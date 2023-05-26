@@ -18,7 +18,7 @@ from utils.config import config_args
 import traceback
 
 
-version = '1.1.1'
+version = '1.1.2'
 
 
 def main():
@@ -42,8 +42,7 @@ def main():
             urls.update(crawled_urls)
         if not args['forms']:
             for url in urls:
-                print()
-                log.log(23, f'Scanning url: {url}')
+                log.log(27, f'Scanning url: {url}')
                 url_args = args.copy()
                 url_args['url'] = url
                 channel = Channel(url_args)
@@ -52,11 +51,11 @@ def main():
                     break  # TODO: save vulnerabilities
         else:
             forms = set()
+            log.log(23, 'Starting form detection...')
             for url in urls:
                 forms.update(find_page_forms(url, args))
             for form in forms:
-                print()
-                log.log(23, f'Scanning form with url: {form[0]}')
+                log.log(27, f'Scanning form with url: {form[0]}')
                 url_args = args.copy()
                 url_args['url'] = form[0]
                 url_args['method'] = form[1]
@@ -66,7 +65,7 @@ def main():
                 if channel.data.get('engine'):
                     break  # TODO: save vulnerabilities
                 if not forms:
-                    log.log(22, f'No forms were detected to scan')
+                    log.log(25, f'No forms were detected to scan')
     else:
         # predetermined mode
         checks.check_template_injection(Channel(args))
