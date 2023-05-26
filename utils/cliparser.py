@@ -37,8 +37,6 @@ target.add_argument("-c", "--crawl", dest="crawl_depth", type=int,
                     help="Depth to crawl (default/0: don't crawl)")
 target.add_argument("-f", "--forms", action="store_true", dest="forms",
                     help="Scan page(s) for forms")
-target.add_argument("--config", dest="config",
-                    help="Use custom config file or directory")
 
 
 request = parser.add_argument_group(title="request", description="These options can specify how to connect to the "
@@ -78,6 +76,8 @@ detection.add_argument("-P", "--legacy", "--legacy-payloads", dest="legacy", act
 detection.add_argument("--crawl-exclude", dest="crawl_exclude", help="Regex in URLs to not crawl")
 detection.add_argument("--crawl-domains", dest="crawl_domains",
                        help="Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S")
+detection.add_argument("--config", dest="config",
+                       help="Use custom config file or directory")
 
 
 payload = parser.add_argument_group(title="payload",

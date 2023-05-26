@@ -60,7 +60,12 @@ class Channel:
         # the parsing code. Concatenate to avoid headers with
         # the same key.
         if cookies:
-            for cookie in cookies.split(';'):
+            splitted_cookies = []
+            for cookie in cookies:
+                for param_value in cookie.split(';'):
+                    if '=' in param_value:
+                        splitted_cookies.append(param_value)
+            for cookie in splitted_cookies:
                 param, value = cookie.split('=', 1)
                 param = param.strip()
                 value = value.strip()
@@ -85,7 +90,7 @@ class Channel:
             param = param.strip()
             value = value.strip()
             if param.lower() == "cookie":
-                self._parse_cookies(value, all_injectable=all_injectable)
+                self._parse_cookies([value], all_injectable=all_injectable)
             else:
                 self.header_params[param] = value
                 if self.tag in param:

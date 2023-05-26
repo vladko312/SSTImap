@@ -18,7 +18,7 @@ from utils.config import config_args
 import traceback
 
 
-version = '1.1.2'
+version = '1.1.3'
 
 
 def main():
@@ -64,8 +64,8 @@ def main():
                 checks.check_template_injection(channel)
                 if channel.data.get('engine'):
                     break  # TODO: save vulnerabilities
-                if not forms:
-                    log.log(25, f'No forms were detected to scan')
+            if not forms:
+                log.log(25, f'No forms were detected to scan')
     else:
         # predetermined mode
         checks.check_template_injection(Channel(args))
