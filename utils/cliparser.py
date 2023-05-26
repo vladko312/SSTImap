@@ -37,6 +37,8 @@ target.add_argument("-c", "--crawl", dest="crawl_depth", type=int,
                     help="Depth to crawl (default/0: don't crawl)")
 target.add_argument("-f", "--forms", action="store_true", dest="forms",
                     help="Scan page(s) for forms")
+target.add_argument("--config", dest="config",
+                    help="Use custom config file or directory")
 
 
 request = parser.add_argument_group(title="request", description="These options can specify how to connect to the "

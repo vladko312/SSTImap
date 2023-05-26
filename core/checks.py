@@ -63,7 +63,7 @@ def print_injection_summary(channel):
 
 def detect_template_injection(channel):
     for i in range(len(channel.injs)):
-        log.log(23, f"Testing if {channel.injs[channel.inj_idx]['field']} parameter '{channel.injs[channel.inj_idx]['param']}' is injectable")
+        log.log(28, f"Testing if {channel.injs[channel.inj_idx]['field']} parameter '{channel.injs[channel.inj_idx]['param']}' is injectable")
         for plugin in plugins(legacy=channel.args.get('legacy')):
             current_plugin = plugin(channel)
             if channel.args.get('engine') and channel.args.get('engine').lower() != current_plugin.plugin.lower():

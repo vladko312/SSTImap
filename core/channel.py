@@ -23,15 +23,17 @@ class Channel:
         self.get_params = {}
         self.post_params = {}
         self.header_params = {}
+        self.cookie_params = {}
         self._parse_url()
-        self._parse_cookies()
         self._parse_get()
         self._parse_post()
         self._parse_header()
+        self._parse_cookies(self.args.get('cookies', []))
         if not self.injs:
             self._parse_get(all_injectable=True)
             self._parse_post(all_injectable=True)
             self._parse_header(all_injectable=True)
+            self._parse_cookies(self.args.get('cookies', []), all_injectable=True)
         self._parse_method()
         if not self.args.get('verify_ssl'):
             urllib3.disable_warnings()
@@ -53,29 +55,43 @@ class Channel:
                       if self.url[i] == self.tag]:
             self.injs.append({'field': 'URL', 'param': 'url', 'position': url_path_base_index + index})
 
-    def _parse_cookies(self):
+    def _parse_cookies(self, cookies, all_injectable=False):
         # Just add cookies as headers, to avoid duplicating
         # the parsing code. Concatenate to avoid headers with
         # the same key.
-        cookies = self.args.get('cookies', [])
         if cookies:
-            cookie_string = f"Cookie: {';'.join(cookies)}"
-            if not self.args.get('headers'):
-                self.args['headers'] = []
-            self.args['headers'].append(cookie_string)
+            for cookie in cookies.split(';'):
+                param, value = cookie.split('=', 1)
+                param = param.strip()
+                value = value.strip()
+                self.cookie_params[param] = value
+                if self.tag in param:
+                    self.injs.append({'field': 'Cookie', 'part': 'param', 'param': param})
+                if self.tag in value or all_injectable:
+                    self.injs.append({'field': 'Cookie', 'part': 'value', 'value': value, 'param': param})
+            #cookie_string = f"Cookie: {';'.join(cookies)}"
+            #if not self.args.get('headers'):
+            #    self.args['headers'] = []
+            #self.args['headers'].append(cookie_string)
 
     def _parse_header(self, all_injectable=False):
-        for param_value in self.args.get('headers', []):
-            if ':' not in param_value:
-                continue
+        headers = []
+        for header in self.args.get('headers', []):
+            for param_value in header.split('\r\n'):
+                if ':' in param_value:
+                    headers.append(param_value)
+        for param_value in headers:
             param, value = param_value.split(':', 1)
             param = param.strip()
             value = value.strip()
-            self.header_params[param] = value
-            if self.tag in param:
-                self.injs.append({'field': 'Header', 'part': 'param', 'param': param})
-            if self.tag in value or all_injectable:
-                self.injs.append({'field': 'Header', 'part': 'value', 'value': value, 'param': param})
+            if param.lower() == "cookie":
+                self._parse_cookies(value, all_injectable=all_injectable)
+            else:
+                self.header_params[param] = value
+                if self.tag in param:
+                    self.injs.append({'field': 'Header', 'part': 'param', 'param': param})
+                if self.tag in value or all_injectable:
+                    self.injs.append({'field': 'Header', 'part': 'value', 'value': value, 'param': param})
         if self.args.get('random_agent'):
             user_agent = get_agent()
         else:
@@ -108,6 +124,7 @@ class Channel:
         get_params = deepcopy(self.get_params)
         post_params = deepcopy(self.post_params)
         header_params = deepcopy(self.header_params)
+        cookie_params = deepcopy(self.cookie_params)
         url_params = self.base_url
         inj = deepcopy(self.injs[self.inj_idx])
         if inj['field'] == 'URL':
@@ -144,7 +161,7 @@ class Channel:
         elif inj['field'] == 'Header':
             injection = injection.replace('\n', '').replace('\r', '')
             if inj.get('part') == 'param':
-                old_value = get_params[inj.get('param')]
+                old_value = header_params[inj.get('param')]
                 del header_params[inj.get('param')]
                 if self.tag in inj.get('param'):
                     new_param = inj.get('param').replace(self.tag, injection)
@@ -156,6 +173,21 @@ class Channel:
                     header_params[inj.get('param')] = header_params[inj.get('param')].replace(self.tag, injection)
                 else:
                     header_params[inj.get('param')] = injection
+        elif inj['field'] == 'Cookie':
+            injection = injection.replace('\n', '').replace('\r', '')
+            if inj.get('part') == 'param':
+                old_value = cookie_params[inj.get('param')]
+                del cookie_params[inj.get('param')]
+                if self.tag in inj.get('param'):
+                    new_param = inj.get('param').replace(self.tag, injection)
+                else:
+                    new_param = injection
+                cookie_params[new_param] = old_value
+            if inj.get('part') == 'value':
+                if self.tag in cookie_params[inj.get('param')]:
+                    cookie_params[inj.get('param')] = cookie_params[inj.get('param')].replace(self.tag, injection)
+                else:
+                    cookie_params[inj.get('param')] = injection
         if self.tag in self.base_url:
             log.debug(f'[URL] {url_params}')
         if get_params:
@@ -164,9 +196,12 @@ class Channel:
             log.debug(f'[POST] {post_params}')
         if len(header_params) > 1:
             log.debug(f'[HEDR] {header_params}')
+        if len(cookie_params) > 1:
+            log.debug(f'[COOK] {cookie_params}')
         try:
             result = requests.request(method=self.http_method, url=url_params, params=get_params, data=post_params,
-                                      headers=header_params, proxies=self.proxies, verify=self.args.get('verify_ssl')).text
+                                      headers=header_params, cookies=cookie_params, proxies=self.proxies,
+                                      verify=self.args.get('verify_ssl')).text
         except requests.exceptions.ConnectionError as e:
             if e and e.args[0] and e.args[0].args[0] == 'Connection aborted.':
                 log.log(25, 'Error: connection aborted, bad status line.')

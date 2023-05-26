@@ -262,12 +262,16 @@ If you plan to contribute something big from this list, inform me to avoid worki
 
 - [ ] Make template and base language evaluation functionality more uniform
 - [ ] Add more payloads for different engines
+- [ ] Variable dumping functionality
+- [ ] Blind value extraction
+- [ ] Better documentation (or at least any documentation)
 - [ ] Short arguments as interactive commands?
 - [ ] Engine plugins as objects of _Plugin_ class?
 - [ ] JSON/plaintext API modes for scripting integrations?
 - [ ] Argument to remove escape codes?
 - [ ] Better integration for Python scripts
 - [ ] More POST data types support
+- [ ] Modules for more customisable requests (second order, reset, non-HTTP)
 - [ ] Payload processing scripts
 - [ ] Better config functionality
 - [ ] Saving found vulnerabilities
