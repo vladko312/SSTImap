@@ -5,70 +5,30 @@ if sys.version_info.major != 3 or sys.version_info.minor < 6:
     sys.exit()
 if sys.version_info.minor > 11:
     print('\033[33m[!]\033[0m This version of SSTImap was not tested with Python3.'+str(sys.version_info.minor))
-import urllib
 import importlib
 import os
 from utils import cliparser
 from core import checks
-from core.channel import Channel
 from core.interactive import InteractiveShell
 from utils.loggers import log
-from utils.crawler import crawl, find_page_forms
-from utils.config import config_args
+from utils.config import config_args, version
 import traceback
-
-
-version = '1.1.3'
-
 
 def main():
     args = vars(cliparser.options)
     args = config_args(args)
     args['version'] = version
-    if not (args['url'] or args['interactive']):
+    if not (args['url'] or args['interactive'] or args['load_urls'] or args['load_forms']):
         # no target specified
-        log.log(22, 'SSTImap requires target url (-u, --url) or interactive mode (-i, --interactive)')
+        log.log(22, 'SSTImap requires target URL (-u, --url), URLs/forms file (--load-urls / --load-forms) '
+                    'or interactive mode (-i, --interactive)')
     elif args['interactive']:
         # interactive mode
         log.log(23, 'Starting SSTImap in interactive mode. Type \'help\' to see the details.')
         InteractiveShell(args).cmdloop()
-    elif args['crawl_depth'] or args['forms']:
-        # crawler mode
-        urls = set([args.get('url')])
-        if args['crawl_depth']:
-            crawled_urls = set()
-            for url in urls:
-                crawled_urls.update(crawl(url, args))
-            urls.update(crawled_urls)
-        if not args['forms']:
-            for url in urls:
-                log.log(27, f'Scanning url: {url}')
-                url_args = args.copy()
-                url_args['url'] = url
-                channel = Channel(url_args)
-                checks.check_template_injection(channel)
-                if channel.data.get('engine'):
-                    break  # TODO: save vulnerabilities
-        else:
-            forms = set()
-            log.log(23, 'Starting form detection...')
-            for url in urls:
-                forms.update(find_page_forms(url, args))
-            for form in forms:
-                log.log(27, f'Scanning form with url: {form[0]}')
-                url_args = args.copy()
-                url_args['url'] = form[0]
-                url_args['method'] = form[1]
-                url_args['data'] = urllib.parse.parse_qs(form[2], keep_blank_values=True)
-                channel = Channel(url_args)
-                checks.check_template_injection(channel)
-                if channel.data.get('engine'):
-                    break  # TODO: save vulnerabilities
-            if not forms:
-                log.log(25, f'No forms were detected to scan')
     else:
         # predetermined mode
-        checks.check_template_injection(Channel(args))
+        checks.scan_website(args)
 
 
 def load_plugins():

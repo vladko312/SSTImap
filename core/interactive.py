@@ -1,5 +1,8 @@
 import cmd
-from utils.crawler import crawl, find_page_forms
+import json
+import os
+
+from utils import config
 from utils.loggers import log
 from urllib import parse
 from core import checks
@@ -15,13 +18,18 @@ class InteractiveShell(cmd.Cmd):
     def __init__(self, args):
         cmd.Cmd.__init__(self)
         self.prompt = f"SSTImap> "
-        self.sstimap_options = args
+        self.sstimap_options = args.copy()
         self.sstimap_options.update({"tpl_shell": False, "tpl_cmd": None, "os_shell": False, "os_cmd": None,
                                      "bind_shell": None, "reverse_shell": None, "upload": None, "download": None,
-                                     "eval_shell": False, "eval_cmd": None})
+                                     "eval_shell": False, "eval_cmd": None, "load_urls": None, "load_forms": None,
+                                     "save_urls": None, "save_forms": None, "loaded_urls": set(), "loaded_forms": set()})
         if self.sstimap_options["url"]:
             self.do_url(args.get("url"))
             self.channel = Channel(self.sstimap_options)
+        if args["load_urls"]:
+            self.do_load_urls(args["load_urls"])
+        if args["load_forms"]:
+            self.do_load_forms(args["load_forms"])
         self.current_plugin = None
         self.checked = False
 
@@ -48,8 +56,8 @@ Information:
 
 Target:
   url, target [URL]                       Set target URL (e.g. 'https://example.com/?name=test')
-  crawl [DEPTH]                           Crawl up to depth (0 - do not crawl)
-  forms                                   Search page(s) for forms
+  load_urls [PATH]                        Load URLs from txt file or directory
+  load_forms [PATH]                       Load forms from json file or directory
   run, test, check                        Run SSTI detection on the target
 
 Request:
@@ -59,18 +67,27 @@ Request:
   cookie, cookies {rm} [COOKIE]           Cookie to send (e.g. 'Field=Value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, shows cookies list
   method, http_method [METHOD]            Set HTTP method to use (default 'GET')
   agent, user_agent [AGENT]               Set User-Agent header value to use
-  random, random_agent                    Toggle using random User-Agent header value from a list of desktop browsers on every attempt
+  random, random_agent                    Toggle using random User-Agent header value from a list of desktop browsers on every request
+  delay [DELAY]                           Delay between requests (Default/0: no delay)
   proxy [PROXY]                           Use a proxy to connect to the target URL
   ssl, verify_ssl                         Toggle verifying SSL certificates (not verified by default)
+  log_response                            Toggle including HTTP responses into ~/.sstimap/sstimap.log
+
+Crawler:
+  crawl [DEPTH]                           Crawl up to depth (0 - do not crawl)
+  forms                                   Search page(s) for forms
+  exclude [PATTERN]                       Regex pattern to exclude from crawler
+  domains [DOMAINS]                       Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S
+  save_urls [PATH]                        Save crawled URLs to txt file or directory (run or no PATH: reset)
+  save_forms [PATH]                       Save crawled forms to json file or directory (run or no PATH: reset)
 
 Detection:
   lvl, level [LEVEL]                      Set level of escaping to perform (1-5, Default: 1)
   force, force_level [LEVEL] [CLEVEL]     Force a LEVEL and CLEVEL to test
   engine [ENGINE]                         Check only this backend template engine. For all, use '*'
   technique [TECHNIQUE]                   Use techniques R(endered) T(ime-based blind). Default: RT
+  blind_delay [DELAY]                     Delay to detect time-based blind injection (Default: 4 seconds)
   legacy                                  Toggle including old payloads, that no longer work with newer versions of the engines
-  exclude [PATTERN]                       Regex pattern to exclude from crawler
-  domains [DOMAINS]                       Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S
 
 Exploitation:
   tpl, tpl_shell                          Prompt for an interactive shell on the template engine
@@ -86,18 +103,46 @@ Exploitation:
   down, download [REMOTE] [LOCAL]         Download REMOTE to LOCAL files
 
 SSTImap:
-  reload, reload_plugins                  Reload all SSTImap plugins""")
+  reload, reload_plugins                  Reload all SSTImap plugins
+  config [PATH]                           Update settings from config file or directory""")
 
     def do_version(self, line):
         """Show current SSTImap version"""
         log.log(23, f'Current SSTImap version: {self.sstimap_options["version"]}')
 
+    def do_config(self, line):
+        if line:
+            if os.path.isdir(line):
+                line = f"{line}/config.json"
+            if os.path.exists(line):
+                custom_config = {}
+                with open(line, 'r') as stream:
+                    try:
+                        custom_config = json.load(stream)
+                    except json.JSONDecodeError as e:
+                        log.log(25, f'Error while loading config: {repr(e)}')
+                config.config_update(self.sstimap_options, custom_config)
+                log.log(24, f'Config updated from file: {line}')
+                return
+        log.log(25, 'Provide file or directory to read config from.')
+
     def do_options(self, line):
         """Show current SSTImap options"""
         crawl_domains = {"Y": "Yes", "S": "Subdomains only", "N": "No"}
         log.log(23, f'Current SSTImap {self.sstimap_options["version"]} interactive mode options:')
-        if not self.sstimap_options["url"]:
+        if not self.sstimap_options["url"] and not self.sstimap_options["loaded_urls"] \
+                and not self.sstimap_options["loaded_forms"]:
             log.log(25, f'URL is not set.')
+        elif self.sstimap_options["loaded_forms"]:
+            log.log(26, f'Forms to scan: {len(self.sstimap_options["loaded_forms"])}')
+            if self.sstimap_options["forms"]:
+                ulen = 1 if self.sstimap_options["url"] else 0
+                if self.sstimap_options["loaded_urls"]:
+                    ulen += len(self.sstimap_options["loaded_urls"])
+                log.log(26, f'URLs to scan: {ulen}')
+        elif self.sstimap_options["loaded_urls"]:
+            log.log(26, f'URLs to scan: '
+                        f'{len(self.sstimap_options["loaded_urls"]) + (1 if self.sstimap_options["url"] else 0)}')
         else:
             log.log(26, f'URL: {self.sstimap_options["url"]}')
         log.log(26, f'Injection marker: {self.sstimap_options["marker"]}')
@@ -110,11 +155,14 @@ SSTImap:
         if self.sstimap_options["cookies"]:
             cookies = "\n    ".join(self.sstimap_options["cookies"])
             log.log(26, f'Cookies:\n    {cookies}')
-        log.log(26, f'HTTP method: {self.sstimap_options["method"]}')
+        log.log(26, f'HTTP method: '
+                    f'{self.sstimap_options["method"] if self.sstimap_options["method"] else "Detect automatically"}')
         if self.sstimap_options["random_agent"]:
             log.log(26, 'User-Agent is randomised')
         else:
             log.log(26, f'User-Agent: {self.sstimap_options["user_agent"]}')
+        if self.sstimap_options["delay"]:
+            log.log(26, f'Delay between requests: {self.sstimap_options["delay"]}s')
         if self.sstimap_options["proxy"]:
             log.log(26, f'Proxy: {self.sstimap_options["proxy"]}')
         log.log(26, f'Verify SSL: {self.sstimap_options["verify_ssl"]}')
@@ -127,14 +175,18 @@ SSTImap:
                     f'{"+" if not self.sstimap_options["engine"] and self.sstimap_options["legacy"] else ""}')
         if self.sstimap_options["crawl_depth"] > 0:
             log.log(26, f'Crawler depth: {self.sstimap_options["crawl_depth"]}')
+            if self.sstimap_options["crawl_exclude"]:
+                log.log(26, f'Crawler exclude RE: "{self.sstimap_options["crawl_exclude"]}"')
+            log.log(26, f'Crawl other domains: {crawl_domains.get(self.sstimap_options["crawl_domains"].upper())}')
         else:
-            log.log(26, 'Crawler depth: no crawl')
-        if self.sstimap_options["crawl_exclude"]:
-            log.log(26, f'Crawler exclude RE: "{self.sstimap_options["crawl_exclude"]}"')
-        log.log(26, f'Crawl other domains: {crawl_domains.get(self.sstimap_options["crawl_exclude"].upper())}')
+            log.log(26, 'Crawler: no crawl')
         log.log(26, f'Form detection: {self.sstimap_options["forms"]}')
         log.log(26, f'Attack technique: {self.sstimap_options["technique"]}')
+        if "T" in self.sstimap_options["technique"]:
+            log.log(26, f'Time-based blind detection delay: {self.sstimap_options["time_based_blind_delay"]}')
         log.log(26, f'Force overwrite files: {self.sstimap_options["force_overwrite"]}')
+        if self.sstimap_options["log_response"]:
+            log.log(26, 'HTTP responses will be included into ~/.sstimap/sstimap.log')
 
     do_opt = do_options
 
@@ -158,10 +210,88 @@ SSTImap:
             return
         log.log(24, f'Target URL is set to {line}')
         self.sstimap_options["url"] = line
-        self.set_module(f'\033[31m{url.netloc}\033[0m')
+        if not (self.sstimap_options['loaded_forms'] or self.sstimap_options['loaded_urls']):
+            self.set_module(f'\033[31m{url.netloc}\033[0m')
         self.checked = False
 
     do_target = do_url
+
+    def do_load_urls(self, line):
+        if line:
+            if os.path.isdir(line):
+                line = f"{line}/urls.txt"
+            if os.path.exists(line):
+                try:
+                    with open(line, 'r') as stream:
+                        self.sstimap_options["loaded_urls"] = set([x.strip() for x in stream.readlines()])
+                    log.log(21, f"Loaded {len(self.sstimap_options['loaded_urls'])} URL(s) from file: {line}")
+                    if not self.sstimap_options['loaded_forms']:
+                        self.set_module(f"\033[31m{len(self.sstimap_options['loaded_urls'])} URLs\033[0m")
+                    self.checked = False
+                except Exception as e:
+                    log.log(22, f"Error occurred while loading URLs from file:\n{repr(e)}")
+                return
+            log.log(25, 'Provide valid file or directory to read URLs from.')
+        else:
+            self.sstimap_options["loaded_urls"] = None
+            if not self.sstimap_options['loaded_forms']:
+                self.set_module(f'\033[31m{parse.urlparse(self.sstimap_options["url"]).netloc}'
+                                f'\033[0m' if self.sstimap_options["url"] else "")
+
+    def do_load_forms(self, line):
+        if line:
+            if os.path.isdir(line):
+                line = f"{line}/forms.json"
+            if os.path.exists(line):
+                try:
+                    with open(line, 'r') as stream:
+                        self.sstimap_options["loaded_forms"] = set([tuple(x) for x in json.load(stream)])
+                    log.log(21, f"Loaded {len(self.sstimap_options['loaded_forms'])} forms from file: {line}")
+                    self.set_module(f"\033[31m{len(self.sstimap_options['loaded_forms'])} forms\033[0m")
+                    self.checked = False
+                except Exception as e:
+                    log.log(22, f"Error occurred while loading forms from file:\n{repr(e)}")
+                return
+            log.log(25, 'Provide valid file or directory to read forms from.')
+        else:
+            self.sstimap_options["loaded_forms"] = None
+            if self.sstimap_options['loaded_urls']:
+                self.set_module(f"\033[31m{len(self.sstimap_options['loaded_urls'])} URLs\033[0m")
+            else:
+                self.set_module(f'\033[31m{parse.urlparse(self.sstimap_options["url"]).netloc}'
+                                f'\033[0m' if self.sstimap_options["url"] else "")
+
+    def do_save_urls(self, line):
+        if line:
+            if self.sstimap_options.get('crawled_urls', None):
+                if os.path.isdir(line):
+                    line = f"{line}/sstimap_urls.txt"
+                try:
+                    with open(line, 'w') as stream:
+                        stream.write("\n".join(self.sstimap_options['crawled_urls']))
+                    log.log(21, f"Saved URLs to file: {line}")
+                except Exception as e:
+                    log.log(22, f"Error occurred while saving URLs to file:\n{repr(e)}")
+            else:
+                log.log(25, 'No URLs crawled to save.')
+            return
+        log.log(25, 'Provide valid file or directory to save URLs to.')
+
+    def do_save_forms(self, line):
+        if line:
+            if self.sstimap_options.get('crawled_forms', None):
+                if os.path.isdir(line):
+                    line = f"{line}/sstimap_forms.json"
+                try:
+                    with open(line, 'w') as stream:
+                        json.dump([x for x in self.sstimap_options['crawled_forms']], stream, indent=4)
+                    log.log(21, f"Saved forms to file: {line}")
+                except Exception as e:
+                    log.log(22, f"Error occurred while saving forms to file:\n{repr(e)}")
+            else:
+                log.log(25, 'No forms detected to save.')
+            return
+        log.log(25, 'Provide valid file or directory to save forms to.')
 
     def do_crawl(self, line):
         if not line.isnumeric():
@@ -189,51 +319,19 @@ SSTImap:
 
     def do_run(self, line):
         """Check target URL for SSTI vulnerabilities"""
-        if not self.sstimap_options["url"]:
+        if not (self.sstimap_options["url"] or self.sstimap_options["loaded_urls"] or self.sstimap_options["loaded_forms"]):
             log.log(22, 'Target URL cannot be empty.')
             return
         try:
-            if self.sstimap_options['crawl_depth'] or self.sstimap_options['forms']:
-                # crawler mode
-                urls = set([self.sstimap_options['url']])
-                if self.sstimap_options['crawl_depth']:
-                    crawled_urls = set()
-                    for url in urls:
-                        crawled_urls.update(crawl(url, self.sstimap_options))
-                    urls.update(crawled_urls)
-                if not self.sstimap_options['forms']:
-                    for url in urls:
-                        log.log(27, f'Scanning url: {url}')
-                        url_options = self.sstimap_options.copy()
-                        url_options['url'] = url
-                        self.channel = Channel(url_options)
-                        self.current_plugin = checks.check_template_injection(self.channel)
-                        if self.channel.data.get('engine'):
-                            break  # TODO: save vulnerabilities
-                else:
-                    forms = set()
-                    log.log(23, 'Starting form detection...')
-                    for url in urls:
-                        forms.update(find_page_forms(url, self.sstimap_options))
-                    for form in forms:
-                        log.log(27, f'Scanning form with url: {form[0]}')
-                        url_options = self.sstimap_options.copy()
-                        url_options['url'] = form[0]
-                        url_options['method'] = form[1]
-                        url_options['data'] = parse.parse_qs(form[2], keep_blank_values=True)
-                        self.channel = Channel(url_options)
-                        self.current_plugin = checks.check_template_injection(self.channel)
-                        if self.channel.data.get('engine'):
-                            break  # TODO: save vulnerabilities
-                    if not forms:
-                        log.log(22, f'No forms were detected to scan')
-            else:
-                # predetermined mode
-                self.channel = Channel(self.sstimap_options)
-                self.current_plugin = checks.check_template_injection(self.channel)
+            self.current_plugin = checks.scan_website(self.sstimap_options)
         except (KeyboardInterrupt, EOFError):
             log.log(26, 'Exiting SSTI detection')
-        self.checked = True
+        if self.current_plugin:
+            self.checked = True
+        self.sstimap_options["loaded_urls"] = None
+        self.sstimap_options["loaded_forms"] = None
+        self.set_module(f'\033[31m{parse.urlparse(self.sstimap_options["url"]).netloc}'
+                        f'\033[0m' if self.sstimap_options["url"] else "")
 
     do_check = do_run
     do_test = do_run
@@ -336,6 +434,17 @@ SSTImap:
 
     do_random = do_random_agent
 
+    def do_delay(self, line):
+        """Set DELAY between requests"""
+        try:
+            self.sstimap_options["delay"] = max(float(line), 0)
+        except:
+            log.log(22, 'Invalid delay time.')
+            return
+        log.log(24, f'Delay between requests is set to {self.sstimap_options["delay"]}')
+
+    do_request_delay = do_delay
+
     def do_proxy(self, line):
         """Use proxy"""
         if line == "":
@@ -352,6 +461,12 @@ SSTImap:
         self.sstimap_options["verify_ssl"] = overwrite
 
     do_ssl = do_verify_ssl
+
+    def do_log_response(self, line):
+        """Switch log_response option"""
+        overwrite = not self.sstimap_options["log_response"]
+        log.log(24, f'Value of \'log_response\' is set to {overwrite}')
+        self.sstimap_options["log_response"] = overwrite
 
 # Detection commands
 
@@ -408,6 +523,17 @@ SSTImap:
         self.sstimap_options["crawl_domains"] = line
 
     do_domains = do_crawl_domains
+
+    def do_blind_delay(self, line):
+        """Set DELAY for blind SSTI detection"""
+        try:
+            self.sstimap_options["time_based_blind_delay"] = max(int(line), 1)
+        except:
+            log.log(22, 'Invalid time-based blind injection delay time.')
+            return
+        log.log(24, f'Delay for time-based blind injection detection is set to {self.sstimap_options["time_based_blind_delay"]}')
+
+    do_time_based_blind_delay = do_blind_delay
 
     def do_legacy(self, line):
         """Switch legacy option"""

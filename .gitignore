@@ -1,3 +1,6 @@
+# SSTImap custom plugins
+plugins/custom/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
