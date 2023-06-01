@@ -3,7 +3,6 @@ import json
 import os
 
 from utils import config
-from utils.crawler import crawl, find_page_forms
 from utils.loggers import log
 from urllib import parse
 from core import checks
@@ -442,7 +441,7 @@ SSTImap:
         except:
             log.log(22, 'Invalid delay time.')
             return
-        log.log(24, f'Delay between requests is set to {line}')
+        log.log(24, f'Delay between requests is set to {self.sstimap_options["delay"]}')
 
     do_request_delay = do_delay
 
@@ -532,7 +531,7 @@ SSTImap:
         except:
             log.log(22, 'Invalid time-based blind injection delay time.')
             return
-        log.log(24, f'Delay for time-based blind injection detection is set to {line}')
+        log.log(24, f'Delay for time-based blind injection detection is set to {self.sstimap_options["time_based_blind_delay"]}')
 
     do_time_based_blind_delay = do_blind_delay
 
