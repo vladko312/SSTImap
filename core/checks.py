@@ -1,9 +1,14 @@
+import json
+import os
+import telnetlib
+import urllib
+from urllib import parse
+import socket
 from utils.loggers import log
 from core.clis import Shell, MultilineShell
 from core.tcpserver import TcpServer
-import telnetlib
-from urllib import parse
-import socket
+from utils.crawler import crawl, find_forms
+from core.channel import Channel
 
 
 def plugins(legacy=False):
@@ -211,3 +216,94 @@ def check_template_injection(channel):
         else:
             log.log(22, 'No reverse TCP shell capabilities have been detected on the target')
     return current_plugin
+
+
+def scan_website(args):
+    urls = set()
+    forms = set()
+    single_url = args.get('url', None)
+    if single_url:
+        urls.add(single_url)
+    preloaded_urls = args.get('loaded_urls', None)
+    if preloaded_urls:
+        urls.update(preloaded_urls)
+    preloaded_forms = args.get('loaded_forms', None)
+    if preloaded_forms:
+        forms.update(preloaded_forms)
+    if args['load_forms']:
+        if os.path.isdir(args['load_forms']):
+            args['load_forms'] = f"{args['load_forms']}/forms.json"
+        if os.path.exists(args['load_forms']):
+            try:
+                with open(args['load_forms'], 'r') as stream:
+                    loaded_forms = set([tuple(x) for x in json.load(stream)])
+                forms.update(loaded_forms)
+                log.log(21, f"Loaded {len(loaded_forms)} forms from file: {args['load_forms']}")
+            except Exception as e:
+                log.log(22, f"Error occurred while loading forms from file:\n{repr(e)}")
+    if not forms or args['forms']:
+        if args['load_urls']:
+            if os.path.isdir(args['load_urls']):
+                args['load_urls'] = f"{args['load_urls']}/urls.txt"
+            if os.path.exists(args['load_urls']):
+                try:
+                    with open(args['load_urls'], 'r') as stream:
+                        loaded_urls = set([x.strip() for x in stream.readlines()])
+                    urls.update(loaded_urls)
+                    log.log(21, f"Loaded {len(loaded_urls)} URL(s) from file: {args['load_urls']}")
+                except Exception as e:
+                    log.log(22, f"Error occurred while loading URLs from file:\n{repr(e)}")
+        if args['crawl_depth']:
+            crawled_urls = crawl(urls, args)
+            urls.update(crawled_urls)
+            args['crawled_urls'] = crawled_urls
+            if args['save_urls']:
+                if os.path.isdir(args['save_urls']):
+                    args['save_urls'] = f"{args['save_urls']}/sstimap_urls.txt"
+                try:
+                    with open(args['save_urls'], 'w') as stream:
+                        stream.write("\n".join(crawled_urls))
+                    log.log(21, f"Saved URLs to file: {args['save_urls']}")
+                except Exception as e:
+                    log.log(22, f"Error occurred while saving URLs to file:\n{repr(e)}")
+    else:
+        log.log(25, "Skipping URL loading and crawling as forms are already supplied")
+    args['target_urls'] = urls
+    if args['forms']:
+        crawled_forms = find_forms(urls, args)
+        forms.update(crawled_forms)
+        args['crawled_forms'] = crawled_forms
+        if args['save_forms'] and crawled_forms:
+            if os.path.isdir(args['save_forms']):
+                args['save_forms'] = f"{args['save_forms']}/sstimap_forms.json"
+            try:
+                with open(args['save_forms'], 'w') as stream:
+                    json.dump([x for x in crawled_forms], stream, indent=4)
+                log.log(21, f"Saved forms to file: {args['save_forms']}")
+            except Exception as e:
+                log.log(22, f"Error occurred while saving forms to file:\n{repr(e)}")
+    args['target_forms'] = forms
+    if not urls and not forms:
+        log.log(22, 'No targets found')
+        return
+    elif not forms:
+        for url in urls:
+            log.log(27, f'Scanning url: {url}')
+            url_args = args.copy()
+            url_args['url'] = url
+            channel = Channel(url_args)
+            result = check_template_injection(channel)
+            if channel.data.get('engine'):
+                return result # TODO: save vulnerabilities
+    else:
+        for form in forms:
+            log.log(27, f'Scanning form with url: {form[0]}')
+            url_args = args.copy()
+            url_args['url'] = form[0]
+            url_args['method'] = form[1]
+            url_args['data'] = urllib.parse.parse_qs(form[2], keep_blank_values=True)
+            channel = Channel(url_args)
+            result = check_template_injection(channel)
+            if channel.data.get('engine'):
+                return result # TODO: save vulnerabilities
+    return

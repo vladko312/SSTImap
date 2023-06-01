@@ -1,3 +1,5 @@
+import time
+
 import requests
 import urllib3
 from utils.loggers import log
@@ -97,12 +99,6 @@ class Channel:
                     self.injs.append({'field': 'Header', 'part': 'param', 'param': param})
                 if self.tag in value or all_injectable:
                     self.injs.append({'field': 'Header', 'part': 'value', 'value': value, 'param': param})
-        if self.args.get('random_agent'):
-            user_agent = get_agent()
-        else:
-            user_agent = self.args.get('user_agent')
-        if 'user-agent' not in [p.lower() for p in self.header_params.keys()]:
-            self.header_params['User-Agent'] = user_agent
 
     def _parse_post(self, all_injectable=False):
         if self.args.get('data'):
@@ -203,6 +199,14 @@ class Channel:
             log.debug(f'[HEDR] {header_params}')
         if len(cookie_params) > 1:
             log.debug(f'[COOK] {cookie_params}')
+        if self.args.get('random_agent'):
+            user_agent = get_agent()
+        else:
+            user_agent = self.args.get('user_agent')
+        if 'user-agent' not in [p.lower() for p in header_params.keys()]:
+            header_params['User-Agent'] = user_agent
+        if self.args['delay']:
+            time.sleep(self.args['delay'])
         try:
             result = requests.request(method=self.http_method, url=url_params, params=get_params, data=post_params,
                                       headers=header_params, cookies=cookie_params, proxies=self.proxies,

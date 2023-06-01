@@ -262,6 +262,7 @@ If you plan to contribute something big from this list, inform me to avoid worki
 
 - [ ] Make template and base language evaluation functionality more uniform
 - [ ] Add more payloads for different engines
+- [ ] Parse raw HTTP request from file
 - [ ] Variable dumping functionality
 - [ ] Blind value extraction
 - [ ] Better documentation (or at least any documentation)

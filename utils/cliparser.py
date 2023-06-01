@@ -25,19 +25,17 @@ def banner():
 parser = argparse.ArgumentParser(description='SSTImap is an automatic SSTI detection and exploitation tool '
                                              'with predetermined and interactive modes.')
 parser.add_argument('-v', '--version', action='version', version=f'SSTImap version {version}')
+parser.add_argument("--config", dest="config", help="Use custom config file or directory")
 
 
 target = parser.add_argument_group(title="target",
                                    description="At least one of these options has to be provided to define target(s)")
 target.add_argument("-u", "--url", dest="url",
                     help="Target URL (e.g. 'https://example.com/?name=test')")
-target.add_argument("-i", "--interactive", action="store_true", dest="interactive",
+target.add_argument("-i", "--interactive", action="store_const", const=True, dest="interactive",
                     help="Run SSTImap in interactive mode")
-target.add_argument("-c", "--crawl", dest="crawl_depth", type=int,
-                    help="Depth to crawl (default/0: don't crawl)")
-target.add_argument("-f", "--forms", action="store_true", dest="forms",
-                    help="Scan page(s) for forms")
-
+target.add_argument("--load-urls", dest="load_urls", help="File or directory to load URLs from")
+target.add_argument("--load-forms", dest="load_forms", help="File or directory to load forms from")
 
 request = parser.add_argument_group(title="request", description="These options can specify how to connect to the "
                                                                  "target URL and add possible attack vectors")
@@ -52,14 +50,28 @@ request.add_argument("-C", "--cookie", action="append", dest="cookies", metavar=
 request.add_argument("-m", "--method", dest="method",
                      help="HTTP method to use (default 'GET')")
 request.add_argument("-a", "--user-agent", dest="user_agent",
-                     help="User-Agent header value to use", default=f'SSTImap/{version}')
-request.add_argument("-A", "--random-user-agent", action="store_true", dest="random_agent",
-                     help="Random User-Agent header value from a list of desktop browsers on every attempt")
+                     help="User-Agent header value to use")
+request.add_argument("-A", "--random-user-agent", action="store_const", const=True, dest="random_agent",
+                     help="Random User-Agent header value from a list of desktop browsers on every request")
+request.add_argument("--delay", dest="delay", type=float, help="Delay between requests (Default/0: no delay)")
 request.add_argument("-p", "--proxy", dest="proxy",
                      help="Use a proxy to connect to the target URL")
-request.add_argument("-V", "--verify-ssl", action="store_true", dest="verify_ssl",
+request.add_argument("-V", "--verify-ssl", action="store_const", const=True, dest="verify_ssl",
                      help="Verify SSL certificates (not verified by default)")
+request.add_argument("--log-response", action="store_const", const=True, dest="log_response",
+                     help="Include HTTP responses into ~/.sstimap/sstimap.log")
 
+crawler = parser.add_argument_group(title="crawler", description="These options can specify how to detect URLs and "
+                                                                 "forms on the target website.")
+crawler.add_argument("-c", "--crawl", dest="crawl_depth", type=int,
+                     help="Depth to crawl (default/0: don't crawl)")
+crawler.add_argument("-f", "--forms", action="store_const", const=True, dest="forms",
+                     help="Scan page(s) for forms")
+crawler.add_argument("--crawl-exclude", dest="crawl_exclude", help="Regex in URLs to not crawl")
+crawler.add_argument("--crawl-domains", dest="crawl_domains",
+                     help="Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S")
+crawler.add_argument("--save-urls", dest="save_urls", help="File or directory to save crawled URLs to")
+crawler.add_argument("--save-forms", dest="save_forms", help="File or directory to save crawled forms to")
 
 detection = parser.add_argument_group(title="detection",
                                       description="These options can be used to customize the detection phase.")
@@ -71,27 +83,23 @@ detection.add_argument("-e", "--engine", dest="engine",
                        help="Check only this backend template engine")
 detection.add_argument("-r", "--technique", dest="technique",
                        help="Techniques R(endered) T(ime-based blind). Default: RT")
-detection.add_argument("-P", "--legacy", "--legacy-payloads", dest="legacy", action="store_true",
+detection.add_argument("--blind-delay", dest="time_based_blind_delay", type=int,
+                       help="Delay to detect time-based blind injection (Default: 4 seconds)")
+detection.add_argument("-P", "--legacy", "--legacy-payloads", dest="legacy", action="store_const", const=True,
                        help="Include old payloads, that no longer work with newer versions of the engines")
-detection.add_argument("--crawl-exclude", dest="crawl_exclude", help="Regex in URLs to not crawl")
-detection.add_argument("--crawl-domains", dest="crawl_domains",
-                       help="Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S")
-detection.add_argument("--config", dest="config",
-                       help="Use custom config file or directory")
-
 
 payload = parser.add_argument_group(title="payload",
                                     description="These options can be used to get access to the template engine, "
                                                 "filesystem or OS shell after an attack.")
-payload.add_argument("-t", "--tpl-shell", dest="tpl_shell", action="store_true",
+payload.add_argument("-t", "--tpl-shell", dest="tpl_shell", action="store_const", const=True,
                      help="Prompt for an interactive shell on the template engine")
 payload.add_argument("-T", "--tpl-code", dest="tpl_code",
                      help="Inject code in the template engine")
-payload.add_argument("-x", "--eval-shell", dest="eval_shell", action="store_true",
+payload.add_argument("-x", "--eval-shell", dest="eval_shell", action="store_const", const=True,
                      help="Prompt for an interactive shell on the template engine base language")
 payload.add_argument("-X", "--eval-code", dest="eval_code",
                      help="Evaluate code in the template engine base language")
-payload.add_argument("-s", "--os-shell", dest="os_shell", action="store_true",
+payload.add_argument("-s", "--os-shell", dest="os_shell", action="store_const", const=True,
                      help="Prompt for an interactive operating system shell")
 payload.add_argument("-S", "--os-cmd", dest="os_cmd",
                      help="Execute an operating system command")
@@ -99,7 +107,7 @@ payload.add_argument("-B", "--bind-shell", dest="bind_shell", nargs=1, type=int,
                      help="Spawn a system shell on a TCP PORT of the target and connect to it")
 payload.add_argument("-R", "--reverse-shell", dest="reverse_shell", nargs=2, metavar=("HOST", "PORT",),
                      help="Run a system shell and back-connect to local HOST PORT")
-payload.add_argument("-F", "--force-overwrite", dest="force_overwrite", action="store_true",
+payload.add_argument("-F", "--force-overwrite", dest="force_overwrite", action="store_const", const=True,
                      help="Force file overwrite when uploading")
 payload.add_argument("-U", "--upload", dest="upload", metavar=("LOCAL", "REMOTE",),
                      help="Upload LOCAL to REMOTE files", nargs=2)
