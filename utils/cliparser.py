@@ -43,6 +43,8 @@ request.add_argument("-M", "--marker", dest="marker",
                      help="Use string as injection marker (default '*')")
 request.add_argument("-d", "--data", action="append", dest="data",
                      help="POST data param to send (e.g. 'param=value') [Stackable]", default=[])
+request.add_argument("--content-type", dest="content_type",
+                     help="Post data sent as JSON", default="url")
 request.add_argument("-H", "--header", action="append", dest="headers", metavar="HEADER",
                      help="Header to send (e.g. 'Header: Value') [Stackable]", default=[])
 request.add_argument("-C", "--cookie", action="append", dest="cookies", metavar="COOKIE",

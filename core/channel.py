@@ -1,3 +1,4 @@
+import json
 import time
 
 import requests
@@ -99,18 +100,31 @@ class Channel:
                     self.injs.append({'field': 'Header', 'part': 'param', 'param': param})
                 if self.tag in value or all_injectable:
                     self.injs.append({'field': 'Header', 'part': 'value', 'value': value, 'param': param})
+        if self.args.get('content_type') == "json":
+            self.header_params["Content-Type"] = "application/json"
 
     def _parse_post(self, all_injectable=False):
         if self.args.get('data'):
-            params_dict_list = parse.parse_qs('&'.join(self.args.get('data')), keep_blank_values=True)
-            for param, value_list in params_dict_list.items():
-                self.post_params[param] = value_list
-                if self.tag in param:
-                    self.injs.append({'field': 'POST', 'part': 'param', 'param': param})
-                for idx, value in enumerate(value_list):
-                    if self.tag in value or all_injectable:
-                        self.injs.append({'field': 'POST', 'part': 'value', 'value': value, 'param': param, 'idx': idx})
-            
+            if self.args.get('content_type') == "json":
+                json_data = json.loads(self.args.get('data')[0])
+                for param in json_data:
+                    value_list = json_data[param]
+                    self.post_params[param] = value_list
+                    if self.tag in param:
+                        self.injs.append({'field': 'POST', 'part': 'param', 'param': param})
+                    for idx, value in enumerate(value_list):
+                        if self.tag in value or all_injectable:
+                            self.injs.append({'field': 'POST', 'part': 'value', 'value': value, 'param': param, 'idx': idx})
+            else:
+                params_dict_list = parse.parse_qs('&'.join(self.args.get('data')), keep_blank_values=True)
+                for param, value_list in params_dict_list.items():
+                    self.post_params[param] = value_list
+                    if self.tag in param:
+                        self.injs.append({'field': 'POST', 'part': 'param', 'param': param})
+                    for idx, value in enumerate(value_list):
+                        if self.tag in value or all_injectable:
+                            self.injs.append({'field': 'POST', 'part': 'value', 'value': value, 'param': param, 'idx': idx})
+
     def _parse_get(self, all_injectable=False):
         params_dict_list = parse.parse_qs(parse.urlsplit(self.url).query, keep_blank_values=True)
         for param, value_list in params_dict_list.items():
@@ -142,7 +156,10 @@ class Channel:
                 post_params[new_param] = old_value
             if inj.get('part') == 'value':
                 if self.tag in post_params[inj.get('param')][inj.get('idx')]:
-                    post_params[inj.get('param')][inj.get('idx')] = post_params[inj.get('param')][inj.get('idx')].replace(self.tag, injection)
+                    if post_params[inj.get('param')] == post_params[inj.get('param')][inj.get('idx')]:
+                        post_params[inj.get('param')] = post_params[inj.get('param')].replace(self.tag, injection)
+                    else:
+                        post_params[inj.get('param')][inj.get('idx')] = post_params[inj.get('param')][inj.get('idx')].replace(self.tag, injection)
                 else:
                     post_params[inj.get('param')][inj.get('idx')] = injection
         elif inj['field'] == 'GET':
@@ -208,9 +225,14 @@ class Channel:
         if self.args['delay']:
             time.sleep(self.args['delay'])
         try:
-            result = requests.request(method=self.http_method, url=url_params, params=get_params, data=post_params,
-                                      headers=header_params, cookies=cookie_params, proxies=self.proxies,
-                                      verify=self.args.get('verify_ssl')).text
+            if self.args.get('content_type') == "json":
+                result = requests.request(method=self.http_method, url=url_params, params=get_params, json=post_params,
+                                          headers=header_params, cookies=cookie_params, proxies=self.proxies,
+                                          verify=self.args.get('verify_ssl')).text
+            else:
+                result = requests.request(method=self.http_method, url=url_params, params=get_params, data=post_params,
+                                          headers=header_params, cookies=cookie_params, proxies=self.proxies,
+                                          verify=self.args.get('verify_ssl')).text
         except requests.exceptions.ConnectionError as e:
             if e and e.args[0] and e.args[0].args[0] == 'Connection aborted.':
                 log.log(25, 'Error: connection aborted, bad status line.')
