@@ -323,7 +323,7 @@ SSTImap:
             log.log(22, 'Target URL cannot be empty.')
             return
         try:
-            self.current_plugin = checks.scan_website(self.sstimap_options)
+            self.current_plugin, self.channel = checks.scan_website(self.sstimap_options)
         except (KeyboardInterrupt, EOFError):
             log.log(26, 'Exiting SSTI detection')
         if self.current_plugin:

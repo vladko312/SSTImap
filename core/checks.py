@@ -294,7 +294,7 @@ def scan_website(args):
             channel = Channel(url_args)
             result = check_template_injection(channel)
             if channel.data.get('engine'):
-                return result # TODO: save vulnerabilities
+                return result, channel # TODO: save vulnerabilities
     else:
         for form in forms:
             log.log(27, f'Scanning form with url: {form[0]}')
@@ -305,5 +305,5 @@ def scan_website(args):
             channel = Channel(url_args)
             result = check_template_injection(channel)
             if channel.data.get('engine'):
-                return result # TODO: save vulnerabilities
-    return
+                return result, channel # TODO: save vulnerabilities
+    return None, None

