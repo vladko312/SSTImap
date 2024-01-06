@@ -44,7 +44,7 @@ ${{output}}
 """
             },
             'execute': {
-                # This payload cames from henshin's contribution on
+                # This payload comes from henshin's contribution on
                 # issue #9.
                 'call': 'render',
                 'execute': """#set($engine="")

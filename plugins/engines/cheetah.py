@@ -27,7 +27,7 @@ class Cheetah(python.Python):
             {'level': 1, 'prefix': '{closure}]', 'suffix': '', 'closures': python.ctx_closures},
             {'level': 1, 'prefix': '{closure})', 'suffix': '', 'closures': python.ctx_closures},
             # comments
-            {'level': 2, 'prefix': '*#\n', 'suffix': '', 'closures': python.ctx_closures},
+            {'level': 2, 'prefix': '*#\n', 'suffix': ''},
             # comment out part of syntax, like in IF oneliners
             {'level': 2, 'prefix': '{closure}', 'suffix': ' ##', 'closures': python.ctx_closures},
             # Code blocks
@@ -37,7 +37,7 @@ class Cheetah(python.Python):
             {'level': 5, 'prefix': '{closure}##\n', 'suffix': '\n', 'closures': python.ctx_closures},
             # Cheetah blocks
             {'level': 5, 'prefix': '#end cache', 'suffix': '#cache'},
-            {'level': 5, 'prefix': '#end def', 'suffix': '#def t(x)', 'closures': python.ctx_closures},
-            {'level': 5, 'prefix': '#end block', 'suffix': '#block', 'closures': python.ctx_closures},
-            {'level': 5, 'prefix': '#end raw ', 'suffix': ' #raw', 'closures': python.ctx_closures},
+            {'level': 5, 'prefix': '#end def', 'suffix': '#def t(x)'},
+            {'level': 5, 'prefix': '#end block', 'suffix': '#block'},
+            {'level': 5, 'prefix': '#end raw ', 'suffix': ' #raw'},
         ])

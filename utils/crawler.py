@@ -144,9 +144,10 @@ def find_page_forms(url, args):
     if not args.get('verify_ssl'):
         urllib3.disable_warnings()
     retVal = set()
-    target = (url, "GET", "")
-    retVal.add(target)
-    log.log(24, f'Form found: GET {url} ""')
+    if args.get("empty_forms") or "?" in url:
+        target = (url, "GET", "")
+        retVal.add(target)
+        log.log(24, f'Form found: GET {url} ""')
     if args.get('random_agent'):
         user_agent = get_agent()
     else:
