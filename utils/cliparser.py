@@ -42,9 +42,11 @@ request = parser.add_argument_group(title="request", description="These options 
 request.add_argument("-M", "--marker", dest="marker",
                      help="Use string as injection marker (default '*')")
 request.add_argument("-d", "--data", action="append", dest="data",
-                     help="POST data param to send (e.g. 'param=value') [Stackable]", default=[])
-request.add_argument("--content-type", dest="content_type",
-                     help="Post data sent as JSON", default="url")
+                     help="Request body data param to send (e.g. 'param=value') [Stackable]", default=[])
+request.add_argument("--data-type", dest="data_type",
+                     help="Request body data type (default 'form')")
+request.add_argument("--data-params", action="append", dest="data_params", metavar="KEY=VALUE",
+                     help="Request body data processing params", default=[])
 request.add_argument("-H", "--header", action="append", dest="headers", metavar="HEADER",
                      help="Header to send (e.g. 'Header: Value') [Stackable]", default=[])
 request.add_argument("-C", "--cookie", action="append", dest="cookies", metavar="COOKIE",
@@ -69,6 +71,8 @@ crawler.add_argument("-c", "--crawl", dest="crawl_depth", type=int,
                      help="Depth to crawl (default/0: don't crawl)")
 crawler.add_argument("-f", "--forms", action="store_const", const=True, dest="forms",
                      help="Scan page(s) for forms")
+crawler.add_argument("--empty-forms", action="store_const", const=True, dest="empty_forms",
+                     help="Treat pages without params as GET forms")
 crawler.add_argument("--crawl-exclude", dest="crawl_exclude", help="Regex in URLs to not crawl")
 crawler.add_argument("--crawl-domains", dest="crawl_domains",
                      help="Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S")
@@ -87,6 +91,8 @@ detection.add_argument("-r", "--technique", dest="technique",
                        help="Techniques R(endered) T(ime-based blind). Default: RT")
 detection.add_argument("--blind-delay", dest="time_based_blind_delay", type=int,
                        help="Delay to detect time-based blind injection (Default: 4 seconds)")
+detection.add_argument("--verify-blind-delay", dest="time_based_verify_blind_delay", type=int,
+                       help="Delay to verify and exploit time-based blind injection (Default: 30 seconds)")
 detection.add_argument("-P", "--legacy", "--legacy-payloads", dest="legacy", action="store_const", const=True,
                        help="Include old payloads, that no longer work with newer versions of the engines")
 
@@ -109,6 +115,8 @@ payload.add_argument("-B", "--bind-shell", dest="bind_shell", nargs=1, type=int,
                      help="Spawn a system shell on a TCP PORT of the target and connect to it")
 payload.add_argument("-R", "--reverse-shell", dest="reverse_shell", nargs=2, metavar=("HOST", "PORT",),
                      help="Run a system shell and back-connect to local HOST PORT")
+payload.add_argument("--remote-shell", dest="remote_shell",
+                     help="Expected system shell on the target (default '/bin/sh')")
 payload.add_argument("-F", "--force-overwrite", dest="force_overwrite", action="store_const", const=True,
                      help="Force file overwrite when uploading")
 payload.add_argument("-U", "--upload", dest="upload", metavar=("LOCAL", "REMOTE",),

@@ -54,6 +54,8 @@ class Plugin(object):
         # The delay fortime-based blind injection. This will be added 
         # to the average response time for render values.
         self.tm_delay = self.channel.args.get('time_based_blind_delay', 4)
+        self.tm_verify_delay = self.channel.args.get('time_based_verify_blind_delay', 30)
+        self.tm_varied = False
         # Declare object attributes
         self.actions = {}
         self.contexts = []
@@ -220,6 +222,20 @@ class Plugin(object):
             detail['blind_false'] = self._inject_verbose
             detail['average'] = sum(self.render_req_tm) / len(self.render_req_tm)
             # We can assume here blind is true
+            log.log(28, f'{self.plugin} plugin has detected possible blind injection')
+            self.set('blind', True)
+            # Conduct a true-false test again with bigger delay
+            if not getattr(self, call_name)(code=payload_true, prefix=prefix, suffix=suffix, blind=True):
+                self.set('blind', False)
+                log.log(25, f'Possible blind injection turned out to be false positive')
+                continue
+            detail = {'blind_true': self._inject_verbose}
+            if getattr(self, call_name)(code=payload_false, prefix=prefix, suffix=suffix, blind=True):
+                self.set('blind', False)
+                log.log(25, f'Possible blind injection turned out to be false positive')
+                continue
+            detail['blind_false'] = self._inject_verbose
+            detail['average'] = sum(self.render_req_tm) / len(self.render_req_tm)
             self.set('blind', True)
             self.set('prefix', prefix)
             self.set('suffix', suffix)
@@ -522,8 +538,14 @@ class Plugin(object):
     def _get_expected_delay(self):
         # Get current average timing for render() HTTP requests
         average = int(sum(self.render_req_tm) / len(self.render_req_tm))
+        dev = [x - average for x in self.render_req_tm]
+        varydev = max(dev) + abs(min(dev))
         # Set delay to 2 second over the average timing
-        return average + self.tm_delay
+        delay = self.tm_delay if not self.get('blind') else self.tm_verify_delay
+        if not self.tm_varied and varydev > delay:
+            self.tm_varied = True
+            log.log(29, "Blind injection timing varies too much. Increase the timing to avoid false positives.")
+        return average + delay
 
     def bind_shell(self, port, shell="/bin/sh"):
         action = self.actions.get('bind_shell', {})

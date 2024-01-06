@@ -23,8 +23,10 @@ class Channel:
             self.proxies = {'http': proxy, 'https': proxy}
         else:
             self.proxies = {}
+        from core.data_type import loaded_data_types
+        self.data_type = loaded_data_types.get(self.args.get("data_type", "form").lower(), loaded_data_types["form"])(self.args, self.tag)
         self.get_params = {}
-        self.post_params = {}
+        self.post_params = ""
         self.header_params = {}
         self.cookie_params = {}
         self._parse_url()
@@ -56,7 +58,7 @@ class Channel:
         url_path_base_index = self.url.find(url_path)
         for index in [i for i in range(url_path_base_index, url_path_base_index + len(url_path))
                       if self.url[i] == self.tag]:
-            self.injs.append({'field': 'URL', 'param': 'url', 'position': url_path_base_index + index})
+            self.injs.append({'field': 'Path', 'param': 'url', 'position': url_path_base_index + index})
 
     def _parse_cookies(self, cookies, all_injectable=False):
         # Just add cookies as headers, to avoid duplicating
@@ -77,10 +79,6 @@ class Channel:
                     self.injs.append({'field': 'Cookie', 'part': 'param', 'param': param})
                 if self.tag in value or all_injectable:
                     self.injs.append({'field': 'Cookie', 'part': 'value', 'value': value, 'param': param})
-            #cookie_string = f"Cookie: {';'.join(cookies)}"
-            #if not self.args.get('headers'):
-            #    self.args['headers'] = []
-            #self.args['headers'].append(cookie_string)
 
     def _parse_header(self, all_injectable=False):
         headers = []
@@ -105,64 +103,34 @@ class Channel:
 
     def _parse_post(self, all_injectable=False):
         if self.args.get('data'):
-            if self.args.get('content_type') == "json":
-                json_data = json.loads(self.args.get('data')[0])
-                for param in json_data:
-                    value_list = json_data[param]
-                    self.post_params[param] = value_list
-                    if self.tag in param:
-                        self.injs.append({'field': 'POST', 'part': 'param', 'param': param})
-                    for idx, value in enumerate(value_list):
-                        if self.tag in value or all_injectable:
-                            self.injs.append({'field': 'POST', 'part': 'value', 'value': value, 'param': param, 'idx': idx})
-            else:
-                params_dict_list = parse.parse_qs('&'.join(self.args.get('data')), keep_blank_values=True)
-                for param, value_list in params_dict_list.items():
-                    self.post_params[param] = value_list
-                    if self.tag in param:
-                        self.injs.append({'field': 'POST', 'part': 'param', 'param': param})
-                    for idx, value in enumerate(value_list):
-                        if self.tag in value or all_injectable:
-                            self.injs.append({'field': 'POST', 'part': 'value', 'value': value, 'param': param, 'idx': idx})
-
+            injs = self.data_type.injection_points(self.args['data'], all_injectable)
+            if injs:
+                self.injs.extend(injs)
+                self.post_params = self.data_type.get_params()
+            
     def _parse_get(self, all_injectable=False):
         params_dict_list = parse.parse_qs(parse.urlsplit(self.url).query, keep_blank_values=True)
         for param, value_list in params_dict_list.items():
             self.get_params[param] = value_list
             if self.tag in param:
-                self.injs.append({'field': 'GET', 'part': 'param', 'param': param})
+                self.injs.append({'field': 'Query', 'part': 'param', 'param': param})
             for idx, value in enumerate(value_list):
                 if self.tag in value or all_injectable:
-                    self.injs.append({'field': 'GET', 'part': 'value', 'param': param, 'value': value, 'idx': idx})
+                    self.injs.append({'field': 'Query', 'part': 'value', 'param': param, 'value': value, 'idx': idx})
             
     def req(self, injection):
         get_params = deepcopy(self.get_params)
-        post_params = deepcopy(self.post_params)
+        post_params = self.data_type.get_params()
         header_params = deepcopy(self.header_params)
         cookie_params = deepcopy(self.cookie_params)
         url_params = self.base_url
         inj = deepcopy(self.injs[self.inj_idx])
-        if inj['field'] == 'URL':
+        if inj['field'] == 'Path':
             position = inj['position']
             url_params = self.base_url[:position] + injection + self.base_url[position+1:]
-        elif inj['field'] == 'POST':
-            if inj.get('part') == 'param':
-                old_value = post_params[inj.get('param')]
-                del post_params[inj.get('param')]
-                if self.tag in inj.get('param'):
-                    new_param = inj.get('param').replace(self.tag, injection)
-                else:
-                    new_param = injection
-                post_params[new_param] = old_value
-            if inj.get('part') == 'value':
-                if self.tag in post_params[inj.get('param')][inj.get('idx')]:
-                    if post_params[inj.get('param')] == post_params[inj.get('param')][inj.get('idx')]:
-                        post_params[inj.get('param')] = post_params[inj.get('param')].replace(self.tag, injection)
-                    else:
-                        post_params[inj.get('param')][inj.get('idx')] = post_params[inj.get('param')][inj.get('idx')].replace(self.tag, injection)
-                else:
-                    post_params[inj.get('param')][inj.get('idx')] = injection
-        elif inj['field'] == 'GET':
+        elif inj['field'] == 'Body':
+            post_params = self.data_type.inject(injection, inj)
+        elif inj['field'] == 'Query':
             if inj.get('part') == 'param':
                 old_value = get_params[inj.get('param')]
                 del get_params[inj.get('param')]
@@ -207,15 +175,15 @@ class Channel:
                 else:
                     cookie_params[inj.get('param')] = injection
         if self.tag in self.base_url:
-            log.debug(f'[URL] {url_params}')
+            log.debug(f'[PATH] {url_params}')
         if get_params:
-            log.debug(f'[GET] {get_params}')
+            log.debug(f'[QUERY] {get_params}')
         if post_params:
-            log.debug(f'[POST] {post_params}')
+            log.debug(f'[BODY] {post_params}')
         if len(header_params) > 1:
-            log.debug(f'[HEDR] {header_params}')
+            log.debug(f'[HEADER] {header_params}')
         if len(cookie_params) > 1:
-            log.debug(f'[COOK] {cookie_params}')
+            log.debug(f'[COOKIE] {cookie_params}')
         if self.args.get('random_agent'):
             user_agent = get_agent()
         else:

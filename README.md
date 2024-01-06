@@ -1,12 +1,12 @@
 SSTImap
 ======
 
-[![Version 1.1](https://img.shields.io/badge/version-1.1-green.svg?logo=github)](https://github.com/vladko312/sstimap)
+[![Version 1.2](https://img.shields.io/badge/version-1.2-green.svg?logo=github)](https://github.com/vladko312/sstimap)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg?logo=python)](https://www.python.org/downloads/release/python-3110/)
 [![Python 3.6](https://img.shields.io/badge/python-3.6+-yellow.svg?logo=python)](https://www.python.org/downloads/release/python-360/)
 [![GitHub](https://img.shields.io/github/license/vladko312/sstimap?color=green&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.txt)
 [![GitHub last commit](https://img.shields.io/github/last-commit/vladko312/sstimap?color=green&logo=github)](https://github.com/vladko312/sstimap/commits/)
-[![Maintenance](https://img.shields.io/maintenance/yes/2023?logo=github)](https://github.com/vladko312/sstimap)
+[![Maintenance](https://img.shields.io/maintenance/yes/2024?logo=github)](https://github.com/vladko312/sstimap)
 
 > This project is based on [Tplmap](https://github.com/epinna/tplmap/).
 
@@ -28,6 +28,7 @@ Even though this software is based on Tplmap's code, backwards compatibility is 
 - Interactive mode (`-i`) allowing for easier exploitation and detection
 - Base language _eval()_-like shell (`-x`) or single command (`-X`) execution
 - Added new payload for _Smarty_ without enabled `{php}{/php}`. Old payload is available as `Smarty_unsecure`.
+- Added new payload for newer versions of _Twig_. Payload for older version is available as `Twig_v1`.
 - User-Agent can be randomly selected from a list of desktop browser agents using `-A`
 - SSL verification can now be enabled using `-V`
 - Short versions added to all arguments
@@ -108,7 +109,7 @@ $ ./sstimap.py -u https://example.com/page?name=John
     ╚══════╩══════╝  ╚═╝    ╚╦╝ |_| |_| |_|\__,_| .__/
                              │                  | |
                                                 |_|
-[*] Version: 1.1.0
+[*] Version: 1.2.0
 [*] Author: @vladko312
 [*] Based on Tplmap
 [!] LEGAL DISCLAIMER: Usage of SSTImap for attacking targets without prior mutual consent is illegal. 
@@ -163,7 +164,7 @@ $ ./sstimap.py -u https://example.com/page?name=John --os-shell
     ╚══════╩══════╝  ╚═╝    ╚╦╝ |_| |_| |_|\__,_| .__/
                              │                  | |
                                                 |_|
-[*] Version: 1.1.0
+[*] Version: 1.2.0
 [*] Author: @vladko312
 [*] Based on Tplmap
 [!] LEGAL DISCLAIMER: Usage of SSTImap for attacking targets without prior mutual consent is illegal. 
@@ -223,31 +224,32 @@ SSTImap supports multiple template engines and _eval()_-like injections.
 
 New payloads are welcome in PRs.
 
-| Engine                         | RCE | Blind | Code evaluation | File read | File write |
-|--------------------------------|-----|-------|-----------------|-----------|------------|
-| Mako                           | ✓   | ✓     | Python          | ✓         | ✓          |
-| Cheetah                        | ✓   | ✓     | Python          | ✓         | ✓          |
-| Jinja2                         | ✓   | ✓     | Python          | ✓         | ✓          |
-| Python (code eval)             | ✓   | ✓     | Python          | ✓         | ✓          |
-| Tornado                        | ✓   | ✓     | Python          | ✓         | ✓          |
-| Nunjucks                       | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| Pug                            | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| doT                            | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| Marko                          | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| JavaScript (code eval)         | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| Dust (<= dustjs-helpers@1.5.0) | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| EJS                            | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| Ruby (code eval)               | ✓   | ✓     | Ruby            | ✓         | ✓          |
-| Slim                           | ✓   | ✓     | Ruby            | ✓         | ✓          |
-| ERB                            | ✓   | ✓     | Ruby            | ✓         | ✓          |
-| Smarty (unsecured)             | ✓   | ✓     | PHP             | ✓         | ✓          |
-| Smarty (secured)               | ✓   | ✓     | PHP             | ✓         | ✓          |
-| PHP (code eval)                | ✓   | ✓     | PHP             | ✓         | ✓          |
-| Twig (<=1.19)                  | ✓   | ✓     | PHP             | ✓         | ✓          |
-| Freemarker                     | ✓   | ✓     | Java            | ✓         | ✓          |
-| Velocity                       | ✓   | ✓     | Java            | ✓         | ✓          |
-| Twig (>1.19)                   | ×   | ×     | ×               | ×         | ×          |
-| Dust (> dustjs-helpers@1.5.0)  | ×   | ×     | ×               | ×         | ×          |
+| Engine                               | RCE | Blind | Code evaluation | File read | File write |
+|--------------------------------------|-----|-------|-----------------|-----------|------------|
+| Mako                                 | ✓   | ✓     | Python          | ✓         | ✓          |
+| Cheetah                              | ✓   | ✓     | Python          | ✓         | ✓          |
+| Jinja2                               | ✓   | ✓     | Python          | ✓         | ✓          |
+| Python (code eval)                   | ✓   | ✓     | Python          | ✓         | ✓          |
+| Tornado                              | ✓   | ✓     | Python          | ✓         | ✓          |
+| Nunjucks                             | ✓   | ✓     | JavaScript      | ✓         | ✓          |
+| Pug                                  | ✓   | ✓     | JavaScript      | ✓         | ✓          |
+| doT                                  | ✓   | ✓     | JavaScript      | ✓         | ✓          |
+| Marko                                | ✓   | ✓     | JavaScript      | ✓         | ✓          |
+| JavaScript (code eval)               | ✓   | ✓     | JavaScript      | ✓         | ✓          |
+| Dust (<= dustjs-helpers@1.5.0)       | ✓   | ✓     | JavaScript      | ✓         | ✓          |
+| EJS                                  | ✓   | ✓     | JavaScript      | ✓         | ✓          |
+| Ruby (code eval)                     | ✓   | ✓     | Ruby            | ✓         | ✓          |
+| Slim                                 | ✓   | ✓     | Ruby            | ✓         | ✓          |
+| ERB                                  | ✓   | ✓     | Ruby            | ✓         | ✓          |
+| Smarty (unsecured)                   | ✓   | ✓     | PHP             | ✓         | ✓          |
+| Smarty (secured)                     | ✓   | ✓     | PHP             | ✓         | ✓          |
+| PHP (code eval)                      | ✓   | ✓     | PHP             | ✓         | ✓          |
+| Twig (<=1.19)                        | ✓   | ✓     | PHP             | ✓         | ✓          |
+| Twig (>=2.12 <2.14.11; >=3.0 <3.3.8) | ✓   | ✓     | PHP             | ✓         | ✓          |
+| Freemarker                           | ✓   | ✓     | Java            | ✓         | ✓          |
+| Velocity                             | ✓   | ✓     | Java            | ✓         | ✓          |
+| Twig (>1.19 <2.0)                    | ×   | ×     | ×               | ×         | ×          |
+| Dust (> dustjs-helpers@1.5.0)        | ×   | ×     | ×               | ×         | ×          |
 
 
 Burp Suite Plugin
@@ -264,14 +266,13 @@ If you plan to contribute something big from this list, inform me to avoid worki
 - [ ] Add more payloads for different engines
 - [ ] Parse raw HTTP request from file
 - [ ] Variable dumping functionality
-- [ ] Blind value extraction
+- [ ] Blind/side-channel value extraction
 - [ ] Better documentation (or at least any documentation)
 - [ ] Short arguments as interactive commands?
-- [ ] Engine plugins as objects of _Plugin_ class?
 - [ ] JSON/plaintext API modes for scripting integrations?
 - [ ] Argument to remove escape codes?
 - [ ] Better integration for Python scripts
-- [ ] More POST data types support
+- [x] More POST data types support
 - [ ] Modules for more customisable requests (second order, reset, non-HTTP)
 - [ ] Payload processing scripts
 - [ ] Better config functionality
