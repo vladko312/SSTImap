@@ -1,4 +1,3 @@
-import json
 import time
 
 import requests
@@ -98,8 +97,6 @@ class Channel:
                     self.injs.append({'field': 'Header', 'part': 'param', 'param': param})
                 if self.tag in value or all_injectable:
                     self.injs.append({'field': 'Header', 'part': 'value', 'value': value, 'param': param})
-        if self.args.get('content_type') == "json":
-            self.header_params["Content-Type"] = "application/json"
 
     def _parse_post(self, all_injectable=False):
         if self.args.get('data'):
@@ -193,14 +190,9 @@ class Channel:
         if self.args['delay']:
             time.sleep(self.args['delay'])
         try:
-            if self.args.get('content_type') == "json":
-                result = requests.request(method=self.http_method, url=url_params, params=get_params, json=post_params,
-                                          headers=header_params, cookies=cookie_params, proxies=self.proxies,
-                                          verify=self.args.get('verify_ssl')).text
-            else:
-                result = requests.request(method=self.http_method, url=url_params, params=get_params, data=post_params,
-                                          headers=header_params, cookies=cookie_params, proxies=self.proxies,
-                                          verify=self.args.get('verify_ssl')).text
+            result = requests.request(method=self.http_method, url=url_params, params=get_params, data=post_params,
+                                      headers=header_params, cookies=cookie_params, proxies=self.proxies,
+                                      verify=self.args.get('verify_ssl')).text
         except requests.exceptions.ConnectionError as e:
             if e and e.args[0] and e.args[0].args[0] == 'Connection aborted.':
                 log.log(25, 'Error: connection aborted, bad status line.')
