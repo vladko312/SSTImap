@@ -42,11 +42,22 @@ def load_plugins():
             importlib.import_module(f"plugins.{g.name}.{m.name[:-3]}")
 
 
+def load_data_types():
+    importlib.invalidate_caches()
+    modules = os.scandir(f"{sys.path[0]}/data_types")
+    modules = filter(lambda x: (x.name.endswith(".py") and not x.name.startswith("_")), modules)
+    for m in modules:
+        importlib.import_module(f"data_types.{m.name[:-3]}")
+
+
 if __name__ == '__main__':
     print(cliparser.banner())
     load_plugins()
     from core.plugin import loaded_plugins
-    log.log(26, f"Loaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}\n")
+    log.log(26, f"Loaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
+    load_data_types()
+    from core.data_type import loaded_data_types
+    log.log(26, f"Loaded request body types: {len(loaded_data_types)}\n")
     try:
         main()
     except (KeyboardInterrupt, EOFError):

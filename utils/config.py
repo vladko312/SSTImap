@@ -10,26 +10,29 @@ defaults = {
     "base_path": "~/.sstimap/",
     "crawl_depth": 0,
     "marker": '*',
+    "data_type": "form",
     "level": 1,
     "technique": "RT",
     "crawl_domains": "S",
     "log_response": False,
     "time_based_blind_delay": 4,
+    "time_based_verify_blind_delay": 30,
     "user_agent": f'SSTImap/{version}',
     "interactive": False,
     "random_agent": False,
     "verify_ssl": False,
     "forms": False,
+    "empty_forms": False,
     "legacy": False,
     "tpl_shell": False,
     "eval_shell": False,
     "os_shell": False,
-    "force_overwrite": False
+    "force_overwrite": False,
+    "remote_shell": "/bin/sh"
 }
 config = {}
 user_config = {}
 
-# TODO: fix this
 with open(f"{sys.path[0]}/config.json", 'r') as stream:
     try:
         config = json.load(stream)
@@ -70,5 +73,6 @@ def config_args(args):
                 except json.JSONDecodeError as e:
                     print(f'[!][custom config] {repr(e)}')
             config_update(res, custom_config)
+    args["data_params"] = {x.split("=", 1)[0]: x.split("=", 1)[1] for x in args["data_params"]}
     config_update(res, args)
     return res

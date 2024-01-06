@@ -32,7 +32,7 @@ class Mako(python.Python):
             {'level': 5, 'prefix': '{closure}#\n', 'suffix': '\n', 'closures': python.ctx_closures},
             # Mako blocks
             {'level': 5, 'prefix': '</%doc>', 'suffix': '<%doc>'},
-            {'level': 5, 'prefix': '</%def>', 'suffix': '<%def name="t(x)">', 'closures': python.ctx_closures},
-            {'level': 5, 'prefix': '</%block>', 'suffix': '<%block>', 'closures': python.ctx_closures},
-            {'level': 5, 'prefix': '</%text>', 'suffix': '<%text>', 'closures': python.ctx_closures},
+            {'level': 5, 'prefix': '</%def>', 'suffix': '<%def name="t(x)">'},
+            {'level': 5, 'prefix': '</%block>', 'suffix': '<%block>'},
+            {'level': 5, 'prefix': '</%text>', 'suffix': '<%text>'},
         ])

@@ -26,8 +26,9 @@ class SSTImapFormatter(logging.Formatter):
         24: "\033[32m[+]\033[0m {message}",
         25: "\033[31m[-]\033[0m {message}",
         26: "\033[34m[*]\033[0m {message}",
-        27: "\033[92m[*]\033[0m {message}",
-        28: "\033[32m[*]\033[0m {message}",
+        27: "\033[93m[*]\033[0m {message}",
+        28: "\033[33m[*]\033[0m {message}",
+        29: "\033[33m[!]\033[0m {message}",
         logging.ERROR: "\033[91m[-]\033 [0m[\033[4m{module}\033[0m] {message}",
         logging.CRITICAL: "\033[91m[!]\033[0m [\033[4m{module}\033[0m] {message}",
         'DEFAULT': "\033[91m[{levelname}]\033[0m {message}"

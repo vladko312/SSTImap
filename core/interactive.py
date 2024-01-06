@@ -62,9 +62,11 @@ Target:
 
 Request:
   mark, marker [MARKER]                   Set string as injection marker (default '*')
-  data, post {rm} [DATA]                  Add POST data param to send (e.g. 'param=value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, shows params list
-  header, headers {rm} [HEADER]           Add header to send (e.g. 'Header: Value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, shows headers list
-  cookie, cookies {rm} [COOKIE]           Cookie to send (e.g. 'Field=Value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, shows cookies list
+  data, post {rm} [DATA]                  Add request body data to send (e.g. 'param=value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, clears all data
+  type, data_type [TYPE]                  Select request body processing script for a specific data type (default 'form')
+  data_params {rm} [PARAM]                Add request body processing param as KEY=VALUE. To remove by key, use "data rm KEY". Whithout arguments, clears all params
+  header, headers {rm} [HEADER]           Add header to send (e.g. 'Header: Value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, clears all headers
+  cookie, cookies {rm} [COOKIE]           Cookie to send (e.g. 'Field=Value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, clears all cookies
   method, http_method [METHOD]            Set HTTP method to use (default 'GET')
   agent, user_agent [AGENT]               Set User-Agent header value to use
   random, random_agent                    Toggle using random User-Agent header value from a list of desktop browsers on every request
@@ -76,6 +78,7 @@ Request:
 Crawler:
   crawl [DEPTH]                           Crawl up to depth (0 - do not crawl)
   forms                                   Search page(s) for forms
+  empty_forms                             Treat pages without params as GET forms
   exclude [PATTERN]                       Regex pattern to exclude from crawler
   domains [DOMAINS]                       Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S
   save_urls [PATH]                        Save crawled URLs to txt file or directory (run or no PATH: reset)
@@ -87,6 +90,7 @@ Detection:
   engine [ENGINE]                         Check only this backend template engine. For all, use '*'
   technique [TECHNIQUE]                   Use techniques R(endered) T(ime-based blind). Default: RT
   blind_delay [DELAY]                     Delay to detect time-based blind injection (Default: 4 seconds)
+  verify_delay [DELAY]                    Delay to verify and exploit time-based blind injection (Default: 30 seconds)
   legacy                                  Toggle including old payloads, that no longer work with newer versions of the engines
 
 Exploitation:
@@ -98,12 +102,13 @@ Exploitation:
   os_cmd [COMMAND]                        Execute an operating system command
   bind, bind_shell [PORT]                 Spawn a system shell on a TCP PORT of the target and connect to it
   reverse, reverse_shell [HOST] [PORT]    Run a system shell and back-connect to local HOST PORT
+  remote_shell [SHELL]                    Set expected system shell on the target (default '/bin/sh')
   overwrite, force_overwrite              Toggle file overwrite when uploading
   up, upload [LOCAL] [REMOTE]             Upload LOCAL to REMOTE files
   down, download [REMOTE] [LOCAL]         Download REMOTE to LOCAL files
 
 SSTImap:
-  reload, reload_plugins                  Reload all SSTImap plugins
+  reload, reload_modules                  Reload all SSTImap plugins and data types
   config [PATH]                           Update settings from config file or directory""")
 
     def do_version(self, line):
@@ -148,7 +153,12 @@ SSTImap:
         log.log(26, f'Injection marker: {self.sstimap_options["marker"]}')
         if self.sstimap_options["data"]:
             data = "\n    ".join(self.sstimap_options["data"])
-            log.log(26, f'POST data:\n    {data}')
+            log.log(26, f'Request body data:\n    {data}')
+            log.log(26, f'Request body type: {self.sstimap_options["data_type"]}')
+            if self.sstimap_options["data_params"]:
+                params = "\n    ".join([f"{x}: {self.sstimap_options['data_params'][x]}"
+                                        for x in self.sstimap_options["data_params"]])
+                log.log(26, f'Request body type params:\n    {params}')
         if self.sstimap_options["headers"]:
             headers = "\n    ".join(self.sstimap_options["headers"])
             log.log(26, f'HTTP headers:\n    {headers}')
@@ -181,10 +191,14 @@ SSTImap:
         else:
             log.log(26, 'Crawler: no crawl')
         log.log(26, f'Form detection: {self.sstimap_options["forms"]}')
+        if self.sstimap_options["forms"]:
+            log.log(26, f'Allow empty forms: {self.sstimap_options["empty_forms"]}')
         log.log(26, f'Attack technique: {self.sstimap_options["technique"]}')
         if "T" in self.sstimap_options["technique"]:
             log.log(26, f'Time-based blind detection delay: {self.sstimap_options["time_based_blind_delay"]}')
+            log.log(26, f'Time-based blind verification and exploitation delay: {self.sstimap_options["time_based_verify_blind_delay"]}')
         log.log(26, f'Force overwrite files: {self.sstimap_options["force_overwrite"]}')
+        log.log(26, f'Expected remote shell: {self.sstimap_options["remote_shell"]}')
         if self.sstimap_options["log_response"]:
             log.log(26, 'HTTP responses will be included into ~/.sstimap/sstimap.log')
 
@@ -317,6 +331,11 @@ SSTImap:
         log.log(24, f'Form detection {"en" if overwrite else "dis"}abled.')
         self.sstimap_options['forms'] = overwrite
 
+    def do_empty_forms(self, line):
+        overwrite = not self.sstimap_options['empty_forms']
+        log.log(24, f'Empty form processing {"en" if overwrite else "dis"}abled.')
+        self.sstimap_options['empty_forms'] = overwrite
+
     def do_run(self, line):
         """Check target URL for SSTI vulnerabilities"""
         if not (self.sstimap_options["url"] or self.sstimap_options["loaded_urls"] or self.sstimap_options["loaded_forms"]):
@@ -349,9 +368,9 @@ SSTImap:
     do_mark = do_marker
 
     def do_data(self, line):
-        """Modify POST data"""
+        """Modify request body data"""
         if line == "":
-            log.log(24, f'Clearing all POST data...')
+            log.log(24, f'Clearing all request body data...')
             self.sstimap_options["data"] = []
             return
         command = line.split(" ", 1)
@@ -362,10 +381,25 @@ SSTImap:
                     log.log(26, f'Removing: {data}')
                     self.sstimap_options["data"].remove(data)
         else:
-            log.log(24, f'Adding POST data: {line}')
+            log.log(24, f'Adding request body data: {line}')
             self.sstimap_options["data"].append(line)
 
     do_post = do_data
+
+    def do_data_params(self, line):
+        """Modify request body data processing params"""
+        if line == "":
+            log.log(24, f'Clearing all request body data processing params...')
+            self.sstimap_options["data_params"] = {}
+            return
+        command = line.split(" ", 1)
+        if (command[0] == "remove" or command[0] == "rm") and len(command) == 2 and command[1] != "":
+            log.log(24, f'Removing data param {command[1]}:')
+            self.sstimap_options["data_params"].pop(command[1], None)
+        else:
+            param = line.split("=", 1)
+            log.log(24, f'Adding data param: {param[0]}')
+            self.sstimap_options["data_params"][param[0]] = param[1]
 
     def do_header(self, line):
         """Modify HTTP headers"""
@@ -415,6 +449,17 @@ SSTImap:
         self.sstimap_options["method"] = line
 
     do_method = do_http_method
+
+    def do_data_type(self, line):
+        """Set request body type"""
+        if line == '':
+            log.log(22, 'Request body type cannot be empty.')
+            return
+        line = line.lower()
+        log.log(24, f'Request body type is set to {line}')
+        self.sstimap_options["data_type"] = line
+
+    do_type = do_data_type
 
     def do_user_agent(self, line):
         """Set User-Agent"""
@@ -513,6 +558,11 @@ SSTImap:
         log.log(24, f'Attack technique is set to {line}')
         self.sstimap_options["technique"] = line
 
+    def do_remote_shell(self, line):
+        """Set expected remote shell"""
+        log.log(24, f'Expected remote shell is set to {line}')
+        self.sstimap_options["remote_shell"] = line
+
     def do_crawl_domains(self, line):
         """Set crawling DOMAINS behaviour"""
         line = line.upper()
@@ -534,6 +584,17 @@ SSTImap:
         log.log(24, f'Delay for time-based blind injection detection is set to {self.sstimap_options["time_based_blind_delay"]}')
 
     do_time_based_blind_delay = do_blind_delay
+
+    def do_verify_delay(self, line):
+        """Set DELAY for blind SSTI detection"""
+        try:
+            self.sstimap_options["time_based_verify_blind_delay"] = max(int(line), 1)
+        except:
+            log.log(22, 'Invalid time-based blind injection delay time.')
+            return
+        log.log(24, f'Delay for time-based blind injection verification and exploitation is set to {self.sstimap_options["time_based_verify_blind_delay"]}')
+
+    do_verify_blind_delay = do_verify_delay
 
     def do_legacy(self, line):
         """Switch legacy option"""
@@ -705,7 +766,7 @@ SSTImap:
             if not url.hostname:
                 log.log(22, "Error parsing hostname")
                 return
-            for idx, thread in enumerate(self.current_plugin.bind_shell(port)):
+            for idx, thread in enumerate(self.current_plugin.bind_shell(port, shell=self.channel.args.get('remote_shell'))):
                 log.log(26, f'Spawn a shell on remote port {port} with payload {idx+1}')
                 thread.join(timeout=1)
                 if thread.is_alive():
@@ -738,7 +799,7 @@ SSTImap:
             return
         timeout = 15
         if self.channel.data.get('reverse_shell'):
-            self.current_plugin.reverse_shell(host, port)
+            self.current_plugin.reverse_shell(host, port, shell=self.channel.args.get('remote_shell'))
             try:
                 TcpServer(int(port), timeout)
             except (KeyboardInterrupt, EOFError):
@@ -815,5 +876,11 @@ SSTImap:
         load_plugins()
         from core.plugin import loaded_plugins
         log.log(23, f"Reloaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
+        from core.data_type import unload_data_types
+        from sstimap import load_data_types
+        unload_data_types()
+        load_data_types()
+        from core.data_type import loaded_data_types
+        log.log(26, f"Loaded request body types: {len(loaded_data_types)}")
 
     do_reload = do_reload_modules
