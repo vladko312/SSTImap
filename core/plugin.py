@@ -554,11 +554,17 @@ class Plugin(object):
         # Skip if something is missing or call function is not set
         if not action or not isinstance(payload_actions, list) or not call_name or not hasattr(self, call_name):
             return
-        for payload_action in payload_actions:
-            execution_code = payload_action.format(port=port, shell=shell)
-            reqthread = threading.Thread(target=getattr(self, call_name), args=(execution_code,))
-            reqthread.start()
-            yield reqthread
+
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for payload_action in payload_actions:
+                execution_code = payload_action.format(port=port, shell=shell)
+                future = executor.submit(getattr(self, call_name), execution_code)
+                futures.append(future)
+                
+            # Yield futures to allow the caller to manage them
+            for future in futures:
+                yield future
 
     def reverse_shell(self, host, port, shell="/bin/sh"):
         action = self.actions.get('reverse_shell', {})
@@ -567,10 +573,17 @@ class Plugin(object):
         # Skip if something is missing or call function is not set
         if not action or not isinstance(payload_actions, list) or not call_name or not hasattr(self, call_name):
             return
-        for payload_action in payload_actions:
-            execution_code = payload_action.format(port=port, shell=shell, host=host)
-            reqthread = threading.Thread(target=getattr(self, call_name), args=(execution_code,))
-            reqthread.start()
+
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for payload_action in payload_actions:
+                execution_code = payload_action.format(port=port, shell=shell, host=host)
+                future = executor.submit(getattr(self, call_name), execution_code)
+                futures.append(future)
+
+            # Yield futures to allow the caller to manage them
+            for future in futures:
+                yield future
 
     def update_actions(self, actions):
         # Recursively update actions on the instance
