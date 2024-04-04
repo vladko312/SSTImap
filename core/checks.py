@@ -9,6 +9,7 @@ from core.clis import Shell, MultilineShell
 from core.tcpserver import TcpServer
 from utils.crawler import crawl, find_forms
 from core.channel import Channel
+import concurrent.futures
 
 
 def plugins(legacy=False):
@@ -218,6 +219,7 @@ def check_template_injection(channel):
     return current_plugin
 
 
+
 def scan_website(args):
     urls = set()
     forms = set()
@@ -287,23 +289,37 @@ def scan_website(args):
         log.log(22, 'No targets found')
         return None, None
     elif not forms:
-        for url in urls:
-            log.log(27, f'Scanning url: {url}')
-            url_args = args.copy()
-            url_args['url'] = url
-            channel = Channel(url_args)
-            result = check_template_injection(channel)
-            if channel.data.get('engine'):
-                return result, channel # TODO: save vulnerabilities
+        # Concurrently scan URLs
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(scan_url, url, args) for url in urls]
+            for future in concurrent.futures.as_completed(futures):
+                result, channel = future.result()
+                if channel.data.get('engine'):
+                    return result, channel  # TODO: save vulnerabilities
     else:
-        for form in forms:
-            log.log(27, f'Scanning form with url: {form[0]}')
-            url_args = args.copy()
-            url_args['url'] = form[0]
-            url_args['method'] = form[1]
-            url_args['data'] = urllib.parse.parse_qs(form[2], keep_blank_values=True)
-            channel = Channel(url_args)
-            result = check_template_injection(channel)
-            if channel.data.get('engine'):
-                return result, channel # TODO: save vulnerabilities
+        # Concurrently scan forms
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(scan_form, form, args) for form in forms]
+            for future in concurrent.futures.as_completed(futures):
+                result, channel = future.result()
+                if channel.data.get('engine'):
+                    return result, channel  # TODO: save vulnerabilities
     return None, None
+
+def scan_url(url, args):
+    log.log(27, f'Scanning url: {url}')
+    url_args = args.copy()
+    url_args['url'] = url
+    channel = Channel(url_args)
+    result = check_template_injection(channel)
+    return result, channel
+
+def scan_form(form, args):
+    log.log(27, f'Scanning form with url: {form[0]}')
+    url_args = args.copy()
+    url_args['url'] = form[0]
+    url_args['method'] = form[1]
+    url_args['data'] = urllib.parse.parse_qs(form[2], keep_blank_values=True)
+    channel = Channel(url_args)
+    result = check_template_injection(channel)
+    return result, channel
