@@ -219,7 +219,6 @@ def check_template_injection(channel):
     return current_plugin
 
 
-
 def scan_website(args):
     urls = set()
     forms = set()
@@ -270,56 +269,46 @@ def scan_website(args):
                     log.log(22, f"Error occurred while saving URLs to file:\n{repr(e)}")
     else:
         log.log(25, "Skipping URL loading and crawling as forms are already supplied")
+    
     args['target_urls'] = urls
-    if args['forms']:
-        crawled_forms = find_forms(urls, args)
-        forms.update(crawled_forms)
-        args['crawled_forms'] = crawled_forms
-        if args['save_forms'] and crawled_forms:
-            if os.path.isdir(args['save_forms']):
-                args['save_forms'] = f"{args['save_forms']}/sstimap_forms.json"
-            try:
-                with open(args['save_forms'], 'w') as stream:
-                    json.dump([x for x in crawled_forms], stream, indent=4)
-                log.log(21, f"Saved forms to file: {args['save_forms']}")
-            except Exception as e:
-                log.log(22, f"Error occurred while saving forms to file:\n{repr(e)}")
     args['target_forms'] = forms
+    
     if not urls and not forms:
         log.log(22, 'No targets found')
         return None, None
-    elif not forms:
-        # Concurrently scan URLs
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(scan_url, url, args) for url in urls]
-            for future in concurrent.futures.as_completed(futures):
-                result, channel = future.result()
-                if channel.data.get('engine'):
-                    return result, channel  # TODO: save vulnerabilities
-    else:
-        # Concurrently scan forms
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(scan_form, form, args) for form in forms]
-            for future in concurrent.futures.as_completed(futures):
-                result, channel = future.result()
-                if channel.data.get('engine'):
-                    return result, channel  # TODO: save vulnerabilities
+    
+    # Define a function to scan each target (URL or form)
+    def scan_target(target):
+        if len(target) == 1:  # URL
+            target_url = target[0]
+            log.log(27, f'Scanning url: {target_url}')
+            url_args = args.copy()
+            url_args['url'] = target_url
+        else:  # Form
+            form_url, form_method, form_data = target
+            log.log(27, f'Scanning form with url: {form_url}')
+            url_args = args.copy()
+            url_args['url'] = form_url
+            url_args['method'] = form_method
+            url_args['data'] = urllib.parse.parse_qs(form_data, keep_blank_values=True)
+
+        channel = Channel(url_args)
+        result = check_template_injection(channel)
+        if channel.data.get('engine'):
+            return result, channel
+    
+    # Create a thread pool executor with a maximum of 10 concurrent threads
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        if urls:
+            # Process URLs
+            results = executor.map(scan_target, [(url,) for url in urls])
+        elif forms:
+            # Process forms
+            results = executor.map(scan_target, forms)
+        
+        # Retrieve results
+        for result in results:
+            if result:
+                return result
+    
     return None, None
-
-def scan_url(url, args):
-    log.log(27, f'Scanning url: {url}')
-    url_args = args.copy()
-    url_args['url'] = url
-    channel = Channel(url_args)
-    result = check_template_injection(channel)
-    return result, channel
-
-def scan_form(form, args):
-    log.log(27, f'Scanning form with url: {form[0]}')
-    url_args = args.copy()
-    url_args['url'] = form[0]
-    url_args['method'] = form[1]
-    url_args['data'] = urllib.parse.parse_qs(form[2], keep_blank_values=True)
-    channel = Channel(url_args)
-    result = check_template_injection(channel)
-    return result, channel
