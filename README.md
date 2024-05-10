@@ -27,11 +27,12 @@ Differences with Tplmap
 Even though this software is based on Tplmap's code, backwards compatibility is not provided.
 - Interactive mode (`-i`) allowing for easier exploitation and detection
 - Base language _eval()_-like shell (`-x`) or single command (`-X`) execution
+- Added new payloads for generic templates, as well as a way to speed up detection using 
 - Added new payload for _Smarty_ without enabled `{php}{/php}`. Old payload is available as `Smarty_unsecure`.
 - Added new payload for newer versions of _Twig_. Payload for older version is available as `Twig_v1`.
 - User-Agent can be randomly selected from a list of desktop browser agents using `-A`
-- SSL verification can now be enabled using `-V`
-- Short versions added to all arguments
+- SSL verification can now be enabled using `--verify-ssl`
+- Short versions added to many arguments
 - Some old command line arguments were changed, check `-h` for help
 - Code is changed to use newer python features
 - Burp Suite extension temporarily removed, as _Jython_ doesn't support Python3
@@ -229,23 +230,26 @@ New payloads are welcome in PRs.
 | Mako                                 | ✓   | ✓     | Python          | ✓         | ✓          |
 | Cheetah                              | ✓   | ✓     | Python          | ✓         | ✓          |
 | Jinja2                               | ✓   | ✓     | Python          | ✓         | ✓          |
-| Python (code eval)                   | ✓   | ✓     | Python          | ✓         | ✓          |
 | Tornado                              | ✓   | ✓     | Python          | ✓         | ✓          |
+| Python (code eval)                   | ✓   | ✓     | Python          | ✓         | ✓          |
+| Python-based generic templates       | ✓   | ✓     | Python          | ✓         | ✓          |
 | Nunjucks                             | ✓   | ✓     | JavaScript      | ✓         | ✓          |
 | Pug                                  | ✓   | ✓     | JavaScript      | ✓         | ✓          |
 | doT                                  | ✓   | ✓     | JavaScript      | ✓         | ✓          |
 | Marko                                | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| JavaScript (code eval)               | ✓   | ✓     | JavaScript      | ✓         | ✓          |
 | Dust (<= dustjs-helpers@1.5.0)       | ✓   | ✓     | JavaScript      | ✓         | ✓          |
 | EJS                                  | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| Ruby (code eval)                     | ✓   | ✓     | Ruby            | ✓         | ✓          |
+| JavaScript (code eval)               | ✓   | ✓     | JavaScript      | ✓         | ✓          |
+| JavaScript-based generic templates   | ✓   | ✓     | JavaScript      | ✓         | ✓          |
 | Slim                                 | ✓   | ✓     | Ruby            | ✓         | ✓          |
 | ERB                                  | ✓   | ✓     | Ruby            | ✓         | ✓          |
+| Ruby (code eval)                     | ✓   | ✓     | Ruby            | ✓         | ✓          |
 | Smarty (unsecured)                   | ✓   | ✓     | PHP             | ✓         | ✓          |
 | Smarty (secured)                     | ✓   | ✓     | PHP             | ✓         | ✓          |
-| PHP (code eval)                      | ✓   | ✓     | PHP             | ✓         | ✓          |
 | Twig (<=1.19)                        | ✓   | ✓     | PHP             | ✓         | ✓          |
 | Twig (>=2.12 <2.14.11; >=3.0 <3.3.8) | ✓   | ✓     | PHP             | ✓         | ✓          |
+| PHP (code eval)                      | ✓   | ✓     | PHP             | ✓         | ✓          |
+| PHP-based generic templates          | ✓   | ✓     | PHP             | ✓         | ✓          |
 | Freemarker                           | ✓   | ✓     | Java            | ✓         | ✓          |
 | Velocity                             | ✓   | ✓     | Java            | ✓         | ✓          |
 | Twig (>1.19 <2.0)                    | ×   | ×     | ×               | ×         | ×          |
@@ -262,7 +266,6 @@ Future plans
 
 If you plan to contribute something big from this list, inform me to avoid working on the same thing as me or other contributors.
 
-- [ ] Make template and base language evaluation functionality more uniform
 - [ ] Add more payloads for different engines
 - [ ] Parse raw HTTP request from file
 - [ ] Variable dumping functionality
@@ -272,14 +275,19 @@ If you plan to contribute something big from this list, inform me to avoid worki
 - [ ] JSON/plaintext API modes for scripting integrations?
 - [ ] Argument to remove escape codes?
 - [ ] Better integration for Python scripts
-- [x] More POST data types support
+- [ ] Multipart POST data type support
 - [ ] Modules for more customisable requests (second order, reset, non-HTTP)
 - [ ] Payload processing scripts
 - [ ] Better config functionality
 - [ ] Saving found vulnerabilities
 - [ ] Reports in HTML or other format
+- [ ] Multiline language evaluation?
+- [ ] Avoid platform dependency in payloads
+- [ ] Update NodeJS payloads as process.mainModule may be undefined
 - [x] Spider/crawler automation (by [fantesykikachu](https://github.com/fantesykikachu))
 - [x] Automatic languages and engines import
+- [x] More POST data types support
+- [x] Make template and base language evaluation functionality more uniform
 
 [1]: https://artsploit.blogspot.co.uk/2016/08/pprce2.html
 [2]: https://opsecx.com/index.php/2016/07/03/server-side-template-injection-in-tornado/

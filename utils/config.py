@@ -3,7 +3,7 @@ import sys
 import json
 
 
-version = '1.2.0'
+version = '1.2.1'
 
 # Defaults to be overwritten by config.json, ~/.sstimap/config.json, user-supplied config and arguments
 defaults = {
@@ -24,6 +24,8 @@ defaults = {
     "forms": False,
     "empty_forms": False,
     "legacy": False,
+    "skip_generic": False,
+    "run": False,
     "tpl_shell": False,
     "eval_shell": False,
     "os_shell": False,

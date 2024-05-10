@@ -11,7 +11,7 @@ from utils.crawler import crawl, find_forms
 from core.channel import Channel
 
 
-def plugins(legacy=False):
+def plugins(legacy=False, quick_generic=False):
     from core.plugin import loaded_plugins
     plugin_list = []
     if legacy:
@@ -20,8 +20,15 @@ def plugins(legacy=False):
     plugin_list += loaded_plugins.get("languages", [])
     plugin_list += loaded_plugins.get("custom", [])
     for group in loaded_plugins:
-        if group not in ["legacy_engines", "engines", "languages", "custom"]:
+        if group not in ["legacy_engines", "engines", "languages", "custom", "generic"]:
             plugin_list += loaded_plugins.get(group, [])
+    plugin_list += loaded_plugins.get("generic", [])
+    if quick_generic:
+        all_plugin_list = plugin_list
+        plugin_list = []
+        for p in all_plugin_list:
+            if not p.generic_plugin:
+                plugin_list.append(p)
     return plugin_list
 
 
@@ -29,6 +36,7 @@ def print_injection_summary(channel):
     prefix = channel.data.get('prefix', '').replace('\n', '\\n')
     render = channel.data.get('render', '{code}').replace('\n', '\\n').format(code='*')
     suffix = channel.data.get('suffix', '').replace('\n', '\\n')
+    wrapper = channel.data.get('wrapper', '{code}').replace('\n', '\\n').format(code=render)
     if channel.data.get('evaluate_blind'):
         evaluation = f"\033[92mok\033[0m, {channel.data.get('language')} code (blind)"
     elif channel.data.get('evaluate'):
@@ -52,7 +60,7 @@ def print_injection_summary(channel):
 
   {channel.injs[channel.inj_idx]['field']} parameter: {channel.injs[channel.inj_idx]['param']}
   Engine: {channel.data.get('engine').capitalize()}
-  Injection: {prefix}{render}{suffix}
+  Injection: {prefix}{wrapper}{suffix}
   Context: {'text' if (not prefix and not suffix) else 'code'}
   OS: {channel.data.get('os', 'undetected')}
   Technique: {'blind' if channel.data.get('blind') else 'render'}
@@ -69,7 +77,7 @@ def print_injection_summary(channel):
 def detect_template_injection(channel):
     for i in range(len(channel.injs)):
         log.log(28, f"Testing if {channel.injs[channel.inj_idx]['field']} parameter '{channel.injs[channel.inj_idx]['param']}' is injectable")
-        for plugin in plugins(legacy=channel.args.get('legacy')):
+        for plugin in plugins(legacy=channel.args.get('legacy'), quick_generic=channel.args.get('skip_generic')):
             current_plugin = plugin(channel)
             if channel.args.get('engine') and channel.args.get('engine').lower() != current_plugin.plugin.lower():
                 continue
@@ -88,17 +96,18 @@ def check_template_injection(channel):
     if not any(f for f, v in channel.args.items() if f in ('os_cmd', 'os_shell', 'upload', 'download', 'tpl_shell',
                                                            'tpl_code', 'bind_shell', 'reverse_shell', 'eval_shell',
                                                            'eval_code', 'interactive') and v):
-        log.log(21, f"""Rerun SSTImap providing one of the following options:{'''
-    --os-shell                   Prompt for an interactive operating system shell
+        log.log(21, f"""Rerun SSTImap providing one of the following options:
+    \033[92m--interactive\033[0m                Run SSTImap in interactive mode to switch between exploitation modes without losing progress.{'''
+    --os-shell                   Prompt for an interactive operating system shell.
     --os-cmd                     Execute an operating system command.''' if channel.data.get('execute') or channel.data.get('execute_blind') else ''}{'''
     --eval-shell                 Prompt for an interactive shell on the template engine base language.
     --eval-cmd                   Evaluate code in the template engine base language.''' if channel.data.get('evaluate') or channel.data.get('evaluate_blind') else ''}{'''
     --tpl-shell                  Prompt for an interactive shell on the template engine.
     --tpl-cmd                    Inject code in the template engine.''' if channel.data.get('engine') else ''}{'''
-    --bind-shell PORT            Connect to a shell bind to a target port''' if channel.data.get('bind_shell') else ''}{'''
-    --reverse-shell HOST PORT    Send a shell back to the attacker's port''' if channel.data.get('reverse_shell') else ''}{'''
-    --upload LOCAL REMOTE        Upload files to the server''' if channel.data.get('write') else ''}{'''
-    --download REMOTE LOCAL      Download remote files''' if channel.data.get('read') else ''}""")
+    --bind-shell PORT            Connect to a shell bind to a target port.''' if channel.data.get('bind_shell') else ''}{'''
+    --reverse-shell HOST PORT    Send a shell back to the attacker's port.''' if channel.data.get('reverse_shell') else ''}{'''
+    --upload LOCAL REMOTE        Upload files to the server.''' if channel.data.get('write') else ''}{'''
+    --download REMOTE LOCAL      Download remote files.''' if channel.data.get('read') else ''}""")
         return current_plugin
     # Execute operating system commands
     if channel.args.get('os_cmd') or channel.args.get('os_shell'):

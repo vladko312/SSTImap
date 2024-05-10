@@ -3,6 +3,8 @@ from utils import rand
 
 
 class Cheetah(python.Python):
+    generic_plugin = True
+
     def init(self):
         self.update_actions({
             'render': {

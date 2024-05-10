@@ -63,7 +63,7 @@ class Json(DataType):
                 injs.append({'field': 'Body', 'part': 'value', 'param': self._param_by_path(rpath), 'path': rpath})
 
     def _param_by_path(self, path):
-        return ".".join([x.replace("\\", "\\\\").replace(".", "\\.") for x in path])
+        return ".".join([str(x).replace("\\", "\\\\").replace(".", "\\.") for x in path])
 
     def _process_values(self, values):
         parts = [json.loads(x) for x in values]

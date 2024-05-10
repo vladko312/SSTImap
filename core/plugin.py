@@ -42,6 +42,8 @@ def compatible_url_safe_base64_encode(code):
 
 
 class Plugin(object):
+    generic_plugin = False
+
     def __init__(self, channel):
         # HTTP channel
         self.channel = channel
@@ -79,7 +81,7 @@ class Plugin(object):
     def init(self):
         # To be overridden. This can call self.update_actions
         # and self.set_contexts
-        pass 
+        pass
 
     def rendered_detected(self):
         action_evaluate = self.actions.get('evaluate', {})
@@ -95,7 +97,8 @@ class Plugin(object):
                 action_execute = self.actions.get('execute', {})
                 test_cmd_code = action_execute.get('test_cmd')
                 test_cmd_code_expected = action_execute.get('test_cmd_expected')
-                if test_cmd_code and test_cmd_code_expected and test_cmd_code_expected == self.execute(test_cmd_code):
+                # Using rstrip in case of trailing newline
+                if test_cmd_code and test_cmd_code_expected and test_cmd_code_expected == self.execute(test_cmd_code).rstrip():
                     self.set('execute', True)
                     self.set('bind_shell', True)
                     self.set('reverse_shell', True)
@@ -125,8 +128,9 @@ class Plugin(object):
                 # If here, the rendering is confirmed
                 prefix = self.get('prefix', '')
                 render = self.get('render', '{code}').format(code='*')
+                wrapper = self.get('wrapper', '{code}').format(code=render)
                 suffix = self.get('suffix', '')
-                log.log(24, f'''{self.plugin} plugin has confirmed injection with tag \'{repr(prefix).strip("'")}{repr(render).strip("'")}{repr(suffix).strip("'")}\'''')
+                log.log(24, f'''{self.plugin} plugin has confirmed injection with tag \'{repr(prefix).strip("'")}{repr(wrapper).strip("'")}{repr(suffix).strip("'")}\'''')
                 # Clean up any previous unreliable render data
                 self.delete('unreliable_render')
                 self.delete('unreliable')
@@ -165,15 +169,18 @@ class Plugin(object):
             # The suffix is fixed
             suffix = ctx.get('suffix', '')
             # If the context has no closures, generate one closure with a zero-length string
+            wrappers = ctx.get('wrappers', ['{code}'])
             if ctx.get('closures'):
                 closures = self._generate_closures(ctx)
-                log.log(26, f'''{self.plugin} plugin is testing {repr(ctx.get('prefix', '{closure}').format(closure='')).strip("'")}*{repr(suffix).strip("'")} code context escape with {len(closures)} variations{f' (level {ctx.get("level", 1)})' if self.get('level') else ''}''')
             else:
                 closures = ['']
-            for closure in closures:
-                # Format the prefix with closure
-                prefix = ctx.get('prefix', '{closure}').format(closure=closure)
-                yield prefix, suffix
+            if len(closures)*len(wrappers) > 1:
+                log.log(26, f'''{self.plugin} plugin is testing {repr(ctx.get('prefix', '{closure}').format(closure='')).strip("'")}*{repr(suffix).strip("'")} code context escape with {len(closures)*len(wrappers)} variations{f' (level {ctx.get("level", 1)})' if self.get('level') else ''}''')
+            for wrapper in wrappers:
+                for closure in closures:
+                    # Format the prefix with closure
+                    prefix = ctx.get('prefix', '{closure}').format(closure=closure)
+                    yield prefix, suffix, wrapper
 
     """
     Detection of unreliable rendering tag with no header and trailer.
@@ -212,33 +219,35 @@ class Plugin(object):
             return
         # Print what it's going to be tested
         log.log(23, f'{self.plugin} plugin is testing blind injection')
-        for prefix, suffix in self._generate_contexts():
+        for prefix, suffix, wrapper in self._generate_contexts():
             # Conduct a true-false test
-            if not getattr(self, call_name)(code=payload_true, prefix=prefix, suffix=suffix, blind=True):
+            if not getattr(self, call_name)(code=payload_true, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True):
                 continue
             detail = {'blind_true': self._inject_verbose}
-            if getattr(self, call_name)(code=payload_false, prefix=prefix, suffix=suffix, blind=True):
+            if getattr(self, call_name)(code=payload_false, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True):
                 continue
             detail['blind_false'] = self._inject_verbose
             detail['average'] = sum(self.render_req_tm) / len(self.render_req_tm)
             # We can assume here blind is true
             log.log(28, f'{self.plugin} plugin has detected possible blind injection')
-            self.set('blind', True)
+            self.set('blind_test', True)
             # Conduct a true-false test again with bigger delay
-            if not getattr(self, call_name)(code=payload_true, prefix=prefix, suffix=suffix, blind=True):
-                self.set('blind', False)
+            if not getattr(self, call_name)(code=payload_true, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True):
+                self.set('blind_test', False)
                 log.log(25, f'Possible blind injection turned out to be false positive')
                 continue
             detail = {'blind_true': self._inject_verbose}
-            if getattr(self, call_name)(code=payload_false, prefix=prefix, suffix=suffix, blind=True):
-                self.set('blind', False)
+            if getattr(self, call_name)(code=payload_false, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True):
+                self.set('blind_test', False)
                 log.log(25, f'Possible blind injection turned out to be false positive')
                 continue
+            self.set('blind_test', False)
             detail['blind_false'] = self._inject_verbose
             detail['average'] = sum(self.render_req_tm) / len(self.render_req_tm)
             self.set('blind', True)
             self.set('prefix', prefix)
             self.set('suffix', suffix)
+            self.set('wrapper', wrapper)
             self.channel.detected('blind', detail)
             return
 
@@ -252,7 +261,7 @@ class Plugin(object):
         # Print what it's going to be tested
         log.log(23, f"{self.plugin} plugin is testing rendering with tag "
                     f"{repr(render_action.get('render').format(code='*' ))}")
-        for prefix, suffix in self._generate_contexts():
+        for prefix, suffix, wrapper in self._generate_contexts():
             # Prepare base operation to be evaluated server-side
             expected = render_action.get('test_render_expected')
             payload = render_action.get('test_render')
@@ -262,12 +271,13 @@ class Plugin(object):
             trailer = render_action.get('trailer')  # .format(trailer=trailer_rand)
             # First probe with payload wrapped by header and trailer, no suffix or prefix
             if expected == self.render(code=payload, header=header, trailer=trailer, header_rand=header_rand,
-                                       trailer_rand=trailer_rand, prefix=prefix, suffix=suffix):
+                                       trailer_rand=trailer_rand, prefix=prefix, suffix=suffix, wrapper=wrapper):
                 self.set('render', render_action.get('render'))
                 self.set('header', render_action.get('header'))
                 self.set('trailer', render_action.get('trailer'))
                 self.set('prefix', prefix)
                 self.set('suffix', suffix)
+                self.set('wrapper', wrapper)
                 self.channel.detected('render', {'expected': expected})
                 return
 
@@ -277,8 +287,9 @@ class Plugin(object):
     def inject(self, code, **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
+        wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
-        injection = prefix + code + suffix
+        injection = prefix + wrapper.format(code=code) + suffix
         log.debug(f'[request {self.plugin}] {repr(self.channel.url)}')
         # If the request is blind
         if blind:
@@ -346,11 +357,13 @@ class Plugin(object):
         payload = payload_template.format(code=code)
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
+        wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
-        injection = header + payload + trailer
+        injection = wrapper.format(code=header) + wrapper.format(code=payload) + wrapper.format(code=trailer)
         # Save the average HTTP request time of rendering in order
         # to better tone the blind request timeouts.
-        result_raw = self.inject(code=injection, prefix=prefix, suffix=suffix, blind=blind)
+        # Reset wrapper to empty, as it was already applied
+        result_raw = self.inject(code=injection, prefix=prefix, suffix=suffix, blind=blind, wrapper="{code}")
         if blind:
             return result_raw
         else:
@@ -473,6 +486,7 @@ class Plugin(object):
     def evaluate(self, code,  **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
+        wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
         action = self.actions.get('evaluate', {})
         payload = action.get('evaluate')
@@ -483,11 +497,12 @@ class Plugin(object):
         if '{code_b64}' in payload:
             log.debug(f'[b64 encoding] {code}')
         execution_code = payload.format(code_b64=compatible_url_safe_base64_encode(code), code=code)
-        return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, blind=blind)
+        return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=blind)
 
     def execute(self, code, **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
+        wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
         action = self.actions.get('execute', {})
         payload = action.get('execute')
@@ -498,12 +513,13 @@ class Plugin(object):
         if '{code_b64}' in payload:
             log.debug(f'[b64 encoding] {code}')
         execution_code = payload.format(code_b64=compatible_url_safe_base64_encode(code), code=code)
-        result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, blind=blind)
+        result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=blind)
         return result.replace('\\n', '\n') if type(result) == str else result
 
     def evaluate_blind(self, code, **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
+        wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
         action = self.actions.get('evaluate_blind', {})
         payload_action = action.get('evaluate_blind')
@@ -516,11 +532,12 @@ class Plugin(object):
             log.debug(f'[b64 encoding] {code}')
         execution_code = payload_action.format(code_b64=compatible_url_safe_base64_encode(code),
                                                code=code, delay=expected_delay)
-        return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, blind=True)
+        return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True)
 
     def execute_blind(self, code, **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
+        wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
         action = self.actions.get('execute_blind', {})
         payload_action = action.get('execute_blind')
@@ -533,7 +550,7 @@ class Plugin(object):
             log.debug(f'[b64 encoding] {code}')
         execution_code = payload_action.format(code_b64=compatible_url_safe_base64_encode(code),
                                                code=code, delay=expected_delay)
-        return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, blind=True)
+        return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True)
 
     def _get_expected_delay(self):
         # Get current average timing for render() HTTP requests
@@ -541,7 +558,7 @@ class Plugin(object):
         dev = [x - average for x in self.render_req_tm]
         varydev = max(dev) + abs(min(dev))
         # Set delay to 2 second over the average timing
-        delay = self.tm_delay if not self.get('blind') else self.tm_verify_delay
+        delay = self.tm_delay if not self.get('blind_test', False) else self.tm_verify_delay
         if not self.tm_varied and varydev > delay:
             self.tm_varied = True
             log.log(29, "Blind injection timing varies too much. Increase the timing to avoid false positives.")

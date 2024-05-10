@@ -3,6 +3,8 @@ from utils import rand
 
 
 class Mako(python.Python):
+    generic_plugin = True
+
     def init(self):
         self.update_actions({
             'render': {
@@ -13,8 +15,8 @@ class Mako(python.Python):
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}%25'
             },
             'evaluate': {
-                # A way to check for actual Mako syntax
-                'evaluate': """${{'' | u}}${{{code}}}"""
+                # A way to check for actual Mako syntax, comment out division by zero
+                'evaluate': """${{'' | u}}${{{code}}}<%doc>${{1/0}}</%doc>"""
             }
         })
 
