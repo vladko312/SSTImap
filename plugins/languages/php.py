@@ -12,8 +12,8 @@ class Php(Plugin):
                 'render': """{code}""",
                 'header': """print_r('{header}');""",
                 'trailer': """print_r('{trailer}');""",
-                'test_render': f'print({rand.randints[0]});',
-                'test_render_expected': f'{rand.randints[0]}'
+                'test_render': f'print({rand.randints[0]}+{rand.randints[1]});',
+                'test_render_expected': f'{rand.randints[0]+rand.randints[1]}'
             },
             'write': {
                 'call': 'evaluate',

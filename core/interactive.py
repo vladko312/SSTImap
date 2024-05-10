@@ -32,6 +32,8 @@ class InteractiveShell(cmd.Cmd):
             self.do_load_forms(args["load_forms"])
         self.current_plugin = None
         self.checked = False
+        if args["run"]:
+            self.do_run("")
 
     def set_module(self, module):
         self.prompt = f"SSTImap{f' ({module})' if module else ''}> "
@@ -92,6 +94,7 @@ Detection:
   blind_delay [DELAY]                     Delay to detect time-based blind injection (Default: 4 seconds)
   verify_delay [DELAY]                    Delay to verify and exploit time-based blind injection (Default: 30 seconds)
   legacy                                  Toggle including old payloads, that no longer work with newer versions of the engines
+  generic                                 Toggle skipping dedicated payloads for generic engines to speed up detection
 
 Exploitation:
   tpl, tpl_shell                          Prompt for an interactive shell on the template engine
@@ -182,7 +185,8 @@ SSTImap:
         else:
             log.log(26, f'Level: {self.sstimap_options["level"]}')
         log.log(26, f'Engine: {self.sstimap_options["engine"] if self.sstimap_options["engine"] else "*"}'
-                    f'{"+" if not self.sstimap_options["engine"] and self.sstimap_options["legacy"] else ""}')
+                    f'{"+" if not self.sstimap_options["engine"] and self.sstimap_options["legacy"] else ""}'
+                    f'{"»" if not self.sstimap_options["engine"] and self.sstimap_options["skip_generic"] else ""}')
         if self.sstimap_options["crawl_depth"] > 0:
             log.log(26, f'Crawler depth: {self.sstimap_options["crawl_depth"]}')
             if self.sstimap_options["crawl_exclude"]:
@@ -601,6 +605,12 @@ SSTImap:
         overwrite = not self.sstimap_options["legacy"]
         log.log(24, f'Value of \'legacy\' is set to {overwrite}')
         self.sstimap_options["legacy"] = overwrite
+
+    def do_generic(self, line):
+        """Switch skip_generic option"""
+        overwrite = not self.sstimap_options["skip_generic"]
+        log.log(24, f'Value of \'skip_generic\' is set to {overwrite}')
+        self.sstimap_options["skip_generic"] = overwrite
 
 # Exploitation commands
 

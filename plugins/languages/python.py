@@ -8,10 +8,10 @@ class Python(Plugin):
     def language_init(self):
         self.update_actions({
             'render': {
-                'render': """str({code})""",
+                'render': """{code}""",
                 'header': """'{header}'+""",
                 'trailer': """+'{trailer}'""",
-                'test_render': f"""'{rand.randstrings[0]}'.join('{rand.randstrings[1]}')""",
+                'test_render': f"""str('{rand.randstrings[0]}'.join('{rand.randstrings[1]}'))""",
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
             },
             'write': {
@@ -29,7 +29,7 @@ class Python(Plugin):
             },
             'evaluate': {
                 'call': 'render',
-                'evaluate': """{code}""",
+                'evaluate': """str({code})""",
                 'test_os': """'-'.join([__import__('os').name, __import__('sys').platform])""",
                 'test_os_expected': r'^[\w-]+$'
             },

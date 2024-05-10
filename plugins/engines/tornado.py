@@ -3,6 +3,7 @@ from utils import rand
 
 
 class Tornado(python.Python):
+    generic_plugin = True
     
     def init(self):
 
@@ -11,11 +12,12 @@ class Tornado(python.Python):
                 'render': '{code}',
                 'header': '{{{{{header}}}}}',
                 'trailer': '{{{{{trailer}}}}}',
-                'test_render': f"""{{{{'{rand.randstrings[0]}'}}}}{{% raw '{rand.randstrings[0]}'.join('{rand.randstrings[1]}') %}}{{{{'{rand.randstrings[1]}'}}}}""",
+                'test_render': f"""{{{{'{rand.randstrings[0]}'}}}}{{#comment#}}{{% raw '{rand.randstrings[0]}'.join('{rand.randstrings[1]}') %}}{{{{'{rand.randstrings[1]}'}}}}""",
                 'test_render_expected': f'{rand.randstrings[0] + rand.randstrings[0].join(rand.randstrings[1]) + rand.randstrings[1]}'
             },
             'evaluate': {
-                'evaluate': """{{{{{code}}}}}"""
+                # Using raw blocks to check for actual Tornado syntax
+                'evaluate': """{{% raw {code} %}}"""
             }
         })
 

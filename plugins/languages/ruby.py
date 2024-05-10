@@ -7,10 +7,10 @@ class Ruby(Plugin):
     def language_init(self):
         self.update_actions({
             'render': {
-                'render': '"#{{{code}}}"',
+                'render': '{code}',
                 'header': """'{header}'+""",
                 'trailer': """+'{trailer}'""",
-                'test_render': f"""{rand.randints[0]}*{rand.randints[1]}""",
+                'test_render': f"""({rand.randints[0]}*{rand.randints[1]}).to_s""",
                 'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
             },
             'write': {
@@ -20,21 +20,21 @@ class Ruby(Plugin):
             },
             'read': {
                 'call': 'evaluate',
-                'read': """(require'base64';Base64.encode64(File.binread("{path}"))).to_s""",
+                'read': """require'base64';Base64.encode64(File.binread("{path}"))""",
             },
             'md5': {
                 'call': 'evaluate',
-                'md5': """(require'digest';Digest::MD5.file("{path}")).to_s"""
+                'md5': """require'digest';Digest::MD5.file("{path}")"""
             },
             'evaluate': {
+                'evaluate': """({code}).to_s""",
                 'call': 'render',
-                'evaluate': """{code}""",
                 'test_os': """RUBY_PLATFORM""",
                 'test_os_expected': r'^[\w._-]+$'
             },
             'execute': {
                 'call': 'evaluate',
-                'execute': """(require'base64';%x(#{{Base64.urlsafe_decode64('{code_b64}')}})).to_s""",
+                'execute': """require'base64';%x(#{{Base64.urlsafe_decode64('{code_b64}')}})""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
                 'test_cmd_expected': rand.randstrings[2]
             },
