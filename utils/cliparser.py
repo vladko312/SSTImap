@@ -13,7 +13,7 @@ def banner():
                              │                  \033[94m| |
                                                 |_|\033[0m"""
     msg += f"\n\033[94m[*]\033[0m Version: {version}" \
-           f"\n\033[94m[*]\033[0m Author: \033]8;;https://t.me/vladko312\007@vladko312\033]8;;\007" \
+           f"\n\033[94m[*]\033[0m Author: \033]8;;https://github.com/vladko312\007@vladko312\033]8;;\007" \
            f"\n\033[34m[*]\033[0m Based on \033]8;;https://github.com/epinna/tplmap\007Tplmap\033]8;;\007" \
            f"\n\033[91m[!] LEGAL DISCLAIMER\033[0m: Usage of SSTImap for attacking targets without prior mutual " \
            f"consent is illegal.\nIt is the end user's responsibility to obey all applicable local, state and " \
