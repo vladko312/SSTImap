@@ -241,6 +241,7 @@ class Plugin(object):
                 self.set('blind_test', False)
                 log.log(25, f'Possible blind injection turned out to be false positive')
                 continue
+            self.set('blind_test', False)
             detail['blind_false'] = self._inject_verbose
             detail['average'] = sum(self.render_req_tm) / len(self.render_req_tm)
             self.set('blind', True)
