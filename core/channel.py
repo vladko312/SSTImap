@@ -202,6 +202,9 @@ class Channel:
                 result = ""
             else:
                 raise
+        except requests.exceptions.TooManyRedirects as tmr:
+                log.log(25, 'Error: Too Many redirects.')
+                result = ""
         if self.args.get("log_response", False):
             log.debug(f"< {result}")
         return result
