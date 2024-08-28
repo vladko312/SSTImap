@@ -3,7 +3,7 @@ import sys
 import json
 
 
-version = '1.2.1'
+version = '1.2.2'
 
 # Defaults to be overwritten by config.json, ~/.sstimap/config.json, user-supplied config and arguments
 defaults = {
@@ -30,7 +30,8 @@ defaults = {
     "eval_shell": False,
     "os_shell": False,
     "force_overwrite": False,
-    "remote_shell": "/bin/sh"
+    "remote_shell": "/bin/sh",
+    "colour": True
 }
 config = {}
 user_config = {}

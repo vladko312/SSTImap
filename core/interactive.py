@@ -3,7 +3,7 @@ import json
 import os
 
 from utils import config
-from utils.loggers import log
+from utils.loggers import log, no_colour
 from urllib import parse
 from core import checks
 from core.channel import Channel
@@ -17,7 +17,8 @@ class InteractiveShell(cmd.Cmd):
     """Interactive mode shell."""
     def __init__(self, args):
         cmd.Cmd.__init__(self)
-        self.prompt = f"SSTImap> "
+        self.prompt = "SSTImap> "
+        self.core_prompt = ""
         self.sstimap_options = args.copy()
         self.sstimap_options.update({"tpl_shell": False, "tpl_cmd": None, "os_shell": False, "os_cmd": None,
                                      "bind_shell": None, "reverse_shell": None, "upload": None, "download": None,
@@ -36,6 +37,9 @@ class InteractiveShell(cmd.Cmd):
             self.do_run("")
 
     def set_module(self, module):
+        self.core_prompt = module
+        if not self.sstimap_options.get("colour", True):
+            module = no_colour(module)
         self.prompt = f"SSTImap{f' ({module})' if module else ''}> "
 
     def default(self, line):
@@ -50,11 +54,14 @@ class InteractiveShell(cmd.Cmd):
     def do_help(self, line):
         log.log(23, """SSTImap is an automatic SSTI detection and exploitation tool with predetermined and interactive modes.
 
-Information:
+SSTImap:
   ?, help                                 Show this help message
   version                                 Print SSTImap version
   opt, options                            Display current SSTImap options
   info                                    Show information about detection results
+  reload, reload_modules                  Reload all SSTImap plugins and data types
+  config [PATH]                           Update settings from config file or directory
+  color, colour                           Enable/disable colorful output
 
 Target:
   url, target [URL]                       Set target URL (e.g. 'https://example.com/?name=test')
@@ -108,11 +115,7 @@ Exploitation:
   remote_shell [SHELL]                    Set expected system shell on the target (default '/bin/sh')
   overwrite, force_overwrite              Toggle file overwrite when uploading
   up, upload [LOCAL] [REMOTE]             Upload LOCAL to REMOTE files
-  down, download [REMOTE] [LOCAL]         Download REMOTE to LOCAL files
-
-SSTImap:
-  reload, reload_modules                  Reload all SSTImap plugins and data types
-  config [PATH]                           Update settings from config file or directory""")
+  down, download [REMOTE] [LOCAL]         Download REMOTE to LOCAL files""")
 
     def do_version(self, line):
         """Show current SSTImap version"""
@@ -339,6 +342,16 @@ SSTImap:
         overwrite = not self.sstimap_options['empty_forms']
         log.log(24, f'Empty form processing {"en" if overwrite else "dis"}abled.')
         self.sstimap_options['empty_forms'] = overwrite
+
+    def do_color(self, line):
+        colour = not self.sstimap_options['colour']
+        self.sstimap_options['colour'] = colour
+        from utils.loggers import formatter
+        formatter.colour = colour
+        self.set_module(self.core_prompt)
+        log.log(24, f'Colorful output {"en" if colour else "dis"}abled.')
+
+    do_colour = do_color
 
     def do_run(self, line):
         """Check target URL for SSTI vulnerabilities"""

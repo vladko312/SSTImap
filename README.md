@@ -273,7 +273,6 @@ If you plan to contribute something big from this list, inform me to avoid worki
 - [ ] Better documentation (or at least any documentation)
 - [ ] Short arguments as interactive commands?
 - [ ] JSON/plaintext API modes for scripting integrations?
-- [ ] Argument to remove escape codes?
 - [ ] Better integration for Python scripts
 - [ ] Multipart POST data type support
 - [ ] Modules for more customisable requests (second order, reset, non-HTTP)
@@ -288,6 +287,7 @@ If you plan to contribute something big from this list, inform me to avoid worki
 - [x] Automatic languages and engines import
 - [x] More POST data types support
 - [x] Make template and base language evaluation functionality more uniform
+- [x] Argument to remove escape codes?
 
 [1]: https://artsploit.blogspot.co.uk/2016/08/pprce2.html
 [2]: https://opsecx.com/index.php/2016/07/03/server-side-template-injection-in-tornado/

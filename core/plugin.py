@@ -40,6 +40,11 @@ def compatible_url_safe_base64_encode(code):
     code_b64 = base64.urlsafe_b64encode(code_b64).decode(encoding='UTF-8')
     return code_b64
 
+def compatible_base64_encode(code):
+    code_b64p = code.encode(encoding='UTF-8')
+    code_b64p = base64.b64encode(code_b64p).decode(encoding='UTF-8')
+    return code_b64p
+
 
 class Plugin(object):
     generic_plugin = False
@@ -474,7 +479,8 @@ class Plugin(object):
         for chunk in chunk_seq(data, 500):
             log.debug(f'[b64 encoding] {chunk}')
             chunk_b64 = base64.urlsafe_b64encode(chunk)
-            execution_code = payload_write.format(path=remote_path, chunk_b64=chunk_b64)
+            chunk_b64p = base64.b64encode(chunk)
+            execution_code = payload_write.format(path=remote_path, chunk_b64=chunk_b64, chunk_b64p=chunk_b64p)
             getattr(self, call_name)(code=execution_code)
         if self.get('blind'):
             log.log(25, 'Blind upload can\'t check the upload correctness, check manually')
@@ -495,8 +501,15 @@ class Plugin(object):
         if not action or not payload or not call_name or not hasattr(self, call_name):
             return
         if '{code_b64}' in payload:
+            log.debug(f'[b64u encoding] {code}')
+        if '{code_b64p}' in payload:
             log.debug(f'[b64 encoding] {code}')
-        execution_code = payload.format(code_b64=compatible_url_safe_base64_encode(code), code=code)
+        code_b64 = compatible_url_safe_base64_encode(code)
+        code_b64p = compatible_base64_encode(code)
+        clen = len(code)
+        clen64 = len(code_b64)
+        clen64p = len(code_b64p)
+        execution_code = payload.format(code_b64=code_b64, code=code, code_b64p=code_b64p, clen=clen, clen64=clen64, clen64p=clen64p)
         return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=blind)
 
     def execute(self, code, **kwargs):
@@ -511,8 +524,15 @@ class Plugin(object):
         if not action or not payload or not call_name or not hasattr(self, call_name):
             return
         if '{code_b64}' in payload:
+            log.debug(f'[b64u encoding] {code}')
+        if '{code_b64p}' in payload:
             log.debug(f'[b64 encoding] {code}')
-        execution_code = payload.format(code_b64=compatible_url_safe_base64_encode(code), code=code)
+        code_b64 = compatible_url_safe_base64_encode(code)
+        code_b64p = compatible_base64_encode(code)
+        clen = len(code)
+        clen64 = len(code_b64)
+        clen64p = len(code_b64p)
+        execution_code = payload.format(code_b64=code_b64, code_b64p=code_b64p, code=code, clen=clen, clen64=clen64, clen64p=clen64p)
         result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=blind)
         return result.replace('\\n', '\n') if type(result) == str else result
 
@@ -529,9 +549,16 @@ class Plugin(object):
             return
         expected_delay = self._get_expected_delay()
         if '{code_b64}' in payload_action:
+            log.debug(f'[b64u encoding] {code}')
+        if '{code_b64p}' in payload_action:
             log.debug(f'[b64 encoding] {code}')
-        execution_code = payload_action.format(code_b64=compatible_url_safe_base64_encode(code),
-                                               code=code, delay=expected_delay)
+        code_b64 = compatible_url_safe_base64_encode(code)
+        code_b64p = compatible_base64_encode(code)
+        clen = len(code)
+        clen64 = len(code_b64)
+        clen64p = len(code_b64p)
+        execution_code = payload_action.format(code_b64=code_b64, clen=clen, clen64=clen64, clen64p=clen64p,
+                                               code_b64p=code_b64p, code=code, delay=expected_delay)
         return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True)
 
     def execute_blind(self, code, **kwargs):
@@ -547,9 +574,16 @@ class Plugin(object):
             return
         expected_delay = self._get_expected_delay()
         if '{code_b64}' in payload_action:
+            log.debug(f'[b64u encoding] {code}')
+        if '{code_b64p}' in payload_action:
             log.debug(f'[b64 encoding] {code}')
-        execution_code = payload_action.format(code_b64=compatible_url_safe_base64_encode(code),
-                                               code=code, delay=expected_delay)
+        code_b64 = compatible_url_safe_base64_encode(code)
+        code_b64p = compatible_base64_encode(code)
+        clen = len(code)
+        clen64 = len(code_b64)
+        clen64p = len(code_b64p)
+        execution_code = payload_action.format(code_b64=code_b64, clen=clen, clen64=clen64, clen64p=clen64p,
+                                               code_b64p=code_b64p, code=code, delay=expected_delay)
         return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True)
 
     def _get_expected_delay(self):

@@ -18,6 +18,18 @@ def main():
     args = vars(cliparser.options)
     args = config_args(args)
     args['version'] = version
+    from utils.loggers import formatter, no_colour
+    formatter.colour = args.get("colour", True)
+    if formatter.colour:
+        print(cliparser.banner())
+    else:
+        print(no_colour(cliparser.banner()))
+    load_plugins()
+    from core.plugin import loaded_plugins
+    log.log(26, f"Loaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
+    load_data_types()
+    from core.data_type import loaded_data_types
+    log.log(26, f"Loaded request body types: {len(loaded_data_types)}\n")
     if not (args['url'] or args['interactive'] or args['load_urls'] or args['load_forms']):
         # no target specified
         log.log(22, 'SSTImap requires target URL (-u, --url), URLs/forms file (--load-urls / --load-forms) '
@@ -51,13 +63,6 @@ def load_data_types():
 
 
 if __name__ == '__main__':
-    print(cliparser.banner())
-    load_plugins()
-    from core.plugin import loaded_plugins
-    log.log(26, f"Loaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
-    load_data_types()
-    from core.data_type import loaded_data_types
-    log.log(26, f"Loaded request body types: {len(loaded_data_types)}\n")
     try:
         main()
     except (KeyboardInterrupt, EOFError):
