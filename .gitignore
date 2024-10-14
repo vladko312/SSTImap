@@ -1,5 +1,6 @@
 # SSTImap custom plugins
 plugins/custom/*
+plugins/SEP/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

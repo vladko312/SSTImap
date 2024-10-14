@@ -1,5 +1,5 @@
 # Shared closures
-close_single_double_quotes = ['1\'', '1"']
+close_single_double_quotes = ["1'", '1"']
 integer = ['1']
 string = ['"1"']
 close_dict = ['}', ':1}']

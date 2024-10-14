@@ -1,5 +1,5 @@
 from plugins.languages import php
-from plugins.languages import bash
+from core import bash
 from utils import rand
 
 
@@ -12,8 +12,8 @@ class Twig_v1(php.Php):
         self.update_actions({
             'render': {
                 'render': '{code}',
-                'header': '{{{{{header}}}}}',
-                'trailer': '{{{{{trailer}}}}}',
+                'header': '{{{{{header[0]}+{header[1]}}}}}',
+                'trailer': '{{{{{trailer[0]}+{trailer[1]}}}}}',
                 # {{7*'7'}} and a{#b#}c work in freemarker as well
                 # {%% set a=%i*%i %%}{{a}} works in Nunjucks as well
                 # "sameas" worked in 1.x but was replaced by "same as" in 2.x

@@ -7,8 +7,8 @@ class Jinja2(python.Python):
         self.update_actions({
             'render': {
                 'render': '{code}',
-                'header': '{{{{{header}}}}}',
-                'trailer': '{{{{{trailer}}}}}',
+                'header': '{{{{{header[0]}+{header[1]}}}}}',
+                'trailer': '{{{{{trailer[0]}+{trailer[1]}}}}}',
                 'test_render': f'{{{{({rand.randints[0]},{rand.randints[1]}*{rand.randints[2]})|e}}}}',
                 'test_render_expected': f'{(rand.randints[0],rand.randints[1]*rand.randints[2])}'
             },

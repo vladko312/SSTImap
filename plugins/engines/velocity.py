@@ -7,8 +7,8 @@ class Velocity(java.Java):
         self.update_actions({
             'render': {
                 'render': '{code}',
-                'header': '\n#set($h={header})\n${{h}}\n',
-                'trailer': '\n#set($t={trailer})\n${{t}}\n',
+                'header': '\n#set($h={header[0]}+{header[1]})\n${{h}}\n',
+                'trailer': '\n#set($t={trailer[0]}+{trailer[1]})\n${{t}}\n',
                 'test_render': f'#set($c={rand.randints[0]}*{rand.randints[1]})\n${{c}}\n',
                 'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
             },

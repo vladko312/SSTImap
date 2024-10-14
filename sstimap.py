@@ -3,7 +3,7 @@ import sys
 if sys.version_info.major != 3 or sys.version_info.minor < 6:
     print('\033[91m[!]\033[0m SSTImap was created for Python3.6 and above. Python'+str(sys.version_info.major)+'.'+str(sys.version_info.minor)+' is not supported!')
     sys.exit()
-if sys.version_info.minor > 11:
+if sys.version_info.minor > 13:
     print('\033[33m[!]\033[0m This version of SSTImap was not tested with Python3.'+str(sys.version_info.minor))
 import importlib
 import os
@@ -36,7 +36,7 @@ def main():
                     'or interactive mode (-i, --interactive)')
     elif args['interactive']:
         # interactive mode
-        log.log(23, 'Starting SSTImap in interactive mode. Type \'help\' to see the details.')
+        log.log(23, "Starting SSTImap in interactive mode. Type 'help' to see the details.")
         InteractiveShell(args).cmdloop()
     else:
         # predetermined mode

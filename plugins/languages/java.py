@@ -1,11 +1,12 @@
 from core.plugin import Plugin
-from plugins.languages import bash
+from core import bash
 from utils import closures
 from utils import rand
 import re
 
 
 class Java(Plugin):
+    header_type = "add"
     def language_init(self):
         self.update_actions({
             'execute': {
@@ -23,7 +24,7 @@ class Java(Plugin):
                 'md5': """$(type -p md5 md5sum)<'{path}'|head -c 32"""
             },
             # Prepared to used only for blind detection. Not useful for time-boolean
-            # tests (since && characters can\'t be used) but enough for the detection phase.
+            # tests (since && characters can't be used) but enough for the detection phase.
             'blind': {
                 'call': 'execute_blind',
                 'test_bool_true': 'true',

@@ -1,15 +1,16 @@
 from core.plugin import Plugin
-from plugins.languages import bash
+from core import bash
 from utils import rand
 
 
 class Ruby(Plugin):
+    header_type = "add"
     def language_init(self):
         self.update_actions({
             'render': {
                 'render': '{code}',
-                'header': """'{header}'+""",
-                'trailer': """+'{trailer}'""",
+                'header': """({header[0]}+{header[1]}).to_s+""",
+                'trailer': """+({trailer[0]}+{trailer[1]}).to_s""",
                 'test_render': f"""({rand.randints[0]}*{rand.randints[1]}).to_s""",
                 'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
             },

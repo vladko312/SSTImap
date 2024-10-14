@@ -1,12 +1,11 @@
 import json
 import os
-import telnetlib
-import urllib
 from urllib import parse
 import socket
 from utils.loggers import log
 from core.clis import Shell, MultilineShell
 from core.tcpserver import TcpServer
+from core.tcpclient import TcpClient
 from utils.crawler import crawl, find_forms
 from core.channel import Channel
 
@@ -202,10 +201,12 @@ def check_template_injection(channel):
                 if not thread.is_alive():
                     continue
                 try:
-                    telnetlib.Telnet(urlparsed.hostname.decode(), bind_shell_port, timeout=5).interact()
-                    # If telnetlib does not rise an exception, we can assume that
-                    # ended correctly and return from `run()`
+                    a = TcpClient(urlparsed.hostname.decode(), bind_shell_port, timeout=5)
+                    a.shell()
                     return current_plugin
+                except (KeyboardInterrupt, EOFError):
+                    print()
+                    log.log(26, 'Exiting bind shell')
                 except Exception as e:
                     log.debug(f"Error connecting to {urlparsed.hostname}:{bind_shell_port} {e}")
         else:
@@ -310,7 +311,7 @@ def scan_website(args):
             url_args = args.copy()
             url_args['url'] = form[0]
             url_args['method'] = form[1]
-            url_args['data'] = urllib.parse.parse_qs(form[2], keep_blank_values=True)
+            url_args['data'] = parse.parse_qs(form[2], keep_blank_values=True)
             channel = Channel(url_args)
             result = check_template_injection(channel)
             if channel.data.get('engine'):

@@ -3,7 +3,7 @@ import hashlib
 
 
 def quote(command):
-    return command.replace("\\", "\\\\").replace("\"", "\\\"")
+    return command.replace("\\", "\\\\").replace('"', '\\"')
 
 
 def base64encode(data):

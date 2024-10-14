@@ -9,8 +9,8 @@ class Cheetah(python.Python):
         self.update_actions({
             'render': {
                 'render': '{code}',
-                'header': '${{{header}}}',
-                'trailer': '${{{trailer}}}',
+                'header': '${{{header[0]}+{header[1]}}}',
+                'trailer': '${{{trailer[0]}+{trailer[1]}}}',
                 # ${{getVar('a', '').replace($getVar('a', ''), '')}} is a way to trigger getVar and get empty result
                 'test_render': f"""${{getVar('a', '').replace($getVar('a', ''), '')}}${{'{rand.randstrings[0]}'.join('{rand.randstrings[1]}')}}""",
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'

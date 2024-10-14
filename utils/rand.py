@@ -2,7 +2,8 @@ import random
 import string
 
 
-def randint_n(n):
+def randint_n(n, m=9):
+    # m - max first digit
     # If the length is 1, starts from 2 to avoid
     # number repetition on evaluation e.g. 1*8=8
     # creating false positives
@@ -10,7 +11,7 @@ def randint_n(n):
         range_start = 2
     else:
         range_start = 10**(n-1)
-    range_end = (10**n)-1
+    range_end = (m+1)*(10**(n-1))-1
     return random.randint(range_start, range_end)
 
 

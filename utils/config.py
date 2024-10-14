@@ -3,7 +3,11 @@ import sys
 import json
 
 
-version = '1.2.2'
+version = '1.2.3'
+min_version = {
+    'plugin': '1.2.3',
+    'data_type': '1.2.0'
+}
 
 # Defaults to be overwritten by config.json, ~/.sstimap/config.json, user-supplied config and arguments
 defaults = {
@@ -79,3 +83,20 @@ def config_args(args):
     args["data_params"] = {x.split("=", 1)[0]: x.split("=", 1)[1] for x in args["data_params"]}
     config_update(res, args)
     return res
+
+
+def compare_versions(a, b):
+    av = [int(x) for x in a.split("#")[0].split(".")]
+    bv = [int(x) for x in b.split("#")[0].split(".")]
+    l = min(len(av), len(bv))
+    for i in range(l):
+        if av[i] < bv[i]:
+            return "<"
+        elif av[i] > bv[i]:
+            return ">"
+    # a.b.c = a.b.c.0 < a.b.c.d
+    if len(av) < len(bv):
+        return "<"
+    elif len(av) > len(bv):
+        return ">"
+    return "="

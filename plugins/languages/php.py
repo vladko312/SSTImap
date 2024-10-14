@@ -1,17 +1,18 @@
-from plugins.languages import bash
+from core import bash
 from core.plugin import Plugin
 from utils import closures
 from utils import rand
 
 
 class Php(Plugin):
+    header_type = "add"
     def language_init(self):
         self.update_actions({
             'render': {
                 'call': 'inject',
                 'render': """{code}""",
-                'header': """print_r('{header}');""",
-                'trailer': """print_r('{trailer}');""",
+                'header': """print({header[0]}+{header[1]});""",
+                'trailer': """print({trailer[0]}+{trailer[1]});""",
                 'test_render': f'print({rand.randints[0]}+{rand.randints[1]});',
                 'test_render_expected': f'{rand.randints[0]+rand.randints[1]}'
             },
