@@ -1,6 +1,6 @@
 from plugins.languages import php
 from utils import rand
-from plugins.languages import bash
+from core import bash
 
 
 class Php_generic(php.Php):
@@ -9,8 +9,8 @@ class Php_generic(php.Php):
             'render': {
                 'render': '{code}',
                 #TODO: Add pre_header later: ini_set("error_reporting", "0")
-                'header': '"{header}"',
-                'trailer': '"{trailer}"',
+                'header': '{header[0]}+{header[1]}',
+                'trailer': '{trailer[0]}+{trailer[1]}',
                 'test_render': f'"{rand.randints[0]}"+"{rand.randints[1]}"',
                 'test_render_expected': f'{rand.randints[0]+rand.randints[1]}'
             },

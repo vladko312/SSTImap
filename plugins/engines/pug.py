@@ -10,8 +10,8 @@ class Pug(javascript.Javascript):
             'render': {
                 'call': 'inject',
                 'render': '{code}',
-                'header': '\n= {header}\n',
-                'trailer': '\n= {trailer}\n',
+                'header': '\n= {header[0]}+{header[1]}\n',
+                'trailer': '\n= {trailer[0]}+{trailer[1]}\n',
                 'test_render': f'|#{{typeof({rand.randints[0]})+{rand.randints[1]}}}',
                 'test_render_expected': f'number{rand.randints[1]}'
             },

@@ -1,17 +1,18 @@
-from plugins.languages import bash
+from core import bash
 from utils import closures
 from core.plugin import Plugin
 from utils import rand
 
 
 class Javascript(Plugin):
+    header_type = "add"
     def language_init(self):
         self.update_actions({
             'render': {
                 'call': 'inject',
                 'render': """{code}""",
-                'header': """'{header}'+""",
-                'trailer': """+'{trailer}'""",
+                'header': """({header[0]}+{header[1]}).toString()+""",
+                'trailer': """+({trailer[0]}+{trailer[1]}).toString()""",
                 'test_render': f'typeof({rand.randints[0]})+{rand.randints[1]}',
                 'test_render_expected': f'number{rand.randints[1]}'
             },
@@ -27,7 +28,7 @@ class Javascript(Plugin):
             },
             'md5': {
                 'call': 'render',
-                'md5': "require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest(\"hex\")"
+                'md5': "require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest('hex')"
             },
             'evaluate': {
                 'call': 'render',

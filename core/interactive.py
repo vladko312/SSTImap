@@ -44,7 +44,7 @@ class InteractiveShell(cmd.Cmd):
 
     def default(self, line):
         log.log(22, f'Invalid interactive command: {line.split(" ", 1)[0].lower()}. '
-                    f'Type \'help\' to see available commands.')
+                    f"Type 'help' to see available commands.")
 
     def emptyline(self):
         pass
@@ -73,9 +73,9 @@ Request:
   mark, marker [MARKER]                   Set string as injection marker (default '*')
   data, post {rm} [DATA]                  Add request body data to send (e.g. 'param=value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, clears all data
   type, data_type [TYPE]                  Select request body processing script for a specific data type (default 'form')
-  data_params {rm} [PARAM]                Add request body processing param as KEY=VALUE. To remove by key, use "data rm KEY". Whithout arguments, clears all params
-  header, headers {rm} [HEADER]           Add header to send (e.g. 'Header: Value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, clears all headers
-  cookie, cookies {rm} [COOKIE]           Cookie to send (e.g. 'Field=Value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, clears all cookies
+  data_params {rm} [PARAM]                Add request body processing param as KEY=VALUE. To remove by key, use "data_params rm KEY". Whithout arguments, clears all params
+  header, headers {rm} [HEADER]           Add header to send (e.g. 'Header: Value'). To remove by prefix, use "header rm PREFIX". Whithout arguments, clears all headers
+  cookie, cookies {rm} [COOKIE]           Cookie to send (e.g. 'Field=Value'). To remove by prefix, use "cookie rm PREFIX". Whithout arguments, clears all cookies
   method, http_method [METHOD]            Set HTTP method to use (default 'GET')
   agent, user_agent [AGENT]               Set User-Agent header value to use
   random, random_agent                    Toggle using random User-Agent header value from a list of desktop browsers on every request

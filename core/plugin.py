@@ -1,5 +1,5 @@
 from utils.strings import chunk_seq, md5
-from utils import rand
+from utils import rand, config
 from utils.loggers import log
 import re
 import itertools
@@ -10,15 +10,21 @@ import time
 import sys
 
 loaded_plugins = {}
+failed_plugins = []
 
 
 def unload_plugins():
     global loaded_plugins
+    global failed_plugins
     for k in loaded_plugins:
         for p in loaded_plugins[k]:
             if p.__module__ in sys.modules:
                 del sys.modules[p.__module__]
     loaded_plugins = {}
+    for p in failed_plugins:
+        if p.__module__ in sys.modules:
+            del sys.modules[p.__module__]
+    failed_plugins = []
 
 
 def _recursive_update(d, u):
@@ -48,6 +54,8 @@ def compatible_base64_encode(code):
 
 class Plugin(object):
     generic_plugin = False
+    header_type = 'cat'
+    sstimap_version = config.version
 
     def __init__(self, channel):
         # HTTP channel
@@ -73,6 +81,14 @@ class Plugin(object):
     def __init_subclass__(cls, **kwargs):
         module = cls.__module__.split(".")
         if module[0] == "plugins":
+            if config.compare_versions(cls.sstimap_version, config.min_version['plugin']) == "<":
+                log.log(22, f'''{cls.__name__} plugin is outdated and cannot be loaded''')
+                failed_plugins.append(cls)
+                return
+            if config.compare_versions(cls.sstimap_version, config.version) == ">":
+                log.log(22, f'''{cls.__name__} plugin requires SSTImap update and cannot be loaded''')
+                failed_plugins.append(cls)
+                return
             if module[1] in loaded_plugins:
                 loaded_plugins[module[1]].append(cls)
             else:
@@ -135,7 +151,7 @@ class Plugin(object):
                 render = self.get('render', '{code}').format(code='*')
                 wrapper = self.get('wrapper', '{code}').format(code=render)
                 suffix = self.get('suffix', '')
-                log.log(24, f'''{self.plugin} plugin has confirmed injection with tag \'{repr(prefix).strip("'")}{repr(wrapper).strip("'")}{repr(suffix).strip("'")}\'''')
+                log.log(24, f'''{self.plugin} plugin has confirmed injection with tag '{repr(prefix).strip("'")}{repr(wrapper).strip("'")}{repr(suffix).strip("'")}' ''')
                 # Clean up any previous unreliable render data
                 self.delete('unreliable_render')
                 self.delete('unreliable')
@@ -201,8 +217,8 @@ class Plugin(object):
         payload = render_action.get('test_render')
         # Probe with payload wrapped by header and trailer, no suffix or prefix.
         # Test if contained, since the page contains other garbage
-        if expected in self.render(code=payload, header='', trailer='', header_rand=0,
-                                   trailer_rand=0, prefix='', suffix=''):
+        if expected in self.render(code=payload, header='', trailer='', header_rand=[0,0],
+                                   trailer_rand=[0,0], prefix='', suffix=''):
             # Print if the first found unreliable render
             if not self.get('unreliable_render'):
                 log.log(25, f"{self.plugin} plugin has detected unreliable rendering with tag "
@@ -270,9 +286,9 @@ class Plugin(object):
             # Prepare base operation to be evaluated server-side
             expected = render_action.get('test_render_expected')
             payload = render_action.get('test_render')
-            header_rand = rand.randint_n(10)
+            header_rand = [rand.randint_n(10,4),rand.randint_n(10,4)]
             header = render_action.get('header')  # .format(header=header_rand)
-            trailer_rand = rand.randint_n(10)
+            trailer_rand = [rand.randint_n(10,4),rand.randint_n(10,4)]
             trailer = render_action.get('trailer')  # .format(trailer=trailer_rand)
             # First probe with payload wrapped by header and trailer, no suffix or prefix
             if expected == self.render(code=payload, header=header, trailer=trailer, header_rand=header_rand,
@@ -331,15 +347,16 @@ class Plugin(object):
     def render(self, code, **kwargs):
         # If header == '', do not send headers
         header_template = kwargs.get('header')
+        header_type = self.header_type
         if header_template != '':
             header_template = kwargs.get('header', self.get('header'))
             if not header_template:
                 header_template = self.actions.get('render', {}).get('header')
             if header_template:
-                header_rand = kwargs.get('header_rand', self.get('header_rand', rand.randint_n(10)))
+                header_rand = kwargs.get('header_rand', self.get('header_rand', [rand.randint_n(10,4), rand.randint_n(10,4)]))
                 header = header_template.format(header=header_rand)
         else:
-            header_rand = 0
+            header_rand = [0, 0]
             header = ''
         # If trailer == '', do not send headers
         trailer_template = kwargs.get('trailer')
@@ -348,11 +365,12 @@ class Plugin(object):
             if not trailer_template:
                 trailer_template = self.actions.get('render', {}).get('trailer')
             if trailer_template:
-                trailer_rand = kwargs.get('trailer_rand', self.get('trailer_rand', rand.randint_n(10)))
+                trailer_rand = kwargs.get('trailer_rand', self.get('trailer_rand', [rand.randint_n(10,4), rand.randint_n(10,4)]))
                 trailer = trailer_template.format(trailer=trailer_rand)
         else:
-            trailer_rand = 0
+            trailer_rand = [0, 0]
             trailer = ''
+        # Ensure constant length
         payload_template = kwargs.get('render', self.get('render'))
         if not payload_template:
             payload_template = self.actions.get('render', {}).get('render')
@@ -365,6 +383,15 @@ class Plugin(object):
         wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
         injection = wrapper.format(code=header) + wrapper.format(code=payload) + wrapper.format(code=trailer)
+        if header_type == "add":
+            header_expected = str(sum(header_rand))
+            trailer_expected = str(sum(trailer_rand))
+        elif header_type == "cat":
+            header_expected = "".join([str(x) for x in header_rand])
+            trailer_expected = "".join([str(x) for x in trailer_rand])
+        else:
+            header_expected = ""
+            trailer_expected = ""
         # Save the average HTTP request time of rendering in order
         # to better tone the blind request timeouts.
         # Reset wrapper to empty, as it was already applied
@@ -378,9 +405,9 @@ class Plugin(object):
                 return result_raw
             # Cut the result using the header and trailer if specified
             if header:
-                before, _, result_after = result_raw.partition(str(header_rand))
+                before, _, result_after = result_raw.partition(header_expected)
             if trailer and result_after:
-                result, _, after = result_after.partition(str(trailer_rand))
+                result, _, after = result_after.partition(trailer_expected)
             return result.strip() if result else result
 
     def set(self, key, value):
@@ -480,7 +507,13 @@ class Plugin(object):
             log.debug(f'[b64 encoding] {chunk}')
             chunk_b64 = base64.urlsafe_b64encode(chunk)
             chunk_b64p = base64.b64encode(chunk)
-            execution_code = payload_write.format(path=remote_path, chunk_b64=chunk_b64, chunk_b64p=chunk_b64p)
+            lens = {
+                'path': len(remote_path),
+                'clen': len(chunk),
+                'clen64': len(chunk_b64),
+                'clen64p': len(chunk_b64p)
+            }
+            execution_code = payload_write.format(path=remote_path, chunk_b64=chunk_b64, chunk_b64p=chunk_b64p, lens=lens)
             getattr(self, call_name)(code=execution_code)
         if self.get('blind'):
             log.log(25, 'Blind upload can\'t check the upload correctness, check manually')
@@ -506,10 +539,12 @@ class Plugin(object):
             log.debug(f'[b64 encoding] {code}')
         code_b64 = compatible_url_safe_base64_encode(code)
         code_b64p = compatible_base64_encode(code)
-        clen = len(code)
-        clen64 = len(code_b64)
-        clen64p = len(code_b64p)
-        execution_code = payload.format(code_b64=code_b64, code=code, code_b64p=code_b64p, clen=clen, clen64=clen64, clen64p=clen64p)
+        lens = {
+            'clen': len(code),
+            'clen64': len(code_b64),
+            'clen64p': len(code_b64p)
+        }
+        execution_code = payload.format(code_b64=code_b64, code=code, code_b64p=code_b64p, lens=lens)
         return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=blind)
 
     def execute(self, code, **kwargs):
@@ -529,10 +564,12 @@ class Plugin(object):
             log.debug(f'[b64 encoding] {code}')
         code_b64 = compatible_url_safe_base64_encode(code)
         code_b64p = compatible_base64_encode(code)
-        clen = len(code)
-        clen64 = len(code_b64)
-        clen64p = len(code_b64p)
-        execution_code = payload.format(code_b64=code_b64, code_b64p=code_b64p, code=code, clen=clen, clen64=clen64, clen64p=clen64p)
+        lens = {
+            'clen': len(code),
+            'clen64': len(code_b64),
+            'clen64p': len(code_b64p)
+        }
+        execution_code = payload.format(code_b64=code_b64, code_b64p=code_b64p, code=code, lens=lens)
         result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=blind)
         return result.replace('\\n', '\n') if type(result) == str else result
 
@@ -554,10 +591,13 @@ class Plugin(object):
             log.debug(f'[b64 encoding] {code}')
         code_b64 = compatible_url_safe_base64_encode(code)
         code_b64p = compatible_base64_encode(code)
-        clen = len(code)
-        clen64 = len(code_b64)
-        clen64p = len(code_b64p)
-        execution_code = payload_action.format(code_b64=code_b64, clen=clen, clen64=clen64, clen64p=clen64p,
+        lens = {
+            'clen': len(code),
+            'clen64': len(code_b64),
+            'clen64p': len(code_b64p),
+            'delay': len(str(expected_delay))
+        }
+        execution_code = payload_action.format(code_b64=code_b64, lens=lens,
                                                code_b64p=code_b64p, code=code, delay=expected_delay)
         return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True)
 
@@ -579,10 +619,13 @@ class Plugin(object):
             log.debug(f'[b64 encoding] {code}')
         code_b64 = compatible_url_safe_base64_encode(code)
         code_b64p = compatible_base64_encode(code)
-        clen = len(code)
-        clen64 = len(code_b64)
-        clen64p = len(code_b64p)
-        execution_code = payload_action.format(code_b64=code_b64, clen=clen, clen64=clen64, clen64p=clen64p,
+        lens = {
+            'clen': len(code),
+            'clen64': len(code_b64),
+            'clen64p': len(code_b64p),
+            'delay': len(str(expected_delay))
+        }
+        execution_code = payload_action.format(code_b64=code_b64, lens=lens,
                                                code_b64p=code_b64p, code=code, delay=expected_delay)
         return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True)
 

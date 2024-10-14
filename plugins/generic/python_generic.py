@@ -7,8 +7,8 @@ class Python_generic(python.Python):
         self.update_actions({
             'render': {
                 'render': '{code}',
-                'header': '"{header}"',
-                'trailer': '"{trailer}"',
+                'header': '{header[0]}+{header[1]}',
+                'trailer': '{trailer[0]}+{trailer[1]}',
                 'test_render': f"'{rand.randstrings[0]}'.join('{rand.randstrings[1]}')",
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
             },

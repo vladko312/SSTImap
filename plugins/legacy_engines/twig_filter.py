@@ -1,5 +1,5 @@
 from plugins.languages import php
-from plugins.languages import bash
+from core import bash
 from utils import rand
 
 
@@ -12,8 +12,8 @@ class Twig_filter(php.Php):
             'render': {
                 'render': '{code}',
                 # Disable errors, so that "system" will not corrupt the output with a warning
-                'header': '{{% for a in {{"0":"error_reporting"}}|map("ini_set") %}}{{% endfor %}}{{{{{header}}}}}',
-                'trailer': '{{{{{trailer}}}}}',
+                'header': '{{% for a in {{"0":"error_reporting"}}|map("ini_set") %}}{{% endfor %}}{{{{{header[0]}+{header[1]}}}}}',
+                'trailer': '{{{{{trailer[0]}+{trailer[1]}}}}}',
                 # {{7*'7'}} and a{#b#}c work in freemarker as well
                 # {%% set a=%i*%i %%}{{a}} works in Nunjucks as well
                 'test_render': f'{{{{(1..3)|filter(x => x < 3)|join("")}}}}{{{{"{rand.randstrings[0]}\n"|nl2br}}}}',

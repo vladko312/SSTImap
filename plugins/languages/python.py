@@ -1,16 +1,17 @@
 from core.plugin import Plugin
 from utils import closures
-from plugins.languages import bash
+from core import bash
 from utils import rand
 
 
 class Python(Plugin):
+    header_type = "add"
     def language_init(self):
         self.update_actions({
             'render': {
                 'render': """{code}""",
-                'header': """'{header}'+""",
-                'trailer': """+'{trailer}'""",
+                'header': """str({header[0]}+{header[1]})+""",
+                'trailer': """+str({trailer[0]}+{trailer[1]})""",
                 'test_render': f"""str('{rand.randstrings[0]}'.join('{rand.randstrings[1]}'))""",
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
             },

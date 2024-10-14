@@ -2,7 +2,7 @@ SSTImap
 ======
 
 [![Version 1.2](https://img.shields.io/badge/version-1.2-green.svg?logo=github)](https://github.com/vladko312/sstimap)
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg?logo=python)](https://www.python.org/downloads/release/python-3110/)
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg?logo=python)](https://www.python.org/downloads/release/python-3130/)
 [![Python 3.6](https://img.shields.io/badge/python-3.6+-yellow.svg?logo=python)](https://www.python.org/downloads/release/python-360/)
 [![GitHub](https://img.shields.io/github/license/vladko312/sstimap?color=green&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.txt)
 [![GitHub last commit](https://img.shields.io/github/last-commit/vladko312/sstimap?color=green&logo=github)](https://github.com/vladko312/sstimap/commits/)
@@ -12,7 +12,7 @@ SSTImap
 
 SSTImap is a penetration testing software that can check websites for Code Injection and Server-Side Template Injection vulnerabilities and exploit them, giving access to the operating system itself.
 
-This tool was developed to be used as an interactive penetration testing tool for SSTI detection and exploitation, which allows more advanced exploitation.
+This tool was developed to be used as an interactive penetration testing tool for SSTI detection and exploitation, which allows more advanced exploitation. More payloads for SSTImap can be found [here](https://github.com/vladko312/extras).
 
 Sandbox break-out techniques came from:
 - James Kett's [Server-Side Template Injection: RCE For The Modern Web App][5]
@@ -26,8 +26,9 @@ Differences with Tplmap
 
 Even though this software is based on Tplmap's code, backwards compatibility is not provided.
 - Interactive mode (`-i`) allowing for easier exploitation and detection
+- Simple evaluation payloads as response markers in case of payload reflection
+- Added new payloads for generic templates, as well as a way to speed up detection using `--skip-generic`
 - Base language _eval()_-like shell (`-x`) or single command (`-X`) execution
-- Added new payloads for generic templates, as well as a way to speed up detection using 
 - Added new payload for _Smarty_ without enabled `{php}{/php}`. Old payload is available as `Smarty_unsecure`.
 - Added new payload for newer versions of _Twig_. Payload for older version is available as `Twig_v1`.
 - User-Agent can be randomly selected from a list of desktop browser agents using `-A`
@@ -223,7 +224,7 @@ Supported template engines
 
 SSTImap supports multiple template engines and _eval()_-like injections.
 
-New payloads are welcome in PRs.
+New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko312/extras#developing-plugins) to speed up development.
 
 | Engine                               | RCE | Blind | Code evaluation | File read | File write |
 |--------------------------------------|-----|-------|-----------------|-----------|------------|
@@ -254,7 +255,7 @@ New payloads are welcome in PRs.
 | Velocity                             | ✓   | ✓     | Java            | ✓         | ✓          |
 | Twig (>1.19 <2.0)                    | ×   | ×     | ×               | ×         | ×          |
 | Dust (> dustjs-helpers@1.5.0)        | ×   | ×     | ×               | ×         | ×          |
-
+More plugins and payloads can be found in [SSTImap Extra Plugins](https://github.com/vladko312/extras) repository.
 
 Burp Suite Plugin
 -----------------

@@ -7,8 +7,8 @@ class Freemarker(java.Java):
         self.update_actions({
             'render': {
                 'render': '{code}',
-                'header': '${{{header}?c}}',
-                'trailer': '${{{trailer}?c}}',
+                'header': '${{({header[0]}+{header[1]})?c}}',
+                'trailer': '${{({trailer[0]}+{trailer[1]})?c}}',
                 'test_render': f"""${{{rand.randints[0]}}}<#--{rand.randints[1]}-->${{{rand.randints[2]}}}""",
                 'test_render_expected': f'{rand.randints[0]}{rand.randints[2]}'
             },

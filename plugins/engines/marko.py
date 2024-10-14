@@ -7,8 +7,8 @@ class Marko(javascript.Javascript):
         self.update_actions({
             'render': {
                 'render': '{code}',
-                'header': '${{"{header}"}}',
-                'trailer': '${{"{trailer}"}}',
+                'header': '${{{header[0]}+{header[1]}}}',
+                'trailer': '${{{trailer[0]}+{trailer[1]}}}',
                 'test_render': f'${{typeof({rand.randints[0]})+{rand.randints[1]}}}',
                 'test_render_expected': f'number{rand.randints[1]}'
             },
@@ -22,7 +22,7 @@ class Marko(javascript.Javascript):
                 'read': """${{require('fs').readFileSync('{path}').toString('base64')}}"""
             },
             'md5': {
-                'md5': "${{require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest(\"hex\")}}"
+                'md5': "${{require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest('hex')}}"
             },
             'evaluate': {
                 'evaluate': """${{eval(Buffer('{code_b64p}', 'base64').toString())}}"""
