@@ -3,6 +3,22 @@ from utils import rand
 
 
 class Smarty_unsecure(php.Php):
+    generic_plugin = True
+    legacy_plugin = True
+    priority = 7
+    plugin_info = {
+        "Description": """Smarty template engine prior to version 3.0 using {php}{/php} tags""",
+        "Usage notes": "Functionality completely covered by the new 'Smarty' plugin.",
+        "Authors": [
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+        "Engine": [
+            "Homepage: https://www.smarty.net/docs/en/",
+            "Github: https://github.com/smarty-php/smarty",
+        ],
+    }
+
     def init(self):
         self.update_actions({
             'render': {

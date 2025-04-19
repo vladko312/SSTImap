@@ -6,6 +6,15 @@ from utils import rand
 
 class Python(Plugin):
     header_type = "add"
+    priority = 8
+    plugin_info = {
+        "Description": """Eval injections in Python. Base for Python-based template engines""",
+        "Authors": [
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap plugin
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+    }
+
     def language_init(self):
         self.update_actions({
             'render': {

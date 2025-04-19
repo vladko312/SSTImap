@@ -4,6 +4,18 @@ from utils import rand
 # TODO: process.mainModule may be undefined, needs replacement
 class Ejs(javascript.Javascript):
     generic_plugin = True
+    priority = 5
+    plugin_info = {
+        "Description": """EJS template engine""",
+        "Authors": [
+            "Yuji Matsunaga @jx6f https://github.com/jx6f",  # Original Tplmap payload
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+        "Engine": [
+            "Homepage: https://ejs.co/",
+            "Github: https://github.com/mde/ejs",
+        ],
+    }
 
     def init(self):
         self.update_actions({

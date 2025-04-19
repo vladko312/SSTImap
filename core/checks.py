@@ -10,24 +10,113 @@ from utils.crawler import crawl, find_forms
 from core.channel import Channel
 
 
+def module_info(line):
+    from core.plugin import loaded_plugins
+    from core.data_type import loaded_data_types
+    if line == '':
+        plugin_message = ""
+        for category in loaded_plugins:
+            plugin_message += f"\033[1m\033[4m{category}\033[0m\n"
+            for plugin in loaded_plugins[category]:
+                mod = ""
+                if plugin.legacy_plugin:
+                    mod += "\033[91mL\033[0m"
+                if plugin.generic_plugin:
+                    mod += "\033[93mG\033[0m"
+                if plugin.__name__.endswith("_generic"):
+                    mod += "\033[96mU\033[0m"
+                if plugin.__mro__[1].__name__ == "Plugin":
+                    mod += "\033[92mB\033[0m"
+                    if plugin.no_tests:
+                        mod += "\033[95mN\033[0m"
+                if plugin.extra_plugin:
+                    mod += "\033[94mE\033[0m"
+                if mod:
+                    mod = f"[{mod}]"
+                plugin_message += f" - {mod}\033[1m{plugin.__name__}\033[0m: {plugin.plugin_info['Description']}\n"
+        log.log(26, f'Plugins by categories:\n{plugin_message}')
+        data_type_message = ""
+        for data_type in loaded_data_types:
+            data_type_message += f" - \033[1m{data_type}\033[0m: {loaded_data_types[data_type].data_type_info['Description']}\n"
+        log.log(26, f'Data types:\n{data_type_message}')
+    else:
+        found = False
+        for category in loaded_plugins:
+            for plugin in loaded_plugins[category]:
+                if plugin.__name__.lower() == line.lower():
+                    found = True
+                    message = f"Plugin \033[1m{plugin.__name__}\033[0m: {plugin.plugin_info['Description']}\n"
+                    mod = []
+                    if plugin.legacy_plugin:
+                        mod.append("\033[91mL\033[0megacy")
+                    if plugin.generic_plugin:
+                        mod.append("\033[93mG\033[0meneric")
+                    if plugin.__name__.endswith("_generic"):
+                        mod.append("\033[96mU\033[0mniversal")
+                    if plugin.__mro__[1].__name__ == "Plugin":
+                        mod.append("\033[92mB\033[0mase")
+                        if plugin.no_tests:
+                            mod.append("\033[95mN\033[0mo tests")
+                    if plugin.extra_plugin:
+                        mod.append("\033[94mE\033[0mxtra")
+                    if mod:
+                        message += f"{'; '.join(mod)}\n"
+                    if "Usage notes" in plugin.plugin_info:
+                        message += f"{plugin.plugin_info['Usage notes']}\n"
+                    if "Authors" in plugin.plugin_info:
+                        message += "Authors:\n"
+                        for author in plugin.plugin_info['Authors']:
+                            message += f" - {author}\n"
+                    if "References" in plugin.plugin_info:
+                        message += "References:\n"
+                        for ref in plugin.plugin_info['References']:
+                            message += f" - {ref}\n"
+                    if "Engine" in plugin.plugin_info:
+                        message += "Engine documentation:\n"
+                        for ref in plugin.plugin_info['Engine']:
+                            message += f" - {ref}\n"
+                    log.log(24, message)
+        for data_type in loaded_data_types:
+            if data_type.lower() == line.lower():
+                found = True
+                message = f"Data type \033[1m{data_type}\033[0m: {loaded_data_types[data_type].data_type_info['Description']}\n"
+                if "Usage notes" in loaded_data_types[data_type].data_type_info:
+                    message += f"{loaded_data_types[data_type].data_type_info['Usage notes']}\n"
+                if "Authors" in loaded_data_types[data_type].data_type_info:
+                    message += "Authors:\n"
+                    for author in loaded_data_types[data_type].data_type_info['Authors']:
+                        message += f" - {author}\n"
+                if "References" in loaded_data_types[data_type].data_type_info:
+                    message += "References:\n"
+                    for ref in loaded_data_types[data_type].data_type_info['References']:
+                        message += f" - {ref}\n"
+                if "Options" in loaded_data_types[data_type].data_type_info:
+                    message += "Data type options:\n"
+                    for ref in loaded_data_types[data_type].data_type_info['Options']:
+                        message += f" - {ref}\n"
+                log.log(24, message)
+        if not found:
+            log.log(25, "No module found with provided name.")
+
+
 def plugins(legacy=False, quick_generic=False):
     from core.plugin import loaded_plugins
     plugin_list = []
-    if legacy:
-        plugin_list += loaded_plugins.get("legacy_engines", [])
-    plugin_list += loaded_plugins.get("engines", [])
-    plugin_list += loaded_plugins.get("languages", [])
-    plugin_list += loaded_plugins.get("custom", [])
     for group in loaded_plugins:
-        if group not in ["legacy_engines", "engines", "languages", "custom", "generic"]:
-            plugin_list += loaded_plugins.get(group, [])
-    plugin_list += loaded_plugins.get("generic", [])
+        plugin_list += loaded_plugins.get(group, [])
     if quick_generic:
         all_plugin_list = plugin_list
         plugin_list = []
         for p in all_plugin_list:
             if not p.generic_plugin:
                 plugin_list.append(p)
+    if not legacy:
+        all_plugin_list = plugin_list
+        plugin_list = []
+        for p in all_plugin_list:
+            if not p.legacy_plugin:
+                plugin_list.append(p)
+    plugin_list.sort(key=lambda x: x.priority)
     return plugin_list
 
 

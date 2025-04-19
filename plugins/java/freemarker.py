@@ -3,6 +3,19 @@ from plugins.languages import java
 
 
 class Freemarker(java.Java):
+    priority = 5
+    plugin_info = {
+        "Description": """Apache Freemarker template engine""",
+        "Authors": [
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+        "Engine": [
+            "Homepage: https://freemarker.apache.org/",
+            "Github: https://github.com/apache/freemarker",
+        ],
+    }
+
     def init(self):
         self.update_actions({
             'render': {

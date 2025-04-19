@@ -5,6 +5,18 @@ from core import bash
 
 class Smarty(php.Php):
     generic_plugin = True
+    priority = 5
+    plugin_info = {
+        "Description": """Smarty template engine""",
+        "Authors": [
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # New payload without {php}{/php} tags
+            "Emilio @epinna https://github.com/epinna",  # Render test and contexts for Tplmap payload
+        ],
+        "Engine": [
+            "Homepage: https://www.smarty.net/docs/en/",
+            "Github: https://github.com/smarty-php/smarty",
+        ],
+    }
 
     def init(self):
         self.update_actions({

@@ -3,7 +3,18 @@ from utils import rand
 
 
 class Cheetah(python.Python):
+    priority = 5
     generic_plugin = True
+    plugin_info = {
+        "Description": """Cheetah3 template engine""",
+        "Authors": [
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",
+        ],
+        "Engine": [
+            "Homepage: https://cheetahtemplate.org/",
+            "Github: https://github.com/CheetahTemplate3/cheetah3",
+        ],
+    }
 
     def init(self):
         self.update_actions({

@@ -4,8 +4,17 @@ from copy import deepcopy
 
 
 class Form(DataType):
-    help_text = """Supply key=value pairs for application/x-www-form-urlencoded content-type.
-    keep_blank_values=True - keep empty values (e.g. in a=&b=5, param 'a' will not be removed)"""
+    data_type_info = {
+        "Description": """HTTP form data (application/x-www-form-urlencoded MIME type)""",
+        "Usage notes": """Supply multiple key=value pairs for the form.
+Sometimes, appropriate Content-Type header is required by the server.""",
+        "Authors": [
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",
+        ],
+        "Options": [
+            "keep_blank_values=True - keep empty values (e.g. in a=&b=5, param 'a' will not be removed)"
+        ],
+    }
 
     def injection_points(self, data, all_injectable=False):
         injs = []

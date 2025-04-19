@@ -3,6 +3,20 @@ from utils import rand
 
 
 class Velocity(java.Java):
+    priority = 5
+    plugin_info = {
+        "Description": """Apache Velocity template engine""",
+        "Authors": [
+            "Henshin @henshin https://github.com/henshin",  # Original payload for Tplmap
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+        "Engine": [
+            "Homepage: https://velocity.apache.org/index.html",
+            "Github: https://github.com/apache/velocity-engine",
+        ],
+    }
+
     def init(self):
         self.update_actions({
             'render': {

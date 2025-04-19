@@ -3,7 +3,22 @@ from utils import rand
 
 
 class Tornado(python.Python):
+    priority = 5
     generic_plugin = True
+    plugin_info = {
+        "Description": """Template engine of the Tornado web framework""",
+        "Authors": [
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+        "References": [
+            "Research: https://opsecx.com/index.php/2016/07/03/server-side-template-injection-in-tornado/",
+        ],
+        "Engine": [
+            "Homepage: https://www.tornadoweb.org/en/stable/template.html",
+            "Github: https://github.com/tornadoweb/tornado/blob/master/tornado/template.py",
+        ],
+    }
     
     def init(self):
 

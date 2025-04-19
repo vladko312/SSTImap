@@ -7,6 +7,16 @@ import re
 
 class Java(Plugin):
     header_type = "add"
+    no_tests = True
+    priority = 8
+    plugin_info = {
+        "Description": """Base for Java-based template engines. This plugin performs no tests""",
+        "Authors": [
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap plugin
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+    }
+
     def language_init(self):
         self.update_actions({
             'execute': {

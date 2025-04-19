@@ -28,13 +28,19 @@ def compatible_url_safe_base64_encode(code):
 
 class DataType(object):
     sstimap_version = config.version
+    data_type_info = {
+        "Description": """This data type has no description.""",
+        "Usage notes": "",
+        "Authors": [],
+        "References": [],
+        "Options": [],
+    }
 
     def __init__(self, args, tag="*"):
         self.data_type = self.__class__.__name__
         self.params = ""
         self.args = args
         self.tag = tag
-        self.help_text = ""
 
     def __init_subclass__(cls, **kwargs):
         module = cls.__module__.split(".")

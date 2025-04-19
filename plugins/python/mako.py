@@ -3,7 +3,19 @@ from utils import rand
 
 
 class Mako(python.Python):
+    priority = 5
     generic_plugin = True
+    plugin_info = {
+        "Description": """Mako template engine""",
+        "Authors": [
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+        "Engine": [
+            "Homepage: https://www.makotemplates.org/",
+            "Github: https://github.com/sqlalchemy/mako",
+        ],
+    }
 
     def init(self):
         self.update_actions({
