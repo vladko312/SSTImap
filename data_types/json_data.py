@@ -36,8 +36,17 @@ def update(a, b):
 
 
 class Json(DataType):
-    help_text = """Supply JSON objects to be merged into one.
-    deep_update=True - recursively update dictionaries."""
+    data_type_info = {
+        "Description": """JSON data (application/json MIME type)""",
+        "Usage notes": """Supply JSON objects to be merged into one.
+Appropriate Content-Type header is often required by the server.""",
+        "Authors": [
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",
+        ],
+        "Options": [
+            "deep_update=True - recursively update dictionaries."
+        ],
+    }
 
     def injection_points(self, data, all_injectable=False):
         injs = []

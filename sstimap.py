@@ -30,10 +30,13 @@ def main():
     load_data_types()
     from core.data_type import loaded_data_types
     log.log(26, f"Loaded request body types: {len(loaded_data_types)}\n")
-    if not (args['url'] or args['interactive'] or args['load_urls'] or args['load_forms']):
+    if not (args['url'] or args['interactive'] or args['load_urls'] or args['load_forms'] or args['module']):
         # no target specified
         log.log(22, 'SSTImap requires target URL (-u, --url), URLs/forms file (--load-urls / --load-forms) '
                     'or interactive mode (-i, --interactive)')
+    elif args['module']:
+        # module list / help
+        checks.module_info("" if args['module'] == 'list' else args['module'])
     elif args['interactive']:
         # interactive mode
         log.log(23, "Starting SSTImap in interactive mode. Type 'help' to see the details.")

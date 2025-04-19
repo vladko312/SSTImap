@@ -1,7 +1,21 @@
 from plugins.languages import ruby
 from utils import rand
 
+
 class Slim(ruby.Ruby):
+    priority = 5
+    plugin_info = {
+        "Description": """Slim template engine""",
+        "Authors": [
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+        "Engine": [
+            "Homepage: https://slim-template.github.io/",
+            "Github: https://github.com/slim-template/slim",
+        ],
+    }
+
     def init(self):
         self.update_actions({
             'render': {

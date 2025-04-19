@@ -25,6 +25,7 @@ def banner():
 parser = argparse.ArgumentParser(description='SSTImap is an automatic SSTI detection and exploitation tool '
                                              'with predetermined and interactive modes.')
 parser.add_argument('-V', '--version', action='version', version=f'SSTImap version {version}')
+parser.add_argument("--module", dest="module", help="Provide information about the module ('list' to show all modules)")
 parser.add_argument("--config", dest="config", help="Use custom config file or directory")
 parser.add_argument("--no-color", action="store_const", const=False, dest="colour", help="Disable color in output")
 

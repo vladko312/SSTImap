@@ -4,6 +4,18 @@ from utils import rand
 
 class Pug(javascript.Javascript):
     generic_plugin = True
+    priority = 5
+    plugin_info = {
+        "Description": """Pug template engine formerly known as Jade""",
+        "Authors": [
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+        "Engine": [
+            "Homepage: https://pugjs.org/",
+            "Github: https://github.com/pugjs/pug",
+        ],
+    }
 
     def init(self):
         self.update_actions({

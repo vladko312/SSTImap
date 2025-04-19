@@ -3,6 +3,20 @@ from utils import rand
 
 
 class Nunjucks(javascript.Javascript):
+    priority = 5
+    plugin_info = {
+        "Description": """Nunjucks template engine""",
+        "Authors": [
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
+            "Jeremy Bae @opt9 https://github.com/opt9",  # Contributions to the Tplmap payload
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+        "Engine": [
+            "Homepage: https://mozilla.github.io/nunjucks/",
+            "Github: https://github.com/mozilla/nunjucks",
+        ],
+    }
+
     def init(self):
         self.update_actions({
             'render': {

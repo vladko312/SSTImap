@@ -6,7 +6,7 @@ SSTImap
 [![Python 3.6](https://img.shields.io/badge/python-3.6+-yellow.svg?logo=python)](https://www.python.org/downloads/release/python-360/)
 [![GitHub](https://img.shields.io/github/license/vladko312/sstimap?color=green&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.txt)
 [![GitHub last commit](https://img.shields.io/github/last-commit/vladko312/sstimap?color=green&logo=github)](https://github.com/vladko312/sstimap/commits/)
-[![Maintenance](https://img.shields.io/maintenance/yes/2024?logo=github)](https://github.com/vladko312/sstimap)
+[![Maintenance](https://img.shields.io/maintenance/yes/2025?logo=github)](https://github.com/vladko312/sstimap)
 
 > This project is based on [Tplmap](https://github.com/epinna/tplmap/).
 
@@ -226,35 +226,38 @@ SSTImap supports multiple template engines and _eval()_-like injections.
 
 New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko312/extras#developing-plugins) to speed up development.
 
-| Engine                               | RCE | Blind | Code evaluation | File read | File write |
-|--------------------------------------|-----|-------|-----------------|-----------|------------|
-| Mako                                 | ✓   | ✓     | Python          | ✓         | ✓          |
-| Cheetah                              | ✓   | ✓     | Python          | ✓         | ✓          |
-| Jinja2                               | ✓   | ✓     | Python          | ✓         | ✓          |
-| Tornado                              | ✓   | ✓     | Python          | ✓         | ✓          |
-| Python (code eval)                   | ✓   | ✓     | Python          | ✓         | ✓          |
-| Python-based generic templates       | ✓   | ✓     | Python          | ✓         | ✓          |
-| Nunjucks                             | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| Pug                                  | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| doT                                  | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| Marko                                | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| Dust (<= dustjs-helpers@1.5.0)       | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| EJS                                  | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| JavaScript (code eval)               | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| JavaScript-based generic templates   | ✓   | ✓     | JavaScript      | ✓         | ✓          |
-| Slim                                 | ✓   | ✓     | Ruby            | ✓         | ✓          |
-| ERB                                  | ✓   | ✓     | Ruby            | ✓         | ✓          |
-| Ruby (code eval)                     | ✓   | ✓     | Ruby            | ✓         | ✓          |
-| Smarty (unsecured)                   | ✓   | ✓     | PHP             | ✓         | ✓          |
-| Smarty (secured)                     | ✓   | ✓     | PHP             | ✓         | ✓          |
-| Twig (<=1.19)                        | ✓   | ✓     | PHP             | ✓         | ✓          |
-| Twig (>=2.12 <2.14.11; >=3.0 <3.3.8) | ✓   | ✓     | PHP             | ✓         | ✓          |
-| PHP (code eval)                      | ✓   | ✓     | PHP             | ✓         | ✓          |
-| PHP-based generic templates          | ✓   | ✓     | PHP             | ✓         | ✓          |
-| Freemarker                           | ✓   | ✓     | Java            | ✓         | ✓          |
-| Velocity                             | ✓   | ✓     | Java            | ✓         | ✓          |
-| Twig (>1.19 <2.0)                    | ×   | ×     | ×               | ×         | ×          |
-| Dust (> dustjs-helpers@1.5.0)        | ×   | ×     | ×               | ×         | ×          |
+| Engine                                                                 | RCE | Blind | Code evaluation | Type                                                   |
+|------------------------------------------------------------------------|-----|-------|-----------------|--------------------------------------------------------|
+| Mako                                                                   | ✓   | ✓     | Python          | Default                                                |
+| Cheetah                                                                | ✓   | ✓     | Python          | Default                                                |
+| Jinja2                                                                 | ✓   | ✓     | Python          | Default                                                |
+| Tornado                                                                | ✓   | ✓     | Python          | Default                                                |
+| Python (code eval)                                                     | ✓   | ✓     | Python          | Default                                                |
+| Python-based generic templates                                         | ✓   | ✓     | Python          | Default                                                |
+| Nunjucks                                                               | ✓   | ✓     | JavaScript      | Default                                                |
+| Pug                                                                    | ✓   | ✓     | JavaScript      | Default                                                |
+| doT                                                                    | ✓   | ✓     | JavaScript      | Default                                                |
+| Marko                                                                  | ✓   | ✓     | JavaScript      | Default                                                |
+| EJS                                                                    | ✓   | ✓     | JavaScript      | Default                                                |
+| JavaScript (code eval)                                                 | ✓   | ✓     | JavaScript      | Default                                                |
+| JavaScript-based generic templates                                     | ✓   | ✓     | JavaScript      | Default                                                |
+| Slim                                                                   | ✓   | ✓     | Ruby            | Default                                                |
+| ERB                                                                    | ✓   | ✓     | Ruby            | Default                                                |
+| Ruby (code eval)                                                       | ✓   | ✓     | Ruby            | Default                                                |
+| Smarty (unsecured and secured)                                         | ✓   | ✓     | PHP             | Default                                                |
+| Twig (<=1.19)                                                          | ✓   | ✓     | PHP             | Default                                                |
+| Twig (>=2.12; >=3.0)                                                   | ✓   | ✓     | PHP             | Default                                                |
+| Twig (sandboxed; >=2.12 <2.14.11; >=3.0 <3.3.8)                        | ✓   | ✓     | PHP             | Default                                                |
+| PHP (code eval)                                                        | ✓   | ✓     | PHP             | Default                                                |
+| PHP-based generic templates                                            | ✓   | ✓     | PHP             | Default                                                |
+| Freemarker                                                             | ✓   | ✓     | Java            | Default                                                |
+| Velocity                                                               | ✓   | ✓     | Java            | Default                                                |
+| Dust (<= dustjs-helpers@1.5.0)                                         | ✓   | ✓     | JavaScript      | Legacy                                                 |
+| Twig (>=2.10; >=3.0)                                                   | ✓   | ✓     | PHP             | Legacy                                                 |
+| [CVE_2024_6386](https://sec.stealthcopter.com/wpml-rce-via-twig-ssti/) | ✓   | ✓     | PHP             | [Extra](https://github.com/vladko312/extras/tree/main) |
+| Twig (>1.19 <2.0)                                                      | ×   | ×     | ×               | ×                                                      |
+| Dust (> dustjs-helpers@1.5.0)                                          | ×   | ×     | ×               | ×                                                      |
+
 More plugins and payloads can be found in [SSTImap Extra Plugins](https://github.com/vladko312/extras) repository.
 
 Burp Suite Plugin

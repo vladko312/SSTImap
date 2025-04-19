@@ -5,7 +5,21 @@ from core import bash
 
 
 class Dust(javascript.Javascript):
+    legacy_plugin = True
     header_type = "cat"
+    priority = 7
+    plugin_info = {
+        "Description": """Dust.js template engine""",
+        "Usage notes": "Exploitation is only possible if dustjs-helpers of versions <=1.5.0 are installed.",
+        "Authors": [
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+        "Engine": [
+            "Github: https://github.com/linkedin/dustjs",
+        ],
+    }
+
     def init(self):
         self.update_actions({
             'evaluate': {

@@ -3,6 +3,15 @@ from utils import rand
 
 # TODO: process.mainModule may be undefined, needs replacement
 class Javascript_generic(javascript.Javascript):
+    priority = 9
+    plugin_info = {
+        "Description": """Template engines with JavaScript statement evaluation in tags""",
+        "Usage notes": "This plugin can be used to speed up detection in simple contexts as well as for covering more of such engines.",
+        "Authors": [
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",
+        ],
+    }
+
     def init(self):
         self.update_actions({
             'render': {

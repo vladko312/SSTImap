@@ -3,6 +3,19 @@ from utils import rand
 
 
 class Erb(ruby.Ruby):
+    priority = 5
+    plugin_info = {
+        "Description": """ERB template engine""",
+        "Authors": [
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+        "Engine": [
+            "Homepage: https://docs.ruby-lang.org/en/master/ERB.html",
+            "Github: https://github.com/ruby/erb",
+        ],
+    }
+
     def init(self):
         self.update_actions({
             'render': {

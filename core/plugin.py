@@ -54,8 +54,19 @@ def compatible_base64_encode(code):
 
 class Plugin(object):
     generic_plugin = False
+    legacy_plugin = False
+    extra_plugin = False
+    no_tests = False
+    priority = 10
     header_type = 'cat'
     sstimap_version = config.version
+    plugin_info = {
+        "Description": """This plugin has no description.""",
+        "Usage notes": "",
+        "Authors": [],
+        "References": [],
+        "Engine": [],
+    }
 
     def __init__(self, channel):
         # HTTP channel
@@ -113,8 +124,10 @@ class Plugin(object):
             if os and re.search(test_os_code_expected, os):
                 self.set('os', os)
                 self.set('evaluate', self.language)
-                self.set('write', True)
-                self.set('read', True)
+                if self.actions.get('write'):
+                    self.set('write', True)
+                if self.actions.get('read'):
+                    self.set('read', True)
                 action_execute = self.actions.get('execute', {})
                 test_cmd_code = action_execute.get('test_cmd')
                 test_cmd_code_expected = action_execute.get('test_cmd_expected')

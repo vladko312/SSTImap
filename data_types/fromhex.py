@@ -3,7 +3,14 @@ from copy import deepcopy
 
 
 class FromHex(DataType):
-    help_text = """Supply hex-encoded parts of the binary body."""
+    data_type_info = {
+        "Description": """Binary HTTP body, provided to SSTImap in HEX encoding""",
+        "Usage notes": """Supply hex-encoded parts of the binary body.
+Appropriate Content-Type header is often required by the server.""",
+        "Authors": [
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",
+        ]
+    }
 
     def injection_points(self, data, all_injectable=False):
         injs = []

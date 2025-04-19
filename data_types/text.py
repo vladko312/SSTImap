@@ -3,7 +3,14 @@ from copy import deepcopy
 
 
 class Text(DataType):
-    help_text = """Supply parts of the plaintext body."""
+    data_type_info = {
+        "Description": """Plaintext HTML data (text/* MIME types)""",
+        "Usage notes": """Supply parts of the plaintext body.
+Appropriate Content-Type header is often required by the server.""",
+        "Authors": [
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",
+        ]
+    }
 
     def injection_points(self, data, all_injectable=False):
         injs = []

@@ -3,6 +3,19 @@ from utils import rand
 
 
 class Marko(javascript.Javascript):
+    priority = 5
+    plugin_info = {
+        "Description": """Marko template engine""",
+        "Authors": [
+            "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+        ],
+        "Engine": [
+            "Homepage: https://markojs.com/",
+            "Github: https://github.com/marko-js/marko",
+        ],
+    }
+
     def init(self):
         self.update_actions({
             'render': {

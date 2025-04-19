@@ -60,6 +60,7 @@ SSTImap:
   opt, options                            Display current SSTImap options
   info                                    Show information about detection results
   reload, reload_modules                  Reload all SSTImap plugins and data types
+  modules, module [MODULE]                List all modules or provide info about MODULE
   config [PATH]                           Update settings from config file or directory
   color, colour                           Enable/disable colorful output
 
@@ -210,6 +211,12 @@ Exploitation:
             log.log(26, 'HTTP responses will be included into ~/.sstimap/sstimap.log')
 
     do_opt = do_options
+
+    def do_module(self, line):
+        """List modules or show module info"""
+        checks.module_info(line)
+
+    do_modules = do_module
 
     def do_info(self, line):
         """Show information about the capabilities of a detected SSTI"""
