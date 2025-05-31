@@ -21,6 +21,14 @@ class Python_generic(python.Python):
                 'test_render': f"'{rand.randstrings[0]}'.join('{rand.randstrings[1]}')",
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
             },
+            'render_error': {
+                'render': """{code}""",
+                'header': """getattr("", str({header[0]}+{header[1]})+str(""",
+                'trailer': """).rstrip()+str({trailer[0]}+{trailer[1]}))""",
+                'wrapper_type': "global",
+                'test_render': f"""str('{rand.randstrings[0]}'.join('{rand.randstrings[1]}'))""",
+                'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
+            },
             'evaluate': {
                 'evaluate': "{code}"
             }

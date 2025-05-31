@@ -26,9 +26,19 @@ class Mako(python.Python):
                 'test_render': f"""${{'{rand.randstrings[0]}'.join('{rand.randstrings[1]}')}}${{"%" | u}}""",
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}%25'
             },
+            'render_error': {
+                'render': '{code}',
+                'header': '<%doc>${{1/0}}</%doc>${{'' | u}}${{getattr("", str({header[0]}+{header[1]})+str(',
+                'trailer': ').rstrip()+str({trailer[0]}+{trailer[1]}))}}',
+                'test_render': f"""'{rand.randstrings[0]}'.join('{rand.randstrings[1]}')""",
+                'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
+            },
             'evaluate': {
                 # A way to check for actual Mako syntax, comment out division by zero
                 'evaluate': """${{'' | u}}${{{code}}}<%doc>${{1/0}}</%doc>"""
+            },
+            'evaluate_error': {
+                'evaluate': """{code}"""
             }
         })
 

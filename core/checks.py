@@ -121,6 +121,12 @@ def plugins(legacy=False, quick_generic=False):
 
 
 def print_injection_summary(channel):
+    if channel.data.get('blind'):
+        technique = "time-based blind"
+    elif channel.data.get('error'):
+        technique = "error-based"
+    else:
+        technique = "rendered"
     prefix = channel.data.get('prefix', '').replace('\n', '\\n')
     render = channel.data.get('render', '{code}').replace('\n', '\\n').format(code='*')
     suffix = channel.data.get('suffix', '').replace('\n', '\\n')
@@ -151,7 +157,7 @@ def print_injection_summary(channel):
   Injection: {prefix}{wrapper}{suffix}
   Context: {'text' if (not prefix and not suffix) else 'code'}
   OS: {channel.data.get('os', 'undetected')}
-  Technique: {'blind' if channel.data.get('blind') else 'render'}
+  Technique: {technique}
   Capabilities:
 
     Shell command execution: {execution}

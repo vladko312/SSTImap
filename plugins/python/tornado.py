@@ -30,9 +30,19 @@ class Tornado(python.Python):
                 'test_render': f"""{{{{'{rand.randstrings[0]}'}}}}{{#comment#}}{{% raw '{rand.randstrings[0]}'.join('{rand.randstrings[1]}') %}}{{{{'{rand.randstrings[1]}'}}}}""",
                 'test_render_expected': f'{rand.randstrings[0] + rand.randstrings[0].join(rand.randstrings[1]) + rand.randstrings[1]}'
             },
+            'render_error': {
+                'render': '{code}',
+                'header': '{{# 1/0 #}}{{% raw getattr("", str({header[0]}+{header[1]})+str(',
+                'trailer': ').rstrip()+str({trailer[0]}+{trailer[1]})) %}}',
+                'test_render': f"""'{rand.randstrings[0]}'+'{rand.randstrings[0]}'.join('{rand.randstrings[1]}')+'{rand.randstrings[1]}'""",
+                'test_render_expected': f'{rand.randstrings[0] + rand.randstrings[0].join(rand.randstrings[1]) + rand.randstrings[1]}'
+            },
             'evaluate': {
                 # Using raw blocks to check for actual Tornado syntax
                 'evaluate': """{{% raw {code} %}}"""
+            },
+            'evaluate_error': {
+                'evaluate': """{code}"""
             }
         })
 

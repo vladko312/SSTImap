@@ -26,8 +26,18 @@ class Cheetah(python.Python):
                 'test_render': f"""${{getVar('a', '').replace($getVar('a', ''), '')}}${{'{rand.randstrings[0]}'.join('{rand.randstrings[1]}')}}""",
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
             },
+            'render_error': {
+                'render': """{code}""",
+                'header': """${{getattr("", str({header[0]}+{header[1]})+str(""",
+                'trailer': """).rstrip()+str({trailer[0]}+{trailer[1]}))}}""",
+                'test_render': f"""$getVar('a', '').replace($getVar('a', ''), '')+'{rand.randstrings[0]}'.join('{rand.randstrings[1]}')""",
+                'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
+            },
             'evaluate': {
                 'evaluate': """${{getVar('a', '').replace($getVar('a', ''), '')}}${{{code}}}"""
+            },
+            'evaluate_error': {
+                'evaluate': """$getVar('a', '').replace($getVar('a', ''), '')+str({code})"""
             }
         })
 

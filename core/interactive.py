@@ -98,7 +98,7 @@ Detection:
   lvl, level [LEVEL]                      Set level of escaping to perform (1-5, Default: 1)
   force, force_level [LEVEL] [CLEVEL]     Force a LEVEL and CLEVEL to test
   engine [ENGINE]                         Check only this backend template engine. For all, use '*'
-  technique [TECHNIQUE]                   Use techniques R(endered) T(ime-based blind). Default: RT
+  technique [TECHNIQUE]                   Use techniques R(endered) E(rror-based) T(ime-based blind). Default: RET
   blind_delay [DELAY]                     Delay to detect time-based blind injection (Default: 4 seconds)
   verify_delay [DELAY]                    Delay to verify and exploit time-based blind injection (Default: 30 seconds)
   legacy                                  Toggle including old payloads, that no longer work with newer versions of the engines
@@ -576,11 +576,19 @@ Exploitation:
     def do_technique(self, line):
         """Set attack TECHNIQUE to check"""
         line = line.upper()
-        if line not in ["R", "T", "RT", "TR"]:
-            log.log(22, 'Invalid TECHNIQUE value. It should be \'R\', \'T\' or \'RT\'.')
+        technique = ""
+        for t in ["R", "E", "T"]:
+            if t in line:
+                technique += t
+                line = line.replace(t, "")
+        if technique == "":
+            log.log(22, 'Invalid TECHNIQUE value. It must contain at least one of \'R\', \'E\' or \'T\'.')
             return
-        log.log(24, f'Attack technique is set to {line}')
-        self.sstimap_options["technique"] = line
+        if line != "":
+            log.log(22, 'Invalid TECHNIQUE value. It must only contain \'R\', \'E\' and \'T\'.')
+            return
+        log.log(24, f'Attack technique is set to {technique}')
+        self.sstimap_options["technique"] = technique
 
     def do_remote_shell(self, line):
         """Set expected remote shell"""

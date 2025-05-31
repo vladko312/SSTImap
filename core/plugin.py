@@ -46,6 +46,7 @@ def compatible_url_safe_base64_encode(code):
     code_b64 = base64.urlsafe_b64encode(code_b64).decode(encoding='UTF-8')
     return code_b64
 
+
 def compatible_base64_encode(code):
     code_b64p = code.encode(encoding='UTF-8')
     code_b64p = base64.b64encode(code_b64p).decode(encoding='UTF-8')
@@ -116,7 +117,10 @@ class Plugin(object):
         pass
 
     def rendered_detected(self):
-        action_evaluate = self.actions.get('evaluate', {})
+        error = self.get('error', False)
+        action_evaluate = self.actions.get('evaluate', {}).copy()
+        if error and 'evaluate_error' in self.actions:
+            action_evaluate.update(self.actions.get('evaluate_error', {}))
         test_os_code = action_evaluate.get('test_os')
         test_os_code_expected = action_evaluate.get('test_os_expected')
         if test_os_code and test_os_code_expected:
@@ -126,16 +130,20 @@ class Plugin(object):
                 self.set('evaluate', self.language)
                 if self.actions.get('write'):
                     self.set('write', True)
-                if self.actions.get('read'):
+                if self.actions.get('read') or (error and self.actions.get('read_error')):
                     self.set('read', True)
-                action_execute = self.actions.get('execute', {})
+                action_execute = self.actions.get('execute', {}).copy()
+                if error and 'evaluate_error' in self.actions:
+                    action_execute.update(self.actions.get('evaluate_error', {}))
                 test_cmd_code = action_execute.get('test_cmd')
                 test_cmd_code_expected = action_execute.get('test_cmd_expected')
                 # Using rstrip in case of trailing newline
                 if test_cmd_code and test_cmd_code_expected and test_cmd_code_expected == self.execute(test_cmd_code).rstrip():
                     self.set('execute', True)
-                    self.set('bind_shell', True)
-                    self.set('reverse_shell', True)
+                    if self.actions.get('bind_shell'):
+                        self.set('bind_shell', True)
+                    if self.actions.get('reverse_shell'):
+                        self.set('reverse_shell', True)
 
     def blind_detected(self):
         # Blind has been detected so code has been already evaluated
@@ -143,13 +151,17 @@ class Plugin(object):
         test_cmd_code = self.actions.get('execute', {}).get('test_cmd')
         if test_cmd_code and self.execute_blind(test_cmd_code):
             self.set('execute_blind', True)
-            self.set('write', True)
-            self.set('bind_shell', True)
-            self.set('reverse_shell', True)
+            if self.actions.get('write'):
+                self.set('write', True)
+            if self.actions.get('bind_shell'):
+                self.set('bind_shell', True)
+            if self.actions.get('reverse_shell'):
+                self.set('reverse_shell', True)
 
     def detect(self):
         # Get user-provided techniques
         techniques = self.channel.args.get('technique')
+
         # Render technique
         if 'R' in techniques:
             # Start detection
@@ -167,6 +179,27 @@ class Plugin(object):
                 log.log(24, f'''{self.plugin} plugin has confirmed injection with tag '{repr(prefix).strip("'")}{repr(wrapper).strip("'")}{repr(suffix).strip("'")}' ''')
                 # Clean up any previous unreliable render data
                 self.delete('unreliable_render')
+                self.delete('unreliable')
+                # Set basic info
+                self.set('engine', self.plugin.lower())
+                self.set('language', self.language)
+                # Set the environment
+                self.rendered_detected()
+
+        # Error-based technique
+        # This is just a render technique with a different payload
+        if 'E' in techniques:
+            # Start detection
+            self._detect_render(reflection="render_error")
+            # If error is not set, check unreliable error message
+            if self.get('error') is None:
+                self._detect_unreliable_render(reflection="render_error")
+            # Else, print and execute rendered_detected()
+            else:
+                # If here, the error reflection is confirmed
+                log.log(24, f'''{self.plugin} plugin has confirmed error-based injection''')
+                # Clean up any previous unreliable error message data
+                self.delete('unreliable_render_error')
                 self.delete('unreliable')
                 # Set basic info
                 self.set('engine', self.plugin.lower())
@@ -201,42 +234,52 @@ class Plugin(object):
             if not force_level and ctx.get('level') > self.channel.args.get('level'):
                 continue
             # The suffix is fixed
-            suffix = ctx.get('suffix', '')
             # If the context has no closures, generate one closure with a zero-length string
+            suffix = ctx.get('suffix', '')
+            suffix_format = "{closure}" in suffix or "{rclosure}" in suffix
+            suffix_text = suffix.format(closure='', rclosure='') if suffix_format else suffix
             wrappers = ctx.get('wrappers', ['{code}'])
             if ctx.get('closures'):
                 closures = self._generate_closures(ctx)
             else:
                 closures = ['']
             if len(closures)*len(wrappers) > 1:
-                log.log(26, f'''{self.plugin} plugin is testing {repr(ctx.get('prefix', '{closure}').format(closure='')).strip("'")}*{repr(suffix).strip("'")} code context escape with {len(closures)*len(wrappers)} variations{f' (level {ctx.get("level", 1)})' if self.get('level') else ''}''')
+                log.log(26, f'''{self.plugin} plugin is testing {ctx.get('prefix', '').format(closure='')}*{suffix_text} code context escape with {len(closures)*len(wrappers)} variations{f' (level {ctx.get("level", 1)})' if self.get('level') else ''}''')
             for wrapper in wrappers:
                 for closure in closures:
                     # Format the prefix with closure
                     prefix = ctx.get('prefix', '{closure}').format(closure=closure)
+                    if suffix_format:
+                        suffix = ctx.get('suffix', '').format(closure=closure, rclosure=closure[::-1])
                     yield prefix, suffix, wrapper
 
     """
-    Detection of unreliable rendering tag with no header and trailer.
+    Detection of unreliable error message or rendering tag with no header and trailer.
     """
-    def _detect_unreliable_render(self):
-        render_action = self.actions.get('render')
+    def _detect_unreliable_render(self, reflection="render"):
+        render_action = self.actions.get(reflection)
         if not render_action:
             return
         # Print what it's going to be tested
-        log.debug(f'{self.plugin} plugin is testing unreliable rendering on text context')
+        if reflection == "render":
+            log.debug(f'{self.plugin} plugin is testing unreliable rendering on text context')
+        elif reflection == "render_error":
+            log.debug(f'{self.plugin} plugin is testing unreliable error message')
         # Prepare base operation to be evaluated server-side
         expected = render_action.get('test_render_expected')
         payload = render_action.get('test_render')
         # Probe with payload wrapped by header and trailer, no suffix or prefix.
         # Test if contained, since the page contains other garbage
-        if expected in self.render(code=payload, header='', trailer='', header_rand=[0,0],
-                                   trailer_rand=[0,0], prefix='', suffix=''):
+        if expected in self.render(code=payload, header='', trailer='', header_rand=[0, 0],
+                                   trailer_rand=[0, 0], prefix='', suffix='', error=reflection == "render_error"):
             # Print if the first found unreliable render
-            if not self.get('unreliable_render'):
-                log.log(25, f"{self.plugin} plugin has detected unreliable rendering with tag "
-                            f"{repr(render_action.get('render').format(code='*'))}, skipping")
-            self.set('unreliable_render', render_action.get('render'))
+            if not self.get(f'unreliable_{reflection}'):
+                if reflection == "render":
+                    log.log(25, f"{self.plugin} plugin has detected unreliable rendering with tag "
+                                f"{repr(render_action.get('render').format(code='*'))}, skipping")
+                elif reflection == "render_error":
+                    log.log(25, f"{self.plugin} plugin has detected unreliable error message, skipping")
+            self.set(f'unreliable_{reflection}', render_action.get('render'))
             self.set('unreliable', self.plugin)
             return
 
@@ -282,37 +325,45 @@ class Plugin(object):
             self.set('prefix', prefix)
             self.set('suffix', suffix)
             self.set('wrapper', wrapper)
+            self.set('wrapper_type', 'local')  # Should always work as a fallback for blind
             self.channel.detected('blind', detail)
             return
 
     """
     Detection of the rendering tag and context.
     """
-    def _detect_render(self):
-        render_action = self.actions.get('render')
+    def _detect_render(self, reflection="render"):
+        render_action = self.actions.get(reflection)
         if not render_action:
             return
         # Print what it's going to be tested
-        log.log(23, f"{self.plugin} plugin is testing rendering with tag "
-                    f"{repr(render_action.get('render').format(code='*' ))}")
+        if reflection == "render":
+            log.log(23, f"{self.plugin} plugin is testing rendering with tag "
+                        f"{repr(render_action.get('render').format(code='*' ))}")
+        elif reflection == "render_error":
+            log.log(23, f'{self.plugin} plugin is testing error-based injection')
         for prefix, suffix, wrapper in self._generate_contexts():
             # Prepare base operation to be evaluated server-side
             expected = render_action.get('test_render_expected')
             payload = render_action.get('test_render')
-            header_rand = [rand.randint_n(10,4),rand.randint_n(10,4)]
+            wrapper_type = render_action.get(f'wrapper_type', 'local')
+            header_rand = [rand.randint_n(10, 4), rand.randint_n(10, 4)]
             header = render_action.get('header')  # .format(header=header_rand)
-            trailer_rand = [rand.randint_n(10,4),rand.randint_n(10,4)]
+            trailer_rand = [rand.randint_n(10, 4), rand.randint_n(10, 4)]
             trailer = render_action.get('trailer')  # .format(trailer=trailer_rand)
             # First probe with payload wrapped by header and trailer, no suffix or prefix
             if expected == self.render(code=payload, header=header, trailer=trailer, header_rand=header_rand,
-                                       trailer_rand=trailer_rand, prefix=prefix, suffix=suffix, wrapper=wrapper):
+                                       trailer_rand=trailer_rand, prefix=prefix, suffix=suffix, wrapper=wrapper,
+                                       wrapper_type=wrapper_type, error=reflection == "render_error"):
                 self.set('render', render_action.get('render'))
+                self.set('error', reflection == "render_error")
                 self.set('header', render_action.get('header'))
                 self.set('trailer', render_action.get('trailer'))
                 self.set('prefix', prefix)
                 self.set('suffix', suffix)
                 self.set('wrapper', wrapper)
-                self.channel.detected('render', {'expected': expected})
+                self.set('wrapper_type', wrapper_type)
+                self.channel.detected(reflection, {'expected': expected})
                 return
 
     """
@@ -358,13 +409,15 @@ class Plugin(object):
         
     """
     def render(self, code, **kwargs):
+        error = kwargs.get('error', self.get('error', False))
+        call_name = 'render_error' if error else 'render'
         # If header == '', do not send headers
         header_template = kwargs.get('header')
         header_type = self.header_type
         if header_template != '':
             header_template = kwargs.get('header', self.get('header'))
             if not header_template:
-                header_template = self.actions.get('render', {}).get('header')
+                header_template = self.actions.get(call_name, {}).get('header')
             if header_template:
                 header_rand = kwargs.get('header_rand', self.get('header_rand', [rand.randint_n(10,4), rand.randint_n(10,4)]))
                 header = header_template.format(header=header_rand)
@@ -376,7 +429,7 @@ class Plugin(object):
         if trailer_template != '':
             trailer_template = kwargs.get('trailer', self.get('trailer'))
             if not trailer_template:
-                trailer_template = self.actions.get('render', {}).get('trailer')
+                trailer_template = self.actions.get(call_name, {}).get('trailer')
             if trailer_template:
                 trailer_rand = kwargs.get('trailer_rand', self.get('trailer_rand', [rand.randint_n(10,4), rand.randint_n(10,4)]))
                 trailer = trailer_template.format(trailer=trailer_rand)
@@ -386,16 +439,22 @@ class Plugin(object):
         # Ensure constant length
         payload_template = kwargs.get('render', self.get('render'))
         if not payload_template:
-            payload_template = self.actions.get('render', {}).get('render')
+            payload_template = self.actions.get(call_name, {}).get('render')
         if not payload_template:
-            # Exiting, actions.render.render is not set
+            # Exiting, actions.render(_error).render is not set
             return
         payload = payload_template.format(code=code)
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
         wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
+        wrapper_type = kwargs.get('wrapper_type', self.get('wrapper_type', 'local'))
         blind = kwargs.get('blind', False)
-        injection = wrapper.format(code=header) + wrapper.format(code=payload) + wrapper.format(code=trailer)
+        if wrapper_type == "local":
+            injection = wrapper.format(code=header) + wrapper.format(code=payload) + wrapper.format(code=trailer)
+        elif wrapper_type == "global":
+            injection = wrapper.format(code=header+payload+trailer)
+        else:  # Fallback if wrapper type is unknown
+            injection = header + payload + trailer
         if header_type == "add":
             header_expected = str(sum(header_rand))
             trailer_expected = str(sum(trailer_rand))
@@ -452,7 +511,10 @@ class Plugin(object):
 
     """ Overridable function to get MD5 hash of remote files. """
     def md5(self, remote_path):
-        action = self.actions.get('md5', {})
+        error = self.get('error', False)
+        action = self.actions.get('md5', {}).copy()
+        if error and 'md5_error' in self.actions:
+            action.update(self.actions.get('md5_error', {}))
         payload = action.get('md5')
         call_name = action.get('call', 'render')
         # Skip if something is missing or call function is not set
@@ -476,7 +538,10 @@ class Plugin(object):
 
     """ Overridable function to read remote files. """
     def read(self, remote_path):
-        action = self.actions.get('read', {})
+        error = self.get('error', False)
+        action = self.actions.get('md5', {}).copy()
+        if error and 'read_error' in self.actions:
+            action.update(self.actions.get('read_error', {}))
         payload = action.get('read')
         call_name = action.get('call', 'render')
         # Skip if something is missing or call function is not set
@@ -540,7 +605,10 @@ class Plugin(object):
         suffix = kwargs.get('suffix', self.get('suffix', ''))
         wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
-        action = self.actions.get('evaluate', {})
+        error = kwargs.get('error', self.get('error', False))
+        action = self.actions.get('evaluate', {}).copy()
+        if error and 'evaluate_error' in self.actions:
+            action.update(self.actions.get('evaluate_error', {}))
         payload = action.get('evaluate')
         call_name = action.get('call', 'render')
         # Skip if something is missing or call function is not set
@@ -565,7 +633,10 @@ class Plugin(object):
         suffix = kwargs.get('suffix', self.get('suffix', ''))
         wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
-        action = self.actions.get('execute', {})
+        error = kwargs.get('error', self.get('error', False))
+        action = self.actions.get('execute', {}).copy()
+        if error and 'execute_error' in self.actions:
+            action.update(self.actions.get('execute_error', {}))
         payload = action.get('execute')
         call_name = action.get('call', 'render')
         # Skip if something is missing or call function is not set
