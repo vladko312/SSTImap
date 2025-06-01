@@ -29,9 +29,23 @@ class Smarty_unsecure(php.Php):
                 'test_render': f"""{{{rand.randints[0]}}}{{php}}{{/php}}{{*{rand.randints[1]}*}}{{{rand.randints[2]}}}""",
                 'test_render_expected': f'{rand.randints[0]}{rand.randints[2]}'
             },
+            'render_error': {
+                'render': """{code}""",
+                'wrapper_type': "global",
+                # File path "Y:/A:/..." is unlikely to exist
+                'header': """{{* 1 / 0 *}}{{php}}(strval({header[0]}+{header[1]}).rtrim(strval(""",
+                'trailer': """)).strval({trailer[0]}+{trailer[1]}))();{{/php}}""",
+                'test_render': f'"{rand.randints[0]}"+"{rand.randints[1]}"',
+                'test_render_expected': f'{rand.randints[0] + rand.randints[1]}'
+            },
             'evaluate': {
                 'call': 'render',
                 'evaluate': """{{php}}{code}{{/php}}"""
+            },
+            'evaluate_error': {
+                'call': 'render',
+                'evaluate': """{code}""",
+                'test_os': 'PHP_OS',
             },
             'evaluate_blind': {
                 'call': 'inject',

