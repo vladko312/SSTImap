@@ -32,6 +32,7 @@ class Twig(php.Php):
             'render_error': {
                 'render': '{code}',
                 'header': '{{%set h={header[0]}+{header[1]}%}}',
+                # Body needs to set b as the output
                 'trailer': '{{%set t={trailer[0]}+{trailer[1]}%}}{{{{include([h,b,t]|join)}}}}',
                 'test_render': f'{{%set a=(1..3)|filter(x => x < 3)|join("")%}}{{%set b=[a,"{rand.randstrings[0]}\n"|nl2br]|join%}}',
                 'test_render_expected': f'12{rand.randstrings[0]}&lt;br /&gt;'

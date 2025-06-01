@@ -31,6 +31,7 @@ class Jinja2_old(python.Python):
             'render_error': {
                 'render': '{code}',
                 'header': '{{%set h=({header[0]}+{header[1]})|string%}}',
+                # Body needs to set b as the output
                 'trailer': '{{%set t=({trailer[0]}+{trailer[1]})|string%}}{{%include [h,b,t]|join%}}',
                 'test_render': f'{{%set b=(({rand.randints[0]},{rand.randints[1]}*{rand.randints[2]})|e)|string%}}',
                 'test_render_expected': f'{(rand.randints[0],rand.randints[1]*rand.randints[2])}'

