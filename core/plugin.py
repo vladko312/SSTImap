@@ -482,6 +482,12 @@ class Plugin(object):
                 before, _, result_after = result_raw.partition(header_expected)
             if trailer and result_after:
                 result, _, after = result_after.partition(trailer_expected)
+            exfiltrate = self.actions.get(call_name, {}).get('exfiltrate', 'plain')
+            if exfiltrate == 'base64':
+                try:
+                    result = base64.b64decode(result).decode()
+                except:
+                    pass
             return result.strip() if result else result
 
     def set(self, key, value):
@@ -524,6 +530,12 @@ class Plugin(object):
             return
         execution_code = payload.format(path=remote_path)
         result = getattr(self, call_name)(code=execution_code)
+        exfiltrate = action.get('exfiltrate', 'plain')
+        if exfiltrate == 'base64':
+            try:
+                result = base64.b64decode(result).decode()
+            except:
+                pass
         # Check md5 result format
         if re.match(r"([a-fA-F\d]{32})", result):
             return result
@@ -628,7 +640,15 @@ class Plugin(object):
             'clen64p': len(code_b64p)
         }
         execution_code = payload.format(code_b64=code_b64, code=code, code_b64p=code_b64p, lens=lens)
-        return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=blind)
+        result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=blind)
+        if type(result) == str:
+            exfiltrate = action.get('exfiltrate', 'plain')
+            if exfiltrate == 'base64':
+                try:
+                    result = base64.b64decode(result).decode()
+                except:
+                    pass
+        return result
 
     def execute(self, code, **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
@@ -657,7 +677,15 @@ class Plugin(object):
         }
         execution_code = payload.format(code_b64=code_b64, code_b64p=code_b64p, code=code, lens=lens)
         result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=blind)
-        return result.replace('\\n', '\n') if type(result) == str else result
+        if type(result) == str:
+            result = result.replace('\\n', '\n')
+            exfiltrate = action.get('exfiltrate', 'plain')
+            if exfiltrate == 'base64':
+                try:
+                    result = base64.b64decode(result).decode()
+                except:
+                    pass
+        return result
 
     def evaluate_blind(self, code, **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
