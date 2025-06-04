@@ -25,6 +25,14 @@ class Javascript(Plugin):
                 'test_render': f'typeof({rand.randints[0]})+{rand.randints[1]}',
                 'test_render_expected': f'number{rand.randints[1]}'
             },
+            'render_error': {
+                'call': 'inject',
+                'render': """{code}""",
+                'header': """''['x'][({header[0]}+{header[1]}).toString()+""",
+                'trailer': """+({trailer[0]}+{trailer[1]}).toString()]""",
+                'test_render': f'typeof({rand.randints[0]})+{rand.randints[1]}',
+                'test_render_expected': f'number{rand.randints[1]}'
+            },
             # No evaluate_blind here, since we've no sleep, we'll use inject
             'write': {
                 'call': 'inject',

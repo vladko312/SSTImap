@@ -25,7 +25,7 @@ class Ruby(Plugin):
             },
             'render_error': {
                 'render': '{code}',
-                'header': """File.read(({header[0]}+{header[1]}).to_s+""",
+                'header': """File.read("Y:/A:/"+({header[0]}+{header[1]}).to_s+""",
                 'trailer': """+({trailer[0]}+{trailer[1]}).to_s)""",
                 'test_render': f"""({rand.randints[0]}*{rand.randints[1]}).to_s""",
                 'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'

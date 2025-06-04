@@ -29,7 +29,7 @@ class Erb(ruby.Ruby):
                 'render': '{code}',
                 'header': """<%$h=({header[0]}+{header[1]}).to_s%>""",
                 # Body needs to set b as the output
-                'trailer': """<%$t=({trailer[0]}+{trailer[1]}).to_s%><%File.read($h+$b+$t)%>""",
+                'trailer': """<%$t=({trailer[0]}+{trailer[1]}).to_s%><%File.read("Y:/A:/"+$h+$b+$t)%>""",
                 'test_render': f"""<%$b=({rand.randints[0]}*{rand.randints[1]}).to_s%>""",
                 'test_render_expected': f'{rand.randints[0] * rand.randints[1]}'
             },

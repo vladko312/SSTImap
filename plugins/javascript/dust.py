@@ -34,8 +34,8 @@ class Dust(javascript.Javascript):
                 # Errors are caught by default, but it is up to the user to decide what to do with them
                 'call': 'inject',
                 'render': """{code}""",
-                'header': """{{@if cond="require('{header[0]}'+'{header[1]}'+(""",
-                'trailer': """).toString()+'{trailer[0]}'+'{trailer[1]}')"}}{{/if}}""",
+                'header': """{{@if cond="''['x']['{header[0]}'+'{header[1]}'+(""",
+                'trailer': """).toString()+'{trailer[0]}'+'{trailer[1]}']"}}{{/if}}""",
                 'test_render': f'typeof({rand.randints[0]})+{rand.randints[1]}',
                 'test_render_expected': f'number{rand.randints[1]}'
             },

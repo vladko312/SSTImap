@@ -22,12 +22,8 @@ class Python_generic(python.Python):
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
             },
             'render_error': {
-                'render': """{code}""",
-                'header': """getattr("", str({header[0]}+{header[1]})+str(""",
-                'trailer': """).rstrip()+str({trailer[0]}+{trailer[1]}))""",
+                # Just use the wrapped payload for eval
                 'wrapper_type': "global",
-                'test_render': f"""str('{rand.randstrings[0]}'.join('{rand.randstrings[1]}'))""",
-                'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
             },
             'evaluate': {
                 'evaluate': "{code}"
@@ -38,24 +34,24 @@ class Python_generic(python.Python):
             # Text context, no closures
             {'level': 0, 'wrappers': ["{{{code}}}", "{{{{{code}}}}}", "${{{code}}}", "<%={code}%>"]},
             {'level': 0, 'wrappers': ["#{{{code}}}", "{{={code}}}", "{{{{={code}}}}}", "\n={code}\n"]},
-            {'level': 2, 'prefix': '{closure}}}', 'wrappers': ["{{{code}}}"], 'suffix': '{',
+            {'level': 2, 'prefix': '{closure}}}', 'wrappers': ["{{{code}}}"], 'suffix': '{"1"',
              'closures': python.ctx_closures},
-            {'level': 2, 'prefix': '{closure}}}}}', 'wrappers': ["{{{{{code}}}}}"], 'suffix': '{{',
+            {'level': 2, 'prefix': '{closure}}}}}', 'wrappers': ["{{{{{code}}}}}"], 'suffix': '{{"1"',
              'closures': python.ctx_closures},
-            {'level': 2, 'prefix': '{closure}}}', 'wrappers': ["${{{code}}}"], 'suffix': '${',
+            {'level': 2, 'prefix': '{closure}}}', 'wrappers': ["${{{code}}}"], 'suffix': '${"1"',
              'closures': python.ctx_closures},
-            {'level': 2, 'prefix': '{closure}%>', 'wrappers': ["<%={code}>"], 'suffix': '<%=',
+            {'level': 2, 'prefix': '{closure}%>', 'wrappers': ["<%={code}%>"], 'suffix': '<%="1"',
              'closures': python.ctx_closures},
-            {'level': 3, 'prefix': '{closure}}}', 'wrappers': ["#{{{code}}}"], 'suffix': '#{',
+            {'level': 3, 'prefix': '{closure}}}', 'wrappers': ["#{{{code}}}"], 'suffix': '#{"1"',
              'closures': python.ctx_closures},
-            {'level': 3, 'prefix': '{closure}}}', 'wrappers': ["{{={code}}}"], 'suffix': '{=',
+            {'level': 3, 'prefix': '{closure}}}', 'wrappers': ["{{={code}}}"], 'suffix': '{="1"',
              'closures': python.ctx_closures},
-            {'level': 3, 'prefix': '{closure}}}}}', 'wrappers': ["{{{{={code}}}}}"], 'suffix': '{{=',
+            {'level': 3, 'prefix': '{closure}}}}}', 'wrappers': ["{{{{={code}}}}}"], 'suffix': '{{="1"',
              'closures': python.ctx_closures},
-            {'level': 3, 'prefix': '{closure}\n', 'wrappers': ["\n={code}\n"], 'suffix': '\n=',
+            {'level': 3, 'prefix': '{closure}\n', 'wrappers': ["\n={code}\n"], 'suffix': '\n="1"',
              'closures': python.ctx_closures},
             {'level': 3, 'prefix': '{closure}%}}', 'wrappers': ["{{{code}}}", "{{{{{code}}}}}",
-                                                                "{{={code}}}", "{{{{={code}}}}}"], 'suffix': '{%',
+                                                                "{{={code}}}", "{{{{={code}}}}}"], 'suffix': '{%"1"',
              'closures': python.ctx_closures},
             # Comments
             {'level': 4, 'prefix': '*}}', 'wrappers': ["{{{code}}}", "{{{{{code}}}}}", "${{{code}}}",

