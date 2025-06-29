@@ -98,7 +98,7 @@ Detection:
   lvl, level [LEVEL]                      Set level of escaping to perform (1-5, Default: 1)
   force, force_level [LEVEL] [CLEVEL]     Force a LEVEL and CLEVEL to test
   engine [ENGINE]                         Check only this backend template engine. For all, use '*'
-  technique [TECHNIQUE]                   Use techniques R(endered) E(rror-based) T(ime-based blind). Default: RET
+  technique [TECHNIQUE]                   Use techniques: R(endered) E(rror-based) B(oolean error-based blind) T(ime-based blind). Default: REBT
   blind_delay [DELAY]                     Delay to detect time-based blind injection (Default: 4 seconds)
   verify_delay [DELAY]                    Delay to verify and exploit time-based blind injection (Default: 30 seconds)
   legacy                                  Toggle including old payloads, that no longer work with newer versions of the engines
@@ -190,7 +190,7 @@ Exploitation:
             log.log(26, f'Level: {self.sstimap_options["level"]}')
         log.log(26, f'Engine: {self.sstimap_options["engine"] if self.sstimap_options["engine"] else "*"}'
                     f'{"+" if not self.sstimap_options["engine"] and self.sstimap_options["legacy"] else ""}'
-                    f'{"»" if not self.sstimap_options["engine"] and self.sstimap_options["skip_generic"] else ""}')
+                    f'{"»" if not self.sstimap_options["engine"] and not self.sstimap_options["generic"] else ""}')
         if self.sstimap_options["crawl_depth"] > 0:
             log.log(26, f'Crawler depth: {self.sstimap_options["crawl_depth"]}')
             if self.sstimap_options["crawl_exclude"]:
@@ -498,7 +498,7 @@ Exploitation:
     def do_random_agent(self, line):
         """Switch random_user_agent option"""
         overwrite = not self.sstimap_options["random_agent"]
-        log.log(24, f'Value of \'random_user_agent\' is set to {overwrite}')
+        log.log(24, f'User agent randomisation {"en" if overwrite else "dis"}abled')
         self.sstimap_options["random_agent"] = overwrite
 
     do_random = do_random_agent
@@ -526,7 +526,7 @@ Exploitation:
     def do_verify_ssl(self, line):
         """Switch verify_ssl option"""
         overwrite = not self.sstimap_options["verify_ssl"]
-        log.log(24, f'Value of \'verify_ssl\' is set to {overwrite}')
+        log.log(24, f'SSL verification {"en" if overwrite else "dis"}abled')
         self.sstimap_options["verify_ssl"] = overwrite
 
     do_ssl = do_verify_ssl
@@ -534,7 +534,7 @@ Exploitation:
     def do_log_response(self, line):
         """Switch log_response option"""
         overwrite = not self.sstimap_options["log_response"]
-        log.log(24, f'Value of \'log_response\' is set to {overwrite}')
+        log.log(24, f'Response logging {"en" if overwrite else "dis"}abled')
         self.sstimap_options["log_response"] = overwrite
 
 # Detection commands
@@ -577,15 +577,15 @@ Exploitation:
         """Set attack TECHNIQUE to check"""
         line = line.upper()
         technique = ""
-        for t in ["R", "E", "T"]:
-            if t in line:
+        for t in line:
+            if t in ["R", "E", "B", "T"] and t not in technique:
                 technique += t
                 line = line.replace(t, "")
         if technique == "":
-            log.log(22, 'Invalid TECHNIQUE value. It must contain at least one of \'R\', \'E\' or \'T\'.')
+            log.log(22, 'Invalid TECHNIQUE value. It must contain at least one of \'R\', \'E\', \'B\' or \'T\'.')
             return
         if line != "":
-            log.log(22, 'Invalid TECHNIQUE value. It must only contain \'R\', \'E\' and \'T\'.')
+            log.log(22, 'Invalid TECHNIQUE value. It must only contain \'R\', \'E\', \'B\' and \'T\'.')
             return
         log.log(24, f'Attack technique is set to {technique}')
         self.sstimap_options["technique"] = technique
@@ -631,14 +631,14 @@ Exploitation:
     def do_legacy(self, line):
         """Switch legacy option"""
         overwrite = not self.sstimap_options["legacy"]
-        log.log(24, f'Value of \'legacy\' is set to {overwrite}')
+        log.log(24, f'{"En" if overwrite else "Dis"}abled legacy plugins')
         self.sstimap_options["legacy"] = overwrite
 
     def do_generic(self, line):
-        """Switch skip_generic option"""
-        overwrite = not self.sstimap_options["skip_generic"]
-        log.log(24, f'Value of \'skip_generic\' is set to {overwrite}')
-        self.sstimap_options["skip_generic"] = overwrite
+        """Switch generic option"""
+        overwrite = not self.sstimap_options["generic"]
+        log.log(24, f'{"En" if overwrite else "Dis"}abled dedicated plugins for generic template engines')
+        self.sstimap_options["generic"] = overwrite
 
 # Exploitation commands
 
@@ -854,7 +854,7 @@ Exploitation:
     def do_force_overwrite(self, line):
         """Switch forсe_overwrite option"""
         overwrite = not self.sstimap_options["force_overwrite"]
-        log.log(24, f'Value of \'force_overwrite\' is set to {overwrite}')
+        log.log(24, f'{"En" if overwrite else "Dis"}abled forceful overwriting files')
         self.sstimap_options["force_overwrite"] = overwrite
 
     do_overwrite = do_force_overwrite

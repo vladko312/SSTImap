@@ -3,7 +3,7 @@ import sys
 import json
 
 
-version = '1.2.5'
+version = '1.3.0'
 min_version = {
     'plugin': '1.2.3',
     'data_type': '1.2.0'
@@ -16,7 +16,7 @@ defaults = {
     "marker": '*',
     "data_type": "form",
     "level": 1,
-    "technique": "RET",
+    "technique": "REBT",
     "crawl_domains": "S",
     "log_response": False,
     "time_based_blind_delay": 4,
@@ -28,7 +28,7 @@ defaults = {
     "forms": False,
     "empty_forms": False,
     "legacy": False,
-    "skip_generic": False,
+    "generic": False,
     "run": False,
     "tpl_shell": False,
     "eval_shell": False,

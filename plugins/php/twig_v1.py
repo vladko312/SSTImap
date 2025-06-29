@@ -39,8 +39,8 @@ class Twig_v1(php.Php):
                 'header': '{{%set h={header[0]}+{header[1]}%}}',
                 # Body needs to set b as the output
                 'trailer': '{{%set t={trailer[0]}+{trailer[1]}%}}{{{{include([h,b,t]|join)}}}}',
-                'test_render': f'{{% if 1 is sameas(1) %}}{{%set a=(1..3)|join%}}{{% endif %}}{{%set b=[a,"{rand.randstrings[0]}\n"|nl2br]|join%}}',
-                'test_render_expected': f'123{rand.randstrings[0]}&lt;br /&gt;'
+                'test_render': f'{{% if 1 is sameas(1) %}}{{%set a=(1..3)|join%}}{{% endif %}}{{%set b=[a,"{rand.randstrings[0]}"]|join%}}',
+                'test_render_expected': f'123{rand.randstrings[0]}'
             },
             'write': {
                 'call': 'inject',

@@ -99,12 +99,12 @@ def module_info(line):
             log.log(25, "No module found with provided name.")
 
 
-def plugins(legacy=False, quick_generic=False):
+def plugins(legacy=False, generic=False):
     from core.plugin import loaded_plugins
     plugin_list = []
     for group in loaded_plugins:
         plugin_list += loaded_plugins.get(group, [])
-    if quick_generic:
+    if not generic:
         all_plugin_list = plugin_list
         plugin_list = []
         for p in all_plugin_list:
@@ -171,9 +171,10 @@ def print_injection_summary(channel):
 def detect_template_injection(channel):
     for i in range(len(channel.injs)):
         log.log(28, f"Testing if {channel.injs[channel.inj_idx]['field']} parameter '{channel.injs[channel.inj_idx]['param']}' is injectable")
-        for plugin in plugins(legacy=channel.args.get('legacy'), quick_generic=channel.args.get('skip_generic')):
+        for plugin in plugins(legacy=channel.args.get('legacy'), generic=channel.args.get('generic')):
             current_plugin = plugin(channel)
-            if channel.args.get('engine') and channel.args.get('engine').lower() != current_plugin.plugin.lower():
+            # Replacing - with _ the way it is done in class names
+            if channel.args.get('engine') and channel.args.get('engine').lower().replace('-', '_') != current_plugin.plugin.lower():
                 continue
             current_plugin.detect()
             if channel.data.get('engine'):

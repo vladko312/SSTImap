@@ -90,15 +90,15 @@ detection.add_argument("-L", "--force-level", dest="force_level", metavar=("LEVE
 detection.add_argument("-e", "--engine", dest="engine",
                        help="Check only this backend template engine")
 detection.add_argument("-r", "--technique", dest="technique",
-                       help="Techniques R(endered) E(rror-based) T(ime-based blind). Default: RET")
+                       help="Techniques: R(endered) E(rror-based) B(oolean error-based blind) T(ime-based blind). Default: REBT")
 detection.add_argument("--blind-delay", dest="time_based_blind_delay", type=int,
                        help="Delay to detect time-based blind injection (Default: 4 seconds)")
 detection.add_argument("--verify-blind-delay", dest="time_based_verify_blind_delay", type=int,
                        help="Delay to verify and exploit time-based blind injection (Default: 30 seconds)")
 detection.add_argument("--legacy", dest="legacy", action="store_const", const=True,
                        help="Include old payloads, that no longer work with newer versions of the engines")
-detection.add_argument("--skip-generic", dest="skip_generic", action="store_const", const=True,
-                       help="Skip dedicated payloads for generic engines, detecting them as 'generic'.")
+detection.add_argument("--generic", dest="generic", action="store_const", const=False,
+                       help="Try dedicated payloads for generic engines, detecting more context.")
 detection.add_argument("--run", dest="run", action="store_const", const=True,
                        help="Run detection at the start of SSTImap in interactive mode.")
 

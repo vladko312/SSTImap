@@ -162,35 +162,43 @@ class Plugin(object):
         # Get user-provided techniques
         techniques = self.channel.args.get('technique')
 
-        # Render technique
-        if 'R' in techniques:
-            # Start detection
-            self._detect_render()
-            # If render is not set, check unreliable render
-            if self.get('render') is None:
-                self._detect_unreliable_render()
-            # Else, print and execute rendered_detected()
-            else:
-                # If here, the rendering is confirmed
-                prefix = self.get('prefix', '')
-                render = self.get('render', '{code}').format(code='*')
-                wrapper = self.get('wrapper', '{code}').format(code=render)
-                suffix = self.get('suffix', '')
-                log.log(24, f'''{self.plugin} plugin has confirmed injection with tag '{repr(prefix).strip("'")}{repr(wrapper).strip("'")}{repr(suffix).strip("'")}' ''')
-                # Clean up any previous unreliable render data
-                self.delete('unreliable_render')
-                self.delete('unreliable')
-                # Set basic info
-                self.set('engine', self.plugin.lower())
-                self.set('language', self.language)
-                # Set the environment
-                self.rendered_detected()
+        tested = []
+        for technique in techniques:
+            if self.get('engine'):
+                # Engine found, no further testing needed
+                break
+            if technique in tested:
+                # Already tested this technique
+                continue
+            tested.append(technique)
 
-        # Error-based technique
-        # This is just a render technique with a different payload
-        if 'E' in techniques:
-            # Manage error-based injection only if render detection has failed
-            if not self.get('engine'):
+            # Render technique
+            if technique == 'R':
+                # Start detection
+                self._detect_render()
+                # If render is not set, check unreliable render
+                if self.get('render') is None:
+                    self._detect_unreliable_render()
+                # Else, print and execute rendered_detected()
+                else:
+                    # If here, the rendering is confirmed
+                    prefix = self.get('prefix', '')
+                    render = self.get('render', '{code}').format(code='*')
+                    wrapper = self.get('wrapper', '{code}').format(code=render)
+                    suffix = self.get('suffix', '')
+                    log.log(24, f'''{self.plugin} plugin has confirmed injection with tag '{repr(prefix).strip("'")}{repr(wrapper).strip("'")}{repr(suffix).strip("'")}' ''')
+                    # Clean up any previous unreliable render data
+                    self.delete('unreliable_render')
+                    self.delete('unreliable')
+                    # Set basic info
+                    self.set('engine', self.plugin.lower())
+                    self.set('language', self.language)
+                    # Set the environment
+                    self.rendered_detected()
+
+            # Error-based technique
+            # This is just a render technique with a different payload
+            elif technique == 'E':
                 # Start detection
                 self._detect_render(reflection="render_error")
                 # If error is not set, check unreliable error message
@@ -209,13 +217,11 @@ class Plugin(object):
                     # Set the environment
                     self.rendered_detected()
 
-        # Time-based blind technique
-        if 'T' in techniques:
-            # Manage blind injection only if render and error-based detections have failed
-            if not self.get('engine'):
+            # Time-based blind technique
+            elif technique == 'T':
                 self._detect_blind()
                 if self.get('blind'):
-                    log.log(24, f'{self.plugin} plugin has confirmed blind injection')
+                    log.log(24, f'{self.plugin} plugin has confirmed time-based blind injection')
                     # Clean up any previous unreliable render data
                     self.delete('unreliable_render')
                     self.delete('unreliable')
@@ -297,7 +303,7 @@ class Plugin(object):
         if not action or not payload_true or not payload_false or not call_name or not hasattr(self, call_name):
             return
         # Print what it's going to be tested
-        log.log(23, f'{self.plugin} plugin is testing blind injection')
+        log.log(23, f'{self.plugin} plugin is testing time-based blind injection')
         for prefix, suffix, wrapper in self._generate_contexts():
             # Conduct a true-false test
             if not getattr(self, call_name)(code=payload_true, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True):
@@ -308,17 +314,17 @@ class Plugin(object):
             detail['blind_false'] = self._inject_verbose
             detail['average'] = sum(self.render_req_tm) / len(self.render_req_tm)
             # We can assume here blind is true
-            log.log(28, f'{self.plugin} plugin has detected possible blind injection')
+            log.log(28, f'{self.plugin} plugin has detected possible time-based blind injection')
             self.set('blind_test', True)
             # Conduct a true-false test again with bigger delay
             if not getattr(self, call_name)(code=payload_true, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True):
                 self.set('blind_test', False)
-                log.log(25, f'Possible blind injection turned out to be false positive')
+                log.log(25, f'Possible time-based blind injection turned out to be false positive')
                 continue
             detail = {'blind_true': self._inject_verbose}
             if getattr(self, call_name)(code=payload_false, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True):
                 self.set('blind_test', False)
-                log.log(25, f'Possible blind injection turned out to be false positive')
+                log.log(25, f'Possible time-based blind injection turned out to be false positive')
                 continue
             self.set('blind_test', False)
             detail['blind_false'] = self._inject_verbose
