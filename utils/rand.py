@@ -16,9 +16,10 @@ def randint_n(n, m=9):
 
 
 letters = string.ascii_letters
+digits = string.digits
 
 
-def randstr_n(n, chars=letters + string.digits):
+def randstr_n(n, chars=letters + digits):
     return ''.join(random.choice(chars) for _ in range(n))
 
 

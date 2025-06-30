@@ -648,7 +648,7 @@ Exploitation:
             log.log(22, 'Target URL was not checked for SSTI. Use \'run\' or \'check\' first.')
             return
         if self.channel.data.get('engine'):
-            if self.channel.data.get('blind'):
+            if self.channel.data.get('blind') or self.channel.data.get('boolean'):
                 log.log(23, 'Only blind execution has been found. '
                             'Injected template code will not produce any output.')
                 call = self.current_plugin.inject
@@ -674,7 +674,7 @@ Exploitation:
             log.log(22, 'Template command cannot be empty.')
             return
         if self.channel.data.get('engine'):
-            if self.channel.data.get('blind'):
+            if self.channel.data.get('blind') or self.channel.data.get('boolean'):
                 log.log(23, 'Only blind execution has been found. '
                             'Injected template code will not produce any output.')
                 call = self.current_plugin.inject
@@ -694,7 +694,7 @@ Exploitation:
             return
         if self.channel.data.get('evaluate_blind'):
             log.log(23, 'Only blind execution has been found. '
-                        'Injected template code will not produce any output.')
+                        'True or False is returned whether the code evaluates to a truthful value or not.')
             log.log(21, 'Inject multi-line template base language code. '
                         'Press ctrl-D or type \'EOF\' on a new line to send the lines')
             try:
@@ -725,7 +725,7 @@ Exploitation:
             return
         if self.channel.data.get('evaluate_blind'):
             log.log(23, 'Only blind execution has been found. '
-                        'Injected code will not produce any output.')
+                        'True or False is returned whether the code evaluates to a truthful value or not.')
             try:
                 print(self.current_plugin.evaluate_blind(line))
             except (KeyboardInterrupt, EOFError):
@@ -745,8 +745,11 @@ Exploitation:
             return
         if self.channel.data.get('execute_blind'):
             log.log(23, """Blind injection has been found and command execution will not produce any output.""")
-            log.log(26, 'Delay is introduced appending \'&& sleep <delay>\' to the shell commands. '
-                        'True or False is returned whether it returns successfully or not.')
+            if self.channel.data.get('boolean'):
+                log.log(26, 'True or False is returned whether the command returns successfully or not.')
+            else:
+                log.log(26, 'Delay is introduced appending \'&& sleep <delay>\' to the shell commands. '
+                            'True or False is returned whether it returns successfully or not.')
             log.log(21, 'Run commands on the operating system.')
             try:
                 Shell(self.current_plugin.execute_blind, f"{self.channel.data.get('os', 'undetected')} (blind) $ ").cmdloop()
@@ -776,7 +779,10 @@ Exploitation:
             return
         if self.channel.data.get('execute_blind'):
             log.log(23, """Blind injection has been found and command execution will not produce any output.""")
-            log.log(26, 'Delay is introduced appending \'&& sleep <delay>\' to the shell commands. '
+            if self.channel.data.get('boolean'):
+                log.log(26, 'True or False is returned whether the command returns successfully or not.')
+            else:
+                log.log(26, 'Delay is introduced appending \'&& sleep <delay>\' to the shell commands. '
                         'True or False is returned whether it returns successfully or not.')
             try:
                 print(self.current_plugin.execute_blind(line))

