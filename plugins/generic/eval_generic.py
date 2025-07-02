@@ -11,6 +11,7 @@ class Eval_generic(Plugin):
         "Description": """Template engines with evaluation capabilities in tags""",
         "Usage notes": """This plugin is a fallback to detect SSTI with evaluation capabilities.
 No OS-related exploitation is provided, language evaluation works directly in a tag.
+Boolean error-based blind evaluation requires manually triggering errors to get the output.
 You can try to detect the template engine to search for the RCE payloads.""",
         "Authors": [
             "Vladislav Korchagin @vladko312 https://github.com/vladko312",
@@ -36,12 +37,24 @@ You can try to detect the template engine to search for the RCE payloads.""",
                 'test_render': f"({rand.randints[0]}/0).zxy.zxy",
                 'test_render_expected': f'zxy'
             },
+            'boolean': {
+                'call': 'inject',
+                # No universal syntax, so using syntax errors
+                'test_bool_true':  "(3*4/2)",
+                'test_bool_false': "3*)2(/4",
+                'verify_bool_true':  "((7*8)/(2*4))",
+                'verify_bool_false': "7)(*)8)(2/(*4"
+            },
             'evaluate': {
                 'call': 'render',
                 'evaluate': "{code}",
                 'test_os': '"Unknown"',
                 'test_os_expected': r'^Unknown$'
-            }
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': "{code}",
+            },
         })
 
         self.set_contexts([

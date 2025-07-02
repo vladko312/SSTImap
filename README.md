@@ -250,7 +250,7 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | Slim                                                                               | ✓   | REBT | Ruby       | Default                                                |
 | ERB                                                                                | ✓   | REBT | Ruby       | Default                                                |
 | Ruby (code eval)                                                                   | ✓   | REBT | Ruby       | Default                                                |
-| Generic evaluating templates                                                       | ×   | Re   | *          | Default                                                |
+| Generic evaluating templates                                                       | ×   | Reb  | *          | Default                                                |
 | Dust (<= dustjs-helpers@1.5.0)                                                     | ✓   | RET  | JavaScript | Legacy                                                 |
 | Twig (<=1.19)                                                                      | ✓   | RET  | PHP        | Legacy                                                 |
 | [expr-eval](https://huntr.com/bounties/1-npm-expr-eval)                            | ✓   | RET  | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
