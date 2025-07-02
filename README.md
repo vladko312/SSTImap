@@ -228,8 +228,8 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 
 | Engine                                                                             | RCE | Tech | Language   | Type                                                   |
 |------------------------------------------------------------------------------------|-----|------|------------|--------------------------------------------------------|
-| Freemarker                                                                         | ✓   | RET  | Java       | Default                                                |
-| Velocity                                                                           | ✓   | RET  | Java       | Default                                                |
+| Freemarker                                                                         | ✓   | REBT | Java       | Default                                                |
+| Velocity                                                                           | ✓   | REBT | Java       | Default                                                |
 | Nunjucks                                                                           | ✓   | RET  | JavaScript | Default                                                |
 | Pug                                                                                | ✓   | RET  | JavaScript | Default                                                |
 | doT                                                                                | ✓   | RET  | JavaScript | Default                                                |
@@ -239,17 +239,17 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | JavaScript-based generic templates                                                 | ✓   | RET  | JavaScript | Default                                                |
 | Smarty                                                                             | ✓   | RET  | PHP        | Default                                                |
 | Twig (>=1.41; >=2.10; >=3.0)                                                       | ✓   | RET  | PHP        | Default                                                |
-| PHP (code eval)                                                                    | ✓   | RET  | PHP        | Default                                                |
-| PHP-based generic templates                                                        | ✓   | RET  | PHP        | Default                                                |
+| PHP (code eval)                                                                    | ✓   | REBT | PHP        | Default                                                |
+| PHP-based generic templates                                                        | ✓   | REBT | PHP        | Default                                                |
 | Mako                                                                               | ✓   | RET  | Python     | Default                                                |
 | Cheetah                                                                            | ✓   | RET  | Python     | Default                                                |
 | Jinja2                                                                             | ✓   | RET  | Python     | Default                                                |
 | Tornado                                                                            | ✓   | RET  | Python     | Default                                                |
-| Python (code eval)                                                                 | ✓   | RET  | Python     | Default                                                |
-| Python-based generic templates                                                     | ✓   | RET  | Python     | Default                                                |
-| Slim                                                                               | ✓   | RET  | Ruby       | Default                                                |
-| ERB                                                                                | ✓   | RET  | Ruby       | Default                                                |
-| Ruby (code eval)                                                                   | ✓   | RET  | Ruby       | Default                                                |
+| Python (code eval)                                                                 | ✓   | REBT | Python     | Default                                                |
+| Python-based generic templates                                                     | ✓   | REBT | Python     | Default                                                |
+| Slim                                                                               | ✓   | REBT | Ruby       | Default                                                |
+| ERB                                                                                | ✓   | REBT | Ruby       | Default                                                |
+| Ruby (code eval)                                                                   | ✓   | REBT | Ruby       | Default                                                |
 | Generic evaluating templates                                                       | ×   | Re   | *          | Default                                                |
 | Dust (<= dustjs-helpers@1.5.0)                                                     | ✓   | RET  | JavaScript | Legacy                                                 |
 | Twig (<=1.19)                                                                      | ✓   | RET  | PHP        | Legacy                                                 |
@@ -258,7 +258,7 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | [CVE-2022-23614](https://nvd.nist.gov/vuln/detail/CVE-2022-23614)                  | ✓   | RT   | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE_2024_6386](https://sec.stealthcopter.com/wpml-rce-via-twig-ssti/)             | ✓   | RET  | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
 
-Techniques: (R)endered, (E)rror-based and (T)ime-based blind; Lowercase letter marks partially supported technique
+Techniques: (R)endered, (E)rror-based, (B)oolean error-based blind and (T)ime-based blind; Lowercase letter marks partially supported technique
 
 More plugins and payloads can be found in [SSTImap Extra Plugins](https://github.com/vladko312/extras) repository.
 

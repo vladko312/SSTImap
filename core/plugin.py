@@ -133,8 +133,8 @@ class Plugin(object):
                 if self.actions.get('read') or (error and self.actions.get('read_error')):
                     self.set('read', True)
                 action_execute = self.actions.get('execute', {}).copy()
-                if error and 'evaluate_error' in self.actions:
-                    action_execute.update(self.actions.get('evaluate_error', {}))
+                if error and 'execute_error' in self.actions:
+                    action_execute.update(self.actions.get('execute_error', {}))
                 test_cmd_code = action_execute.get('test_cmd')
                 test_cmd_code_expected = action_execute.get('test_cmd_expected')
                 # Using rstrip in case of trailing newline
@@ -658,8 +658,6 @@ class Plugin(object):
         action = self.actions.get('evaluate', {}).copy()
         if error and 'evaluate_error' in self.actions:
             action.update(self.actions.get('evaluate_error', {}))
-        #if boolean and 'evaluate_boolean' in self.actions:
-        #    action.update(self.actions.get('evaluate_boolean', {}))
         payload = action.get('evaluate')
         call_name = action.get('call', 'render')
         # Skip if something is missing or call function is not set
@@ -733,7 +731,7 @@ class Plugin(object):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
         wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
-        blind = kwargs.get('blind', False)
+        blind = kwargs.get('blind', self.get('blind', False))
         boolean = kwargs.get('boolean', self.get('boolean', False))
         action = self.actions.get('evaluate_blind', {})
         if boolean and 'evaluate_boolean' in self.actions:
@@ -765,7 +763,7 @@ class Plugin(object):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
         wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
-        blind = kwargs.get('blind', False)
+        blind = kwargs.get('blind', self.get('blind', False))
         boolean = kwargs.get('boolean', self.get('boolean', False))
         action = self.actions.get('execute_blind', {})
         if boolean and 'execute_boolean' in self.actions:
