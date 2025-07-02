@@ -235,8 +235,8 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | doT                                                                                | ✓   | RET  | JavaScript | Default                                                |
 | Marko                                                                              | ✓   | RET  | JavaScript | Default                                                |
 | EJS                                                                                | ✓   | RET  | JavaScript | Default                                                |
-| JavaScript (code eval)                                                             | ✓   | RET  | JavaScript | Default                                                |
-| JavaScript-based generic templates                                                 | ✓   | RET  | JavaScript | Default                                                |
+| JavaScript (code eval)                                                             | ✓   | REBT | JavaScript | Default                                                |
+| JavaScript-based generic templates                                                 | ✓   | REBT | JavaScript | Default                                                |
 | Smarty                                                                             | ✓   | RET  | PHP        | Default                                                |
 | Twig (>=1.41; >=2.10; >=3.0)                                                       | ✓   | RET  | PHP        | Default                                                |
 | PHP (code eval)                                                                    | ✓   | REBT | PHP        | Default                                                |

