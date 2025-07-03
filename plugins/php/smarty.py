@@ -5,6 +5,7 @@ from core import bash
 
 class Smarty(php.Php):
     priority = 5
+    generic_plugin = True
     plugin_info = {
         "Description": """Smarty template engine""",
         "Authors": [
