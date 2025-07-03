@@ -8,7 +8,7 @@ def vector(response):
     return {"code": response.status_code, "header_count": len(response.headers), "cookie_count": len(response.cookies),
             "byte_len": len(response.content), "body_len": len(response.text), "body_words": len(response.text.split(" ")),
             "body_lines": len(response.text.split("\n")), "encoding": response.encoding, "redirects": len(response.history),
-            "time": response.elapsed / timedelta(microseconds=1), "url": response.url.split("?")[0],
+            "url": response.url.split("?")[0], "time": response.elapsed / timedelta(microseconds=1),
             "content_type": response.headers.get("Content-Type", "unknown"), "server": response.headers.get("Server", "unknown")}
 
 
@@ -31,7 +31,6 @@ def profile(channel, attempts=10, min_size=1, max_size=200, alphabet=rand.digits
         elif (k in ["byte_len", "body_len", "body_words", "body_lines", "time"] and
               ((max(results[k]) - min(results[k])) / sum(results[k]) * len(results[k])) <= fuzzy_limit):
             site_profile[k] = "fuzzy"
-            print(k, results[k])
             site_vector[k] = sum(results[k]) / len(results[k])
         else:
             site_profile[k] = "vary"

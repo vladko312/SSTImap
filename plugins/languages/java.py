@@ -77,7 +77,6 @@ class Java(Plugin):
                 os = self.execute(test_os_code)
                 if os and re.search(test_os_code_expected, os):
                     self.set('os', os)
-            print(1)
             action_evaluate = self.actions.get('evaluate', {}).copy()
             if error and 'evaluate_error' in self.actions:
                 action_evaluate.update(self.actions.get('evaluate_error', {}))
@@ -85,8 +84,6 @@ class Java(Plugin):
                 test_eval = action_evaluate.get('test_eval')
                 test_eval_expected = action_evaluate.get('test_eval_expected')
                 # Using rstrip in case of trailing newline
-                print(2, test_eval, test_eval_expected)
-                print(3, self.evaluate(test_eval))
                 if test_eval and test_eval_expected and test_eval_expected == self.evaluate(test_eval).rstrip():
                     self.set('evaluate', self.language)
 

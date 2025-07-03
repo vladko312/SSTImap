@@ -9,6 +9,10 @@ class Freemarker(java.Java):
         "Authors": [
             "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
             "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap
+            "@n1nj4sec https://github.com/n1nj4sec",  # Boolean error-based blind oracle
+        ],
+        "References": [
+            "Writeup: https://gist.github.com/n1nj4sec/5e3fffdfa322f4c23053359fc8100ab9",
         ],
         "Engine": [
             "Homepage: https://freemarker.apache.org/",

@@ -237,8 +237,8 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | EJS                                                                                | ✓   | RET  | JavaScript | Default                                                |
 | JavaScript (code eval)                                                             | ✓   | REBT | JavaScript | Default                                                |
 | JavaScript-based generic templates                                                 | ✓   | REBT | JavaScript | Default                                                |
-| Smarty                                                                             | ✓   | RET  | PHP        | Default                                                |
-| Twig (>=1.41; >=2.10; >=3.0)                                                       | ✓   | RET  | PHP        | Default                                                |
+| Smarty                                                                             | ✓   | REBT | PHP        | Default                                                |
+| Twig (>=1.41; >=2.10; >=3.0)                                                       | ✓   | REBT | PHP        | Default                                                |
 | PHP (code eval)                                                                    | ✓   | REBT | PHP        | Default                                                |
 | PHP-based generic templates                                                        | ✓   | REBT | PHP        | Default                                                |
 | Mako                                                                               | ✓   | RET  | Python     | Default                                                |
@@ -252,7 +252,7 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | Ruby (code eval)                                                                   | ✓   | REBT | Ruby       | Default                                                |
 | Generic evaluating templates                                                       | ×   | Reb  | *          | Default                                                |
 | Dust (<= dustjs-helpers@1.5.0)                                                     | ✓   | RET  | JavaScript | Legacy                                                 |
-| Twig (<=1.19)                                                                      | ✓   | RET  | PHP        | Legacy                                                 |
+| Twig (<=1.19)                                                                      | ✓   | REBT | PHP        | Legacy                                                 |
 | [expr-eval](https://huntr.com/bounties/1-npm-expr-eval)                            | ✓   | RET  | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE-2025-1302](https://gist.github.com/nickcopi/11ba3cb4fdee6f89e02e6afae8db6456) | ✓   | RET  | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE-2022-23614](https://nvd.nist.gov/vuln/detail/CVE-2022-23614)                  | ✓   | RT   | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
