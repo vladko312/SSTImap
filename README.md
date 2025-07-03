@@ -230,31 +230,31 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 |------------------------------------------------------------------------------------|-----|------|------------|--------------------------------------------------------|
 | Freemarker                                                                         | ✓   | REBT | Java       | Default                                                |
 | Velocity                                                                           | ✓   | REBT | Java       | Default                                                |
-| Nunjucks                                                                           | ✓   | RET  | JavaScript | Default                                                |
-| Pug                                                                                | ✓   | RET  | JavaScript | Default                                                |
-| doT                                                                                | ✓   | RET  | JavaScript | Default                                                |
-| Marko                                                                              | ✓   | RET  | JavaScript | Default                                                |
-| EJS                                                                                | ✓   | RET  | JavaScript | Default                                                |
+| Nunjucks                                                                           | ✓   | REBT | JavaScript | Default                                                |
 | JavaScript (code eval)                                                             | ✓   | REBT | JavaScript | Default                                                |
 | JavaScript-based generic templates                                                 | ✓   | REBT | JavaScript | Default                                                |
-| Smarty                                                                             | ✓   | REBT | PHP        | Default                                                |
 | Twig (>=1.41; >=2.10; >=3.0)                                                       | ✓   | REBT | PHP        | Default                                                |
 | PHP (code eval)                                                                    | ✓   | REBT | PHP        | Default                                                |
 | PHP-based generic templates                                                        | ✓   | REBT | PHP        | Default                                                |
-| Mako                                                                               | ✓   | RET  | Python     | Default                                                |
-| Cheetah                                                                            | ✓   | RET  | Python     | Default                                                |
-| Jinja2                                                                             | ✓   | RET  | Python     | Default                                                |
-| Tornado                                                                            | ✓   | RET  | Python     | Default                                                |
+| Jinja2                                                                             | ✓   | REBT | Python     | Default                                                |
 | Python (code eval)                                                                 | ✓   | REBT | Python     | Default                                                |
 | Python-based generic templates                                                     | ✓   | REBT | Python     | Default                                                |
-| Slim                                                                               | ✓   | REBT | Ruby       | Default                                                |
 | ERB                                                                                | ✓   | REBT | Ruby       | Default                                                |
+| Slim                                                                               | ✓   | REBT | Ruby       | Default                                                |
 | Ruby (code eval)                                                                   | ✓   | REBT | Ruby       | Default                                                |
 | Generic evaluating templates                                                       | ×   | Reb  | *          | Default                                                |
-| Dust (<= dustjs-helpers@1.5.0)                                                     | ✓   | RET  | JavaScript | Legacy                                                 |
+| doT                                                                                | ✓   | REBT | JavaScript | Generic                                                |
+| EJS                                                                                | ✓   | REBT | JavaScript | Generic                                                |
+| Marko                                                                              | ✓   | REBT | JavaScript | Generic                                                |
+| Pug                                                                                | ✓   | REBT | JavaScript | Generic                                                |
+| Smarty                                                                             | ✓   | REBT | PHP        | Generic                                                |
+| Cheetah                                                                            | ✓   | REBT | Python     | Generic                                                |
+| Mako                                                                               | ✓   | REBT | Python     | Generic                                                |
+| Tornado                                                                            | ✓   | REBT | Python     | Generic                                                |
+| Dust (<= dustjs-helpers@1.5.0)                                                     | ✓   | REBT | JavaScript | Legacy                                                 |
 | Twig (<=1.19)                                                                      | ✓   | REBT | PHP        | Legacy                                                 |
-| [expr-eval](https://huntr.com/bounties/1-npm-expr-eval)                            | ✓   | RET  | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
-| [CVE-2025-1302](https://gist.github.com/nickcopi/11ba3cb4fdee6f89e02e6afae8db6456) | ✓   | RET  | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
+| [expr-eval](https://huntr.com/bounties/1-npm-expr-eval)                            | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
+| [CVE-2025-1302](https://gist.github.com/nickcopi/11ba3cb4fdee6f89e02e6afae8db6456) | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE-2022-23614](https://nvd.nist.gov/vuln/detail/CVE-2022-23614)                  | ✓   | RT   | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE_2024_6386](https://sec.stealthcopter.com/wpml-rce-via-twig-ssti/)             | ✓   | RET  | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
 

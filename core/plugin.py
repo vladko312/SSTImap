@@ -423,6 +423,8 @@ class Plugin(object):
             result = match(self.channel, vector)
             log.debug(f'[boolean {self.plugin}] request returned {vector}. '
                       f'{self.channel.page_vector} is expected, returning {str(result)}')
+            print(f'[boolean {self.plugin}] request returned {vector}. '
+                      f'{self.channel.page_vector} is expected, returning {str(result)}')
             self._inject_verbose = {'result': result, 'payload': injection, 'vector': vector,
                                     'expected': self.channel.page_vector, 'profile': self.channel.page_profile}
             return result

