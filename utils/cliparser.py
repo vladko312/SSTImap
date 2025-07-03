@@ -86,7 +86,7 @@ detection = parser.add_argument_group(title="detection",
 detection.add_argument("-l", "--level", dest="level", type=int,
                        help="Level of escaping to perform (1-5, Default: 1)")
 detection.add_argument("-L", "--force-level", dest="force_level", metavar=("LEVEL", "CLEVEL",),
-                       help="Force a LEVEL and CLEVEL to test", nargs=2)
+                       help="Force a LEVEL and CLEVEL to test", nargs=2, type=int)
 detection.add_argument("-e", "--engine", dest="engine",
                        help="Check only this backend template engine")
 detection.add_argument("-r", "--technique", dest="technique",
@@ -95,6 +95,19 @@ detection.add_argument("--blind-delay", dest="time_based_blind_delay", type=int,
                        help="Delay to detect time-based blind injection (Default: 4 seconds)")
 detection.add_argument("--verify-blind-delay", dest="time_based_verify_blind_delay", type=int,
                        help="Delay to verify and exploit time-based blind injection (Default: 30 seconds)")
+detection.add_argument("--bool-ok", dest="boolean_regex_ok",
+                       help="Regex to match when boolean error-based blind payload evaluates correctly")
+detection.add_argument("--bool-err", dest="boolean_regex_err",
+                       help="Regex to match when boolean error-based blind payload causes an error")
+detection.add_argument("--bool-match", dest="boolean_match",
+                       help="Comma-separated list of matching params. Default: code,header_count,cookie_count,byte_len,"
+                            "body_len,body_words,body_lines,encoding,redirects,time,url,content_type,server")
+detection.add_argument("--bool-match-min", dest="boolean_match_min", type=int,
+                       help="Minimum amount of usable params for matching. Default: 7")
+detection.add_argument("--bool-fuzzy", dest="boolean_fuzzy", nargs=2, type=float, metavar=("STABLE", "ERROR",),
+                       help="Allow small deviations in some of the matching parameters. Default: 0.05 0.1")
+detection.add_argument("--bool-samples", dest="boolean_samples", nargs=3, type=int, metavar=("COUNT", "MIN", "MAX",),
+                       help="Amount of tests to profile the page and payload sizes. Default: 10 1 200")
 detection.add_argument("--legacy", dest="legacy", action="store_const", const=True,
                        help="Include old payloads, that no longer work with newer versions of the engines")
 detection.add_argument("--generic", dest="generic", action="store_const", const=False,

@@ -12,38 +12,44 @@ def vector(response):
             "content_type": response.headers.get("Content-Type", "unknown"), "server": response.headers.get("Server", "unknown")}
 
 
-def profile(channel, attempts=10, min_size=1, max_size=200, alphabet=rand.digits, fuzzy_limit=0.05, success=7):
+def profile(channel, alphabet=rand.digits):
     channel.req("")
     results = {"code": [], "header_count": [], "cookie_count": [], "byte_len": [], "body_len": [], "body_words": [],
                "body_lines": [], "encoding": [], "redirects": [], "time": [], "url": [], "content_type": [], "server": []}
     useful = len(results)
-    for _ in range(attempts):
-        t, d, v = channel.req(rand.randstr_n(random.randint(min_size, max_size), chars=alphabet))
+    for _ in range(channel.args.get("boolean_samples")[0]):
+        t, d, v = channel.req(rand.randstr_n(random.randint(channel.args.get("boolean_samples")[1],
+                                                            channel.args.get("boolean_samples")[2]), chars=alphabet))
         for k in v:
             if v[k] not in results[k]:
                 results[k].append(v[k])
     site_profile = {}
     site_vector = {}
     for k in results:
-        if len(results[k]) == 1:
+        if k not in channel.args.get("boolean_match", "code,header_count,cookie_count,byte_len,body_len,body_words,"
+                                                      "body_lines,encoding,redirects,time,url,content_type,server"):
+            site_profile[k] = "skip"
+            site_vector[k] = None
+            useful -= 1
+        elif len(results[k]) == 1:
             site_profile[k] = "stable"
             site_vector[k] = results[k][0]
         elif (k in ["byte_len", "body_len", "body_words", "body_lines", "time"] and
-              ((max(results[k]) - min(results[k])) / sum(results[k]) * len(results[k])) <= fuzzy_limit):
+              ((max(results[k]) - min(results[k])) / sum(results[k]) * len(results[k])) <= channel.args.get("boolean_fuzzy")[0]):
             site_profile[k] = "fuzzy"
             site_vector[k] = sum(results[k]) / len(results[k])
         else:
             site_profile[k] = "vary"
             site_vector[k] = None
             useful -= 1
-    return site_profile, site_vector, useful >= success
+    return site_profile, site_vector, useful >= channel.args.get("boolean_match_min")
 
 
-def match(channel, test_vector, fuzzy_limit=0.05):
+def match(channel, test_vector):
     for k in channel.page_profile:
         if channel.page_profile[k] == "stable" and test_vector[k] != channel.page_vector[k]:
             return False
         elif (channel.page_profile[k] == "fuzzy" and
-              abs(test_vector[k] - channel.page_vector[k]) / channel.page_vector[k] > fuzzy_limit):
+              abs(test_vector[k] - channel.page_vector[k]) / channel.page_vector[k] > channel.args.get("boolean_fuzzy")[1]):
             return False
     return True

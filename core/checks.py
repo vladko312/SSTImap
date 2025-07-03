@@ -174,12 +174,13 @@ def print_injection_summary(channel):
 def detect_template_injection(channel):
     for i in range(len(channel.injs)):
         log.log(28, f"Testing if {channel.injs[channel.inj_idx]['field']} parameter '{channel.injs[channel.inj_idx]['param']}' is injectable")
-        if 'B' in channel.args.get('technique'):
+        if 'B' in channel.args.get('technique') and not (channel.args.get('boolean_regex_ok') or
+                                                         channel.args.get('boolean_regex_err')):
             log.log(28, f"Creating page profile for boolean error-based blind detection")
-            # TODO: arguments
             page_profile, page_vector, success = profile(channel)
             if not success:
-                log.log(22, f"Website seems to be highly dynamic, boolean error-based blind detection will be skipped")
+                log.log(22, f"Website seems to be highly dynamic, boolean error-based blind detection will be skipped. "
+                            f"Try lowering --bool-min parameter.")
                 channel.boolean_enabled = False
             else:
                 channel.boolean_enabled = True
