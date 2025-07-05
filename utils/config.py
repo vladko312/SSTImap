@@ -38,8 +38,7 @@ defaults = {
     "colour": True,
     "boolean_regex_ok": "",
     "boolean_regex_err": "",
-    "boolean_match": "code,header_count,cookie_count,byte_len,body_len,body_words,"
-                     "body_lines,encoding,redirects,time,url,content_type,server",
+    "boolean_match": "",
     "boolean_match_min": 7,
     "boolean_fuzzy": [0.05, 0.1],
     "boolean_samples": [10, 1, 200],

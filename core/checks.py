@@ -156,7 +156,7 @@ def print_injection_summary(channel):
     log.log(21, f"""SSTImap identified the following injection point:
 
   {channel.injs[channel.inj_idx]['field']} parameter: {channel.injs[channel.inj_idx]['param']}
-  Engine: {channel.data.get('engine').capitalize()}
+  Engine: {channel.data.get('engine')}
   Injection: {prefix}{wrapper}{suffix}
   Context: {'text' if (not prefix and not suffix) else 'code'}
   OS: {channel.data.get('os', 'undetected')}
@@ -186,6 +186,8 @@ def detect_template_injection(channel):
                 channel.boolean_enabled = True
             channel.page_profile = page_profile
             channel.page_vector = page_vector
+        else:
+            channel.boolean_enabled = True
         for plugin in plugins(channel.args):
             current_plugin = plugin(channel)
             # Replacing - with _ the way it is done in class names

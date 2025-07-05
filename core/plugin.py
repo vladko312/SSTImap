@@ -191,7 +191,7 @@ class Plugin(object):
                     self.delete('unreliable_render')
                     self.delete('unreliable')
                     # Set basic info
-                    self.set('engine', self.plugin.lower())
+                    self.set('engine', self.plugin)
                     self.set('language', self.language)
                     # Set the environment
                     self.rendered_detected()
@@ -212,7 +212,7 @@ class Plugin(object):
                     self.delete('unreliable_render_error')
                     self.delete('unreliable')
                     # Set basic info
-                    self.set('engine', self.plugin.lower())
+                    self.set('engine', self.plugin)
                     self.set('language', self.language)
                     # Set the environment
                     self.rendered_detected()
@@ -226,7 +226,7 @@ class Plugin(object):
                     self.delete('unreliable_render')
                     self.delete('unreliable')
                     # Set basic info
-                    self.set('engine', self.plugin.lower())
+                    self.set('engine', self.plugin)
                     self.set('language', self.language)
                     # Set the environment
                     self.blind_detected()
@@ -240,7 +240,7 @@ class Plugin(object):
                     self.delete('unreliable_render')
                     self.delete('unreliable')
                     # Set basic info
-                    self.set('engine', self.plugin.lower())
+                    self.set('engine', self.plugin)
                     self.set('language', self.language)
                     # Set the environment
                     self.blind_detected()
@@ -426,24 +426,28 @@ class Plugin(object):
                 except:
                     log.log(22, f'Invalid RE: "{self.channel.args.get("boolean_regex_ok")}"')
                     return
-                result = boolean(pattern.search(text))
+                result = not not pattern.search(text)
                 log.debug(f'[boolean {self.plugin}] request checked against RE: '
                           f'{self.channel.args.get("boolean_regex_err")} (OK), returning {str(result)}')
+                self._inject_verbose = {'result': result, 'payload': injection, 'regex_type': "Normal",
+                                        'regex': self.channel.args.get('boolean_regex_ok')}
             elif self.channel.args.get("boolean_regex_err"):
                 try:
                     pattern = re.compile(self.channel.args.get('boolean_regex_err'))
                 except:
                     log.log(22, f'Invalid RE: "{self.channel.args.get("boolean_regex_err")}"')
                     return
-                result = not boolean(pattern.search(text))
+                result = not pattern.search(text)
                 log.debug(f'[boolean {self.plugin}] request checked against RE: '
                           f'{self.channel.args.get("boolean_regex_err")} (ERR), returning {str(result)}')
+                self._inject_verbose = {'result': result, 'payload': injection, 'regex_type': "Error",
+                                        'regex': self.channel.args.get('boolean_regex_err')}
             else:
                 result = match(self.channel, vector)
                 log.debug(f'[boolean {self.plugin}] request returned {vector}. '
                           f'{self.channel.page_vector} is expected, returning {str(result)}')
-            self._inject_verbose = {'result': result, 'payload': injection, 'vector': vector,
-                                    'expected': self.channel.page_vector, 'profile': self.channel.page_profile}
+                self._inject_verbose = {'result': result, 'payload': injection, 'vector': vector,
+                                        'expected': self.channel.page_vector, 'profile': self.channel.page_profile}
             return result
         else:
             text, delta, vector = self.channel.req(injection)

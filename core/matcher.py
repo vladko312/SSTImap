@@ -25,9 +25,11 @@ def profile(channel, alphabet=rand.digits):
                 results[k].append(v[k])
     site_profile = {}
     site_vector = {}
+    allowed_params = ("code,header_count,cookie_count,byte_len,body_len,body_words,body_lines,encoding,redirects,time,"
+                      "url,content_type,server" if channel.args.get("boolean_match") in ["", "*", "all"]
+                      else channel.args.get("boolean_match")).split(",")
     for k in results:
-        if k not in channel.args.get("boolean_match", "code,header_count,cookie_count,byte_len,body_len,body_words,"
-                                                      "body_lines,encoding,redirects,time,url,content_type,server"):
+        if k not in allowed_params:
             site_profile[k] = "skip"
             site_vector[k] = None
             useful -= 1
