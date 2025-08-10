@@ -229,6 +229,7 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | Engine                                                                             | RCE | Tech | Language   | Type                                                   |
 |------------------------------------------------------------------------------------|-----|------|------------|--------------------------------------------------------|
 | Freemarker                                                                         | ✓   | REBT | Java       | Default                                                |
+| SpEL (Spring EL code eval)                                                         | ✓   | REBT | Java       | Default                                                |
 | Velocity                                                                           | ✓   | REBT | Java       | Default                                                |
 | Nunjucks                                                                           | ✓   | REBT | JavaScript | Default                                                |
 | JavaScript (code eval)                                                             | ✓   | REBT | JavaScript | Default                                                |

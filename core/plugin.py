@@ -60,6 +60,7 @@ class Plugin(object):
     no_tests = False
     priority = 10
     header_type = 'cat'
+    header_length = 10
     sstimap_version = config.version
     plugin_info = {
         "Description": """This plugin has no description.""",
@@ -379,9 +380,9 @@ class Plugin(object):
             expected = render_action.get('test_render_expected')
             payload = render_action.get('test_render')
             wrapper_type = render_action.get(f'wrapper_type', 'local')
-            header_rand = [rand.randint_n(10, 4), rand.randint_n(10, 4)]
+            header_rand = [rand.randint_n(self.header_length, 4), rand.randint_n(self.header_length, 4)]
             header = render_action.get('header')  # .format(header=header_rand)
-            trailer_rand = [rand.randint_n(10, 4), rand.randint_n(10, 4)]
+            trailer_rand = [rand.randint_n(self.header_length, 4), rand.randint_n(self.header_length, 4)]
             trailer = render_action.get('trailer')  # .format(trailer=trailer_rand)
             # First probe with payload wrapped by header and trailer, no suffix or prefix
             if expected == self.render(code=payload, header=header, trailer=trailer, header_rand=header_rand,
@@ -476,7 +477,8 @@ class Plugin(object):
             if not header_template:
                 header_template = self.actions.get(call_name, {}).get('header')
             if header_template:
-                header_rand = kwargs.get('header_rand', self.get('header_rand', [rand.randint_n(10,4), rand.randint_n(10,4)]))
+                header_rand = kwargs.get('header_rand', self.get('header_rand', [rand.randint_n(self.header_length,4),
+                                                                                 rand.randint_n(self.header_length,4)]))
                 header = header_template.format(header=header_rand)
         else:
             header_rand = [0, 0]
@@ -488,7 +490,8 @@ class Plugin(object):
             if not trailer_template:
                 trailer_template = self.actions.get(call_name, {}).get('trailer')
             if trailer_template:
-                trailer_rand = kwargs.get('trailer_rand', self.get('trailer_rand', [rand.randint_n(10,4), rand.randint_n(10,4)]))
+                trailer_rand = kwargs.get('trailer_rand', self.get('trailer_rand', [rand.randint_n(self.header_length,4),
+                                                                                    rand.randint_n(self.header_length,4)]))
                 trailer = trailer_template.format(trailer=trailer_rand)
         else:
             trailer_rand = [0, 0]

