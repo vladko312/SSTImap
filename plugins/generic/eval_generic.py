@@ -5,6 +5,8 @@ from utils.loggers import log
 
 
 class Eval_generic(Plugin):
+    # Avoid int overflow
+    header_length = 9
     header_type = "add"
     priority = 10
     plugin_info = {

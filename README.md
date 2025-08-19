@@ -25,11 +25,12 @@ Differences with Tplmap
 -----------------------
 
 Even though this software is based on Tplmap's code, backwards compatibility is not provided.
+- Added two new techniques for SSTI detection and exploitation
 - Interactive mode (`-i`) allowing for easier exploitation and detection
 - Simple evaluation payloads as response markers in case of payload reflection
-- Added new payloads for generic templates, as well as a way to speed up detection using `--skip-generic`
+- Added new payloads for generic templates, to test all contexts use `--generic`
 - Base language _eval()_-like shell (`-x`) or single command (`-X`) execution
-- Added new payload for _Smarty_ without enabled `{php}{/php}`. Old payload is available as `Smarty_unsecure`.
+- Added new payload for _Smarty_ without enabled `{php}{/php}`.
 - Added new payload for newer versions of _Twig_. Payload for older version is available as `Twig_v1`.
 - User-Agent can be randomly selected from a list of desktop browser agents using `-A`
 - SSL verification can now be enabled using `--verify-ssl`

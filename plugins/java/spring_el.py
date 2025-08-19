@@ -5,8 +5,6 @@ from utils import rand
 
 
 class SpEL(java.Java):
-    # Avoid int overflow
-    header_length = 9
     priority = 5
     plugin_info = {
         "Description": """Spring framework Expression Language (SpEL) injection in Java.""",

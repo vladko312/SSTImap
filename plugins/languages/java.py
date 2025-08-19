@@ -6,6 +6,8 @@ import re
 
 
 class Java(Plugin):
+    # Avoid int overflow
+    header_length = 9
     header_type = "add"
     no_tests = True
     priority = 8
