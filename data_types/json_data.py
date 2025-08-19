@@ -99,7 +99,7 @@ Appropriate Content-Type header is often required by the server.""",
             else:
                 new_param = injection
             param[new_param] = old_value
-        if inj.get('part') == 'value':
+        elif inj.get('part') == 'value':
             for p in inj.get('path')[:-1]:
                 param = param[p]
             if self.tag in param[inj.get('path')[-1]]:

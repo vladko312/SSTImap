@@ -8,6 +8,7 @@ from core.tcpserver import TcpServer
 from core.tcpclient import TcpClient
 from utils.crawler import crawl, find_forms
 from core.channel import Channel
+from core.matcher import profile
 
 
 def module_info(line):
@@ -99,18 +100,18 @@ def module_info(line):
             log.log(25, "No module found with provided name.")
 
 
-def plugins(legacy=False, quick_generic=False):
+def plugins(args):
     from core.plugin import loaded_plugins
     plugin_list = []
     for group in loaded_plugins:
         plugin_list += loaded_plugins.get(group, [])
-    if quick_generic:
+    if not args.get('engine') and not args.get('generic'):
         all_plugin_list = plugin_list
         plugin_list = []
         for p in all_plugin_list:
             if not p.generic_plugin:
                 plugin_list.append(p)
-    if not legacy:
+    if not args.get('engine') and not args.get('legacy'):
         all_plugin_list = plugin_list
         plugin_list = []
         for p in all_plugin_list:
@@ -121,6 +122,14 @@ def plugins(legacy=False, quick_generic=False):
 
 
 def print_injection_summary(channel):
+    if channel.data.get('blind'):
+        technique = "time-based blind"
+    elif channel.data.get('boolean'):
+        technique = "boolean error-based blind"
+    elif channel.data.get('error'):
+        technique = "error-based"
+    else:
+        technique = "rendered"
     prefix = channel.data.get('prefix', '').replace('\n', '\\n')
     render = channel.data.get('render', '{code}').replace('\n', '\\n').format(code='*')
     suffix = channel.data.get('suffix', '').replace('\n', '\\n')
@@ -138,7 +147,7 @@ def print_injection_summary(channel):
     else:
         execution = '\033[91mno\033[0m'
     if channel.data.get('write'):
-        if channel.data.get('blind'):
+        if channel.data.get('blind') or channel.data.get('boolean'):
             writing = '\033[92mok\033[0m (blind)'
         else:
             writing = '\033[92mok\033[0m'
@@ -147,11 +156,11 @@ def print_injection_summary(channel):
     log.log(21, f"""SSTImap identified the following injection point:
 
   {channel.injs[channel.inj_idx]['field']} parameter: {channel.injs[channel.inj_idx]['param']}
-  Engine: {channel.data.get('engine').capitalize()}
+  Engine: {channel.data.get('engine')}
   Injection: {prefix}{wrapper}{suffix}
   Context: {'text' if (not prefix and not suffix) else 'code'}
   OS: {channel.data.get('os', 'undetected')}
-  Technique: {'blind' if channel.data.get('blind') else 'render'}
+  Technique: {technique}
   Capabilities:
 
     Shell command execution: {execution}
@@ -165,9 +174,24 @@ def print_injection_summary(channel):
 def detect_template_injection(channel):
     for i in range(len(channel.injs)):
         log.log(28, f"Testing if {channel.injs[channel.inj_idx]['field']} parameter '{channel.injs[channel.inj_idx]['param']}' is injectable")
-        for plugin in plugins(legacy=channel.args.get('legacy'), quick_generic=channel.args.get('skip_generic')):
+        if 'B' in channel.args.get('technique') and not (channel.args.get('boolean_regex_ok') or
+                                                         channel.args.get('boolean_regex_err')):
+            log.log(28, f"Creating page profile for boolean error-based blind detection")
+            page_profile, page_vector, success = profile(channel)
+            if not success:
+                log.log(22, f"Website seems to be highly dynamic, boolean error-based blind detection will be skipped. "
+                            f"Try lowering --bool-min parameter.")
+                channel.boolean_enabled = False
+            else:
+                channel.boolean_enabled = True
+            channel.page_profile = page_profile
+            channel.page_vector = page_vector
+        else:
+            channel.boolean_enabled = True
+        for plugin in plugins(channel.args):
             current_plugin = plugin(channel)
-            if channel.args.get('engine') and channel.args.get('engine').lower() != current_plugin.plugin.lower():
+            # Replacing - with _ the way it is done in class names
+            if channel.args.get('engine') and channel.args.get('engine').lower().replace('-', '_') != current_plugin.plugin.lower():
                 continue
             current_plugin.detect()
             if channel.data.get('engine'):
@@ -201,8 +225,11 @@ def check_template_injection(channel):
     if channel.args.get('os_cmd') or channel.args.get('os_shell'):
         if channel.data.get('execute_blind'):
             log.log(23, """Blind injection has been found and command execution will not produce any output.""")
-            log.log(26, 'Delay is introduced appending \'&& sleep <delay>\' to the shell commands. '
-                        'True or False is returned whether it returns successfully or not.')
+            if channel.data.get('boolean'):
+                log.log(26, 'True or False is returned whether the command returns successfully or not.')
+            else:
+                log.log(26, 'Delay is introduced appending \'&& sleep <delay>\' to the shell commands. '
+                            'True or False is returned whether it returns successfully or not.')
             if channel.args.get('os_cmd'):
                 print(current_plugin.execute_blind(channel.args.get('os_cmd')))
             elif channel.args.get('os_shell'):
@@ -219,7 +246,7 @@ def check_template_injection(channel):
     # Execute template commands
     if channel.args.get('tpl_code') or channel.args.get('tpl_shell'):
         if channel.data.get('engine'):
-            if channel.data.get('blind'):
+            if channel.data.get('blind') or channel.data.get('boolean'):
                 log.log(23, 'Only blind execution has been found. '
                             'Injected template code will not produce any output.')
                 call = current_plugin.inject
@@ -237,7 +264,7 @@ def check_template_injection(channel):
     if channel.args.get('eval_code') or channel.args.get('eval_shell'):
         if channel.data.get('evaluate_blind'):
             log.log(23, 'Only blind execution has been found. '
-                        'Injected code will not produce any output.')
+                        'True or False is returned whether the code evaluates to a truthful value or not.')
             if channel.args.get('eval_code'):
                 print(current_plugin.evaluate_blind(channel.args.get('eval_code')))
             elif channel.args.get('eval_shell'):

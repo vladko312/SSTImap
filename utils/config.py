@@ -3,7 +3,7 @@ import sys
 import json
 
 
-version = '1.2.4'
+version = '1.3.0'
 min_version = {
     'plugin': '1.2.3',
     'data_type': '1.2.0'
@@ -16,7 +16,7 @@ defaults = {
     "marker": '*',
     "data_type": "form",
     "level": 1,
-    "technique": "RT",
+    "technique": "REBT",
     "crawl_domains": "S",
     "log_response": False,
     "time_based_blind_delay": 4,
@@ -28,14 +28,20 @@ defaults = {
     "forms": False,
     "empty_forms": False,
     "legacy": False,
-    "skip_generic": False,
+    "generic": False,
     "run": False,
     "tpl_shell": False,
     "eval_shell": False,
     "os_shell": False,
     "force_overwrite": False,
     "remote_shell": "/bin/sh",
-    "colour": True
+    "colour": True,
+    "boolean_regex_ok": "",
+    "boolean_regex_err": "",
+    "boolean_match": "",
+    "boolean_match_min": 7,
+    "boolean_fuzzy": [0.05, 0.1],
+    "boolean_samples": [10, 1, 200],
 }
 config = {}
 user_config = {}

@@ -10,9 +10,6 @@ import urllib3
 import html
 import requests
 
-from mechanize._form import parse_forms
-from html5lib import parse
-
 from utils.loggers import log
 from utils.random_agent import get_agent
 
@@ -141,6 +138,8 @@ def crawl(targets, args):
 
 
 def find_page_forms(url, args):
+    from mechanize._form import parse_forms
+    from html5lib import parse
     if not args.get('verify_ssl'):
         urllib3.disable_warnings()
     retVal = set()
@@ -219,6 +218,9 @@ def find_page_forms(url, args):
 def find_forms(urls, args):
     forms = set()
     log.log(23, 'Starting form detection...')
-    for url in urls:
-        forms.update(find_page_forms(url, args))
+    try:
+        for url in urls:
+            forms.update(find_page_forms(url, args))
+    except ImportError:
+        log.log(25, "Form detection requires 'mechanize' and 'html5lib' to be installed")
     return forms

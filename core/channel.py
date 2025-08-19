@@ -1,8 +1,10 @@
 import time
+from datetime import timedelta
 
 import requests
 import urllib3
 from utils.loggers import log
+from core.matcher import vector
 from urllib import parse
 from copy import deepcopy
 from utils.random_agent import get_agent
@@ -190,23 +192,25 @@ class Channel:
         if self.args['delay']:
             time.sleep(self.args['delay'])
         try:
-            result = requests.request(method=self.http_method, url=url_params, params=get_params, data=post_params,
-                                      headers=header_params, cookies=cookie_params, proxies=self.proxies,
-                                      verify=self.args.get('verify_ssl')).text
+            result_raw = requests.request(method=self.http_method, url=url_params, params=get_params, data=post_params,
+                                          headers=header_params, cookies=cookie_params, proxies=self.proxies,
+                                          verify=self.args.get('verify_ssl'))
         except requests.exceptions.ConnectionError as e:
             if e and e.args[0] and e.args[0].args[0] == 'Connection aborted.':
                 log.log(25, 'Error: connection aborted, bad status line.')
-                result = ""
+                result = ("", 0.0, {})
             elif e and e.args[0] and 'Max retries exceeded' in e.args[0].args[0]:
                 log.log(25, 'Error: max retries exceeded for a connection.')
-                result = ""
+                result = ("", 0.0, {})
             else:
-                raise
+                raise e
         except requests.exceptions.TooManyRedirects as tmr:
                 log.log(25, 'Error: Too Many redirects.')
-                result = ""
+                result = ("", 0.0, {})
+        else:
+            result = (result_raw.text, (result_raw.elapsed / timedelta(microseconds=1)) / 1000000, vector(result_raw))
         if self.args.get("log_response", False):
-            log.debug(f"< {result}")
+            log.debug(f"< {result[0]}")
         return result
 
     def detected(self, technique, detail):

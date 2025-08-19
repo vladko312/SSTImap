@@ -89,7 +89,7 @@ Crawler:
   crawl [DEPTH]                           Crawl up to depth (0 - do not crawl)
   forms                                   Search page(s) for forms
   empty_forms                             Treat pages without params as GET forms
-  exclude [PATTERN]                       Regex pattern to exclude from crawler
+  exclude [PATTERN]                       RegEx pattern to exclude from crawler
   domains [DOMAINS]                       Crawl other domains: Y(es) / S(ubdomains) / N(o). Default: S
   save_urls [PATH]                        Save crawled URLs to txt file or directory (run or no PATH: reset)
   save_forms [PATH]                       Save crawled forms to json file or directory (run or no PATH: reset)
@@ -98,7 +98,13 @@ Detection:
   lvl, level [LEVEL]                      Set level of escaping to perform (1-5, Default: 1)
   force, force_level [LEVEL] [CLEVEL]     Force a LEVEL and CLEVEL to test
   engine [ENGINE]                         Check only this backend template engine. For all, use '*'
-  technique [TECHNIQUE]                   Use techniques R(endered) T(ime-based blind). Default: RT
+  technique [TECHNIQUE]                   Use techniques: R(endered) E(rror-based) B(oolean error-based blind) T(ime-based blind). Default: REBT
+  bool_ok [PATTERN]                       RegEx to match when boolean error-based blind payload evaluates correctly, empty to disable
+  bool_err [PATTERN]                      RegEx to match when boolean error-based blind payload causes an error, empty to disable
+  bool_match [PARAMS]                     Comma-separated list of matching params or 'all'. Default: code,header_count,cookie_count,byte_len,body_len,body_words,body_lines,encoding,redirects,time,url,content_type,server
+  bool_match_min [MIN_PARAMS]             Minimum amount of usable params for matching. Default: 7
+  bool_fuzzy [STABLE] [ERROR]             Allow small deviations in some of the matching parameters. Default: 0.05 0.1
+  bool_samples [COUNT] [MIN] [MAX]        Amount of tests to profile the page and payload sizes. Default: 10 1 200
   blind_delay [DELAY]                     Delay to detect time-based blind injection (Default: 4 seconds)
   verify_delay [DELAY]                    Delay to verify and exploit time-based blind injection (Default: 30 seconds)
   legacy                                  Toggle including old payloads, that no longer work with newer versions of the engines
@@ -190,11 +196,11 @@ Exploitation:
             log.log(26, f'Level: {self.sstimap_options["level"]}')
         log.log(26, f'Engine: {self.sstimap_options["engine"] if self.sstimap_options["engine"] else "*"}'
                     f'{"+" if not self.sstimap_options["engine"] and self.sstimap_options["legacy"] else ""}'
-                    f'{"»" if not self.sstimap_options["engine"] and self.sstimap_options["skip_generic"] else ""}')
+                    f'{"»" if not self.sstimap_options["engine"] and not self.sstimap_options["generic"] else ""}')
         if self.sstimap_options["crawl_depth"] > 0:
             log.log(26, f'Crawler depth: {self.sstimap_options["crawl_depth"]}')
             if self.sstimap_options["crawl_exclude"]:
-                log.log(26, f'Crawler exclude RE: "{self.sstimap_options["crawl_exclude"]}"')
+                log.log(26, f'Crawler exclude RegEx: "{self.sstimap_options["crawl_exclude"]}"')
             log.log(26, f'Crawl other domains: {crawl_domains.get(self.sstimap_options["crawl_domains"].upper())}')
         else:
             log.log(26, 'Crawler: no crawl')
@@ -202,9 +208,29 @@ Exploitation:
         if self.sstimap_options["forms"]:
             log.log(26, f'Allow empty forms: {self.sstimap_options["empty_forms"]}')
         log.log(26, f'Attack technique: {self.sstimap_options["technique"]}')
+        if "B" in self.sstimap_options["technique"]:
+            if self.sstimap_options["boolean_regex_ok"]:
+                log.log(26, f'Boolean error-based blind detection: RegEx (Normal page)')
+                log.log(26, f'Boolean error-based blind RegEx: {self.sstimap_options["boolean_regex_ok"]}')
+            elif self.sstimap_options["boolean_regex_err"]:
+                log.log(26, f'Boolean error-based blind detection: RegEx (Error page)')
+                log.log(26, f'Boolean error-based blind RegEx: {self.sstimap_options["boolean_regex_err"]}')
+            else:
+                log.log(26, f'Boolean error-based blind detection: Match pages')
+                if self.sstimap_options["boolean_match"] not in ["", "*", "all"]:
+                    match_params = "\n    ".join(self.sstimap_options["boolean_match"].split(","))
+                    log.log(26, f'Boolean error-based blind matching params:\n    {match_params}')
+                else:
+                    log.log(26, f'Boolean error-based blind matching params: all')
+                log.log(26, f'Boolean minimum usable matching params: {self.sstimap_options["boolean_match_min"]}')
+                log.log(26, f'Boolean maximum stable fuzzy matching deviation: {self.sstimap_options["boolean_fuzzy"][0]}')
+                log.log(26, f'Boolean minimum error fuzzy matching deviation: {self.sstimap_options["boolean_fuzzy"][1]}')
+                log.log(26, f'Boolean matching normal page samples: {self.sstimap_options["boolean_samples"][0]}')
+                log.log(26, f'Boolean matching sample size: {self.sstimap_options["boolean_samples"][1]}-'
+                            f'{self.sstimap_options["boolean_samples"][2]}')
         if "T" in self.sstimap_options["technique"]:
             log.log(26, f'Time-based blind detection delay: {self.sstimap_options["time_based_blind_delay"]}')
-            log.log(26, f'Time-based blind verification and exploitation delay: {self.sstimap_options["time_based_verify_blind_delay"]}')
+            log.log(26, f'Time-based verification and exploitation delay: {self.sstimap_options["time_based_verify_blind_delay"]}')
         log.log(26, f'Force overwrite files: {self.sstimap_options["force_overwrite"]}')
         log.log(26, f'Expected remote shell: {self.sstimap_options["remote_shell"]}')
         if self.sstimap_options["log_response"]:
@@ -333,9 +359,9 @@ Exploitation:
     def do_exclude(self, line):
         self.sstimap_options['crawl_exclude'] = line
         if line:
-            log.log(24, f'Crawler exclude RE is set to "{line}".')
+            log.log(24, f'Crawler exclude RegEx is set to "{line}".')
         else:
-            log.log(24, 'Crawler exclude RE disabled.')
+            log.log(24, 'Crawler exclude RegEx disabled.')
     
     do_crawl_exclude = do_exclude
     do_crawlexclude = do_exclude
@@ -498,7 +524,7 @@ Exploitation:
     def do_random_agent(self, line):
         """Switch random_user_agent option"""
         overwrite = not self.sstimap_options["random_agent"]
-        log.log(24, f'Value of \'random_user_agent\' is set to {overwrite}')
+        log.log(24, f'User agent randomisation {"en" if overwrite else "dis"}abled')
         self.sstimap_options["random_agent"] = overwrite
 
     do_random = do_random_agent
@@ -526,7 +552,7 @@ Exploitation:
     def do_verify_ssl(self, line):
         """Switch verify_ssl option"""
         overwrite = not self.sstimap_options["verify_ssl"]
-        log.log(24, f'Value of \'verify_ssl\' is set to {overwrite}')
+        log.log(24, f'SSL verification {"en" if overwrite else "dis"}abled')
         self.sstimap_options["verify_ssl"] = overwrite
 
     do_ssl = do_verify_ssl
@@ -534,7 +560,7 @@ Exploitation:
     def do_log_response(self, line):
         """Switch log_response option"""
         overwrite = not self.sstimap_options["log_response"]
-        log.log(24, f'Value of \'log_response\' is set to {overwrite}')
+        log.log(24, f'Response logging {"en" if overwrite else "dis"}abled')
         self.sstimap_options["log_response"] = overwrite
 
 # Detection commands
@@ -576,11 +602,19 @@ Exploitation:
     def do_technique(self, line):
         """Set attack TECHNIQUE to check"""
         line = line.upper()
-        if line not in ["R", "T", "RT", "TR"]:
-            log.log(22, 'Invalid TECHNIQUE value. It should be \'R\', \'T\' or \'RT\'.')
+        technique = ""
+        for t in line:
+            if t in ["R", "E", "B", "T"] and t not in technique:
+                technique += t
+                line = line.replace(t, "")
+        if technique == "":
+            log.log(22, 'Invalid TECHNIQUE value. It must contain at least one of \'R\', \'E\', \'B\' or \'T\'.')
             return
-        log.log(24, f'Attack technique is set to {line}')
-        self.sstimap_options["technique"] = line
+        if line != "":
+            log.log(22, 'Invalid TECHNIQUE value. It must only contain \'R\', \'E\', \'B\' and \'T\'.')
+            return
+        log.log(24, f'Attack technique is set to {technique}')
+        self.sstimap_options["technique"] = technique
 
     def do_remote_shell(self, line):
         """Set expected remote shell"""
@@ -597,6 +631,93 @@ Exploitation:
         self.sstimap_options["crawl_domains"] = line
 
     do_domains = do_crawl_domains
+
+    def do_bool_ok(self, line):
+        self.sstimap_options['boolean_regex_ok'] = line
+        if line:
+            log.log(24, f'Boolean error-based blind normal page RegEx is set to "{line}".')
+        else:
+            log.log(24, 'Boolean error-based blind normal page RegEx disabled.')
+        if self.sstimap_options['boolean_regex_ok']:
+            log.log(23, 'Boolean error-based blind detection: RegEx (Normal page)')
+        elif self.sstimap_options['boolean_regex_err']:
+            log.log(29 if line else 23, 'Boolean error-based blind detection: RegEx (Error page)')
+        else:
+            log.log(29 if line else 23, 'Boolean error-based blind detection: Match pages')
+
+    def do_bool_err(self, line):
+        self.sstimap_options['boolean_regex_err'] = line
+        if line:
+            log.log(24, f'Boolean error-based blind error page RegEx is set to "{line}".')
+        else:
+            log.log(24, 'Boolean error-based blind error page RegEx disabled.')
+        if self.sstimap_options['boolean_regex_ok']:
+            log.log(29 if line else 23, 'Boolean error-based blind detection: RegEx (Normal page)')
+        elif self.sstimap_options['boolean_regex_err']:
+            log.log(23, 'Boolean error-based blind detection: RegEx (Error page)')
+        else:
+            log.log(29 if line else 23, 'Boolean error-based blind detection: Match pages')
+
+    def do_bool_match(self, line):
+        if line not in ["", "*", "all"]:
+            self.sstimap_options['boolean_match'] = line
+            match_params = "\n    ".join(self.sstimap_options["boolean_match"].split(","))
+            log.log(24, f'Boolean error-based blind matching params:\n    {match_params}')
+        else:
+            self.sstimap_options['boolean_match'] = "all"
+            log.log(24, 'Boolean error-based blind matching params: all')
+        if self.sstimap_options['boolean_regex_ok']:
+            log.log(29, 'Boolean error-based blind detection: RegEx (Normal page)')
+        elif self.sstimap_options['boolean_regex_err']:
+            log.log(29, 'Boolean error-based blind detection: RegEx (Error page)')
+        else:
+            log.log(23, 'Boolean error-based blind detection: Match pages')
+
+    def do_bool_match_min(self, line):
+        if not line.isnumeric() or not (0 < int(line) < 14):
+            line = "13"
+        self.sstimap_options['boolean_match_min'] = int(line)
+        log.log(24, f'Boolean minimum stable matching params is set to {int(line)}')
+        if self.sstimap_options['boolean_regex_ok']:
+            log.log(29, 'Boolean error-based blind detection: RegEx (Normal page)')
+        elif self.sstimap_options['boolean_regex_err']:
+            log.log(29, 'Boolean error-based blind detection: RegEx (Error page)')
+        else:
+            log.log(23, 'Boolean error-based blind detection: Match pages')
+
+    def do_bool_fuzzy(self, line):
+        line = line.split(" ")
+        try:
+            boolean_fuzzy = (float(line[0]), float(line[1]),)
+        except:
+            log.log(22, 'Invalid STABLE or ERROR value.')
+            return
+        self.sstimap_options["boolean_fuzzy"] = boolean_fuzzy
+        log.log(24, f'Fuzzy matching allows deviation of {boolean_fuzzy[0]} for stable params')
+        log.log(24, f'Fuzzy matching requires deviation of {boolean_fuzzy[1]} to detect error')
+        if self.sstimap_options['boolean_regex_ok']:
+            log.log(29, 'Boolean error-based blind detection: RegEx (Normal page)')
+        elif self.sstimap_options['boolean_regex_err']:
+            log.log(29, 'Boolean error-based blind detection: RegEx (Error page)')
+        else:
+            log.log(23, 'Boolean error-based blind detection: Match pages')
+
+    def do_bool_samples(self, line):
+        line = line.split(" ")
+        try:
+            boolean_samples = (int(line[0]), int(line[1]), int(line[2]),)
+        except:
+            log.log(22, 'Invalid COUNT, MIN or MAX value.')
+            return
+        self.sstimap_options["boolean_samples"] = boolean_samples
+        log.log(24, f'Matcher will try {boolean_samples[0]} payloads of {boolean_samples[0]}-{boolean_samples[0]}'
+                    f' characters to profile the page')
+        if self.sstimap_options['boolean_regex_ok']:
+            log.log(29, 'Boolean error-based blind detection: RegEx (Normal page)')
+        elif self.sstimap_options['boolean_regex_err']:
+            log.log(29, 'Boolean error-based blind detection: RegEx (Error page)')
+        else:
+            log.log(23, 'Boolean error-based blind detection: Match pages')
 
     def do_blind_delay(self, line):
         """Set DELAY for blind SSTI detection"""
@@ -623,14 +744,14 @@ Exploitation:
     def do_legacy(self, line):
         """Switch legacy option"""
         overwrite = not self.sstimap_options["legacy"]
-        log.log(24, f'Value of \'legacy\' is set to {overwrite}')
+        log.log(24, f'{"En" if overwrite else "Dis"}abled legacy plugins')
         self.sstimap_options["legacy"] = overwrite
 
     def do_generic(self, line):
-        """Switch skip_generic option"""
-        overwrite = not self.sstimap_options["skip_generic"]
-        log.log(24, f'Value of \'skip_generic\' is set to {overwrite}')
-        self.sstimap_options["skip_generic"] = overwrite
+        """Switch generic option"""
+        overwrite = not self.sstimap_options["generic"]
+        log.log(24, f'{"En" if overwrite else "Dis"}abled dedicated plugins for generic template engines')
+        self.sstimap_options["generic"] = overwrite
 
 # Exploitation commands
 
@@ -640,7 +761,7 @@ Exploitation:
             log.log(22, 'Target URL was not checked for SSTI. Use \'run\' or \'check\' first.')
             return
         if self.channel.data.get('engine'):
-            if self.channel.data.get('blind'):
+            if self.channel.data.get('blind') or self.channel.data.get('boolean'):
                 log.log(23, 'Only blind execution has been found. '
                             'Injected template code will not produce any output.')
                 call = self.current_plugin.inject
@@ -666,7 +787,7 @@ Exploitation:
             log.log(22, 'Template command cannot be empty.')
             return
         if self.channel.data.get('engine'):
-            if self.channel.data.get('blind'):
+            if self.channel.data.get('blind') or self.channel.data.get('boolean'):
                 log.log(23, 'Only blind execution has been found. '
                             'Injected template code will not produce any output.')
                 call = self.current_plugin.inject
@@ -686,7 +807,7 @@ Exploitation:
             return
         if self.channel.data.get('evaluate_blind'):
             log.log(23, 'Only blind execution has been found. '
-                        'Injected template code will not produce any output.')
+                        'True or False is returned whether the code evaluates to a truthful value or not.')
             log.log(21, 'Inject multi-line template base language code. '
                         'Press ctrl-D or type \'EOF\' on a new line to send the lines')
             try:
@@ -717,7 +838,7 @@ Exploitation:
             return
         if self.channel.data.get('evaluate_blind'):
             log.log(23, 'Only blind execution has been found. '
-                        'Injected code will not produce any output.')
+                        'True or False is returned whether the code evaluates to a truthful value or not.')
             try:
                 print(self.current_plugin.evaluate_blind(line))
             except (KeyboardInterrupt, EOFError):
@@ -737,8 +858,11 @@ Exploitation:
             return
         if self.channel.data.get('execute_blind'):
             log.log(23, """Blind injection has been found and command execution will not produce any output.""")
-            log.log(26, 'Delay is introduced appending \'&& sleep <delay>\' to the shell commands. '
-                        'True or False is returned whether it returns successfully or not.')
+            if self.channel.data.get('boolean'):
+                log.log(26, 'True or False is returned whether the command returns successfully or not.')
+            else:
+                log.log(26, 'Delay is introduced appending \'&& sleep <delay>\' to the shell commands. '
+                            'True or False is returned whether it returns successfully or not.')
             log.log(21, 'Run commands on the operating system.')
             try:
                 Shell(self.current_plugin.execute_blind, f"{self.channel.data.get('os', 'undetected')} (blind) $ ").cmdloop()
@@ -768,7 +892,10 @@ Exploitation:
             return
         if self.channel.data.get('execute_blind'):
             log.log(23, """Blind injection has been found and command execution will not produce any output.""")
-            log.log(26, 'Delay is introduced appending \'&& sleep <delay>\' to the shell commands. '
+            if self.channel.data.get('boolean'):
+                log.log(26, 'True or False is returned whether the command returns successfully or not.')
+            else:
+                log.log(26, 'Delay is introduced appending \'&& sleep <delay>\' to the shell commands. '
                         'True or False is returned whether it returns successfully or not.')
             try:
                 print(self.current_plugin.execute_blind(line))
@@ -846,7 +973,7 @@ Exploitation:
     def do_force_overwrite(self, line):
         """Switch forсe_overwrite option"""
         overwrite = not self.sstimap_options["force_overwrite"]
-        log.log(24, f'Value of \'force_overwrite\' is set to {overwrite}')
+        log.log(24, f'{"En" if overwrite else "Dis"}abled forceful overwriting files')
         self.sstimap_options["force_overwrite"] = overwrite
 
     do_overwrite = do_force_overwrite

@@ -1,7 +1,7 @@
 SSTImap
 ======
 
-[![Version 1.2](https://img.shields.io/badge/version-1.2-green.svg?logo=github)](https://github.com/vladko312/sstimap)
+[![Version 1.3](https://img.shields.io/badge/version-1.3-green.svg?logo=github)](https://github.com/vladko312/sstimap)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg?logo=python)](https://www.python.org/downloads/release/python-3130/)
 [![Python 3.6](https://img.shields.io/badge/python-3.6+-yellow.svg?logo=python)](https://www.python.org/downloads/release/python-360/)
 [![GitHub](https://img.shields.io/github/license/vladko312/sstimap?color=green&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -15,7 +15,7 @@ SSTImap is a penetration testing software that can check websites for Code Injec
 This tool was developed to be used as an interactive penetration testing tool for SSTI detection and exploitation, which allows more advanced exploitation. More payloads for SSTImap can be found [here](https://github.com/vladko312/extras).
 
 Sandbox break-out techniques came from:
-- James Kett's [Server-Side Template Injection: RCE For The Modern Web App][5]
+- James Kettle 's [Server-Side Template Injection: RCE For The Modern Web App][5]
 - Other public researches [\[1\]][1] [\[2\]][2]
 - Contributions to Tplmap [\[3\]][3] [\[4\]][4].
 
@@ -25,11 +25,12 @@ Differences with Tplmap
 -----------------------
 
 Even though this software is based on Tplmap's code, backwards compatibility is not provided.
+- Added two new techniques for SSTI detection and exploitation
 - Interactive mode (`-i`) allowing for easier exploitation and detection
 - Simple evaluation payloads as response markers in case of payload reflection
-- Added new payloads for generic templates, as well as a way to speed up detection using `--skip-generic`
+- Added new payloads for generic templates, to test all contexts use `--generic`
 - Base language _eval()_-like shell (`-x`) or single command (`-X`) execution
-- Added new payload for _Smarty_ without enabled `{php}{/php}`. Old payload is available as `Smarty_unsecure`.
+- Added new payload for _Smarty_ without enabled `{php}{/php}`.
 - Added new payload for newer versions of _Twig_. Payload for older version is available as `Twig_v1`.
 - User-Agent can be randomly selected from a list of desktop browser agents using `-A`
 - SSL verification can now be enabled using `--verify-ssl`
@@ -111,7 +112,7 @@ $ ./sstimap.py -u https://example.com/page?name=John
     ╚══════╩══════╝  ╚═╝    ╚╦╝ |_| |_| |_|\__,_| .__/
                              │                  | |
                                                 |_|
-[*] Version: 1.2.0
+[*] Version: 1.3.0
 [*] Author: @vladko312
 [*] Based on Tplmap
 [!] LEGAL DISCLAIMER: Usage of SSTImap for attacking targets without prior mutual consent is illegal. 
@@ -166,7 +167,7 @@ $ ./sstimap.py -u https://example.com/page?name=John --os-shell
     ╚══════╩══════╝  ╚═╝    ╚╦╝ |_| |_| |_|\__,_| .__/
                              │                  | |
                                                 |_|
-[*] Version: 1.2.0
+[*] Version: 1.3.0
 [*] Author: @vladko312
 [*] Based on Tplmap
 [!] LEGAL DISCLAIMER: Usage of SSTImap for attacking targets without prior mutual consent is illegal. 
@@ -226,37 +227,40 @@ SSTImap supports multiple template engines and _eval()_-like injections.
 
 New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko312/extras#developing-plugins) to speed up development.
 
-| Engine                                                                 | RCE | Blind | Code evaluation | Type                                                   |
-|------------------------------------------------------------------------|-----|-------|-----------------|--------------------------------------------------------|
-| Mako                                                                   | ✓   | ✓     | Python          | Default                                                |
-| Cheetah                                                                | ✓   | ✓     | Python          | Default                                                |
-| Jinja2                                                                 | ✓   | ✓     | Python          | Default                                                |
-| Tornado                                                                | ✓   | ✓     | Python          | Default                                                |
-| Python (code eval)                                                     | ✓   | ✓     | Python          | Default                                                |
-| Python-based generic templates                                         | ✓   | ✓     | Python          | Default                                                |
-| Nunjucks                                                               | ✓   | ✓     | JavaScript      | Default                                                |
-| Pug                                                                    | ✓   | ✓     | JavaScript      | Default                                                |
-| doT                                                                    | ✓   | ✓     | JavaScript      | Default                                                |
-| Marko                                                                  | ✓   | ✓     | JavaScript      | Default                                                |
-| EJS                                                                    | ✓   | ✓     | JavaScript      | Default                                                |
-| JavaScript (code eval)                                                 | ✓   | ✓     | JavaScript      | Default                                                |
-| JavaScript-based generic templates                                     | ✓   | ✓     | JavaScript      | Default                                                |
-| Slim                                                                   | ✓   | ✓     | Ruby            | Default                                                |
-| ERB                                                                    | ✓   | ✓     | Ruby            | Default                                                |
-| Ruby (code eval)                                                       | ✓   | ✓     | Ruby            | Default                                                |
-| Smarty (unsecured and secured)                                         | ✓   | ✓     | PHP             | Default                                                |
-| Twig (<=1.19)                                                          | ✓   | ✓     | PHP             | Default                                                |
-| Twig (>=2.12; >=3.0)                                                   | ✓   | ✓     | PHP             | Default                                                |
-| Twig (sandboxed; >=2.12 <2.14.11; >=3.0 <3.3.8)                        | ✓   | ✓     | PHP             | Default                                                |
-| PHP (code eval)                                                        | ✓   | ✓     | PHP             | Default                                                |
-| PHP-based generic templates                                            | ✓   | ✓     | PHP             | Default                                                |
-| Freemarker                                                             | ✓   | ✓     | Java            | Default                                                |
-| Velocity                                                               | ✓   | ✓     | Java            | Default                                                |
-| Dust (<= dustjs-helpers@1.5.0)                                         | ✓   | ✓     | JavaScript      | Legacy                                                 |
-| Twig (>=2.10; >=3.0)                                                   | ✓   | ✓     | PHP             | Legacy                                                 |
-| [CVE_2024_6386](https://sec.stealthcopter.com/wpml-rce-via-twig-ssti/) | ✓   | ✓     | PHP             | [Extra](https://github.com/vladko312/extras/tree/main) |
-| Twig (>1.19 <2.0)                                                      | ×   | ×     | ×               | ×                                                      |
-| Dust (> dustjs-helpers@1.5.0)                                          | ×   | ×     | ×               | ×                                                      |
+| Engine                                                                             | RCE | Tech | Language   | Type                                                   |
+|------------------------------------------------------------------------------------|-----|------|------------|--------------------------------------------------------|
+| Freemarker                                                                         | ✓   | REBT | Java       | Default                                                |
+| SpEL (Spring EL code eval)                                                         | ✓   | REBT | Java       | Default                                                |
+| Velocity                                                                           | ✓   | REBT | Java       | Default                                                |
+| Nunjucks                                                                           | ✓   | REBT | JavaScript | Default                                                |
+| JavaScript (code eval)                                                             | ✓   | REBT | JavaScript | Default                                                |
+| JavaScript-based generic templates                                                 | ✓   | REBT | JavaScript | Default                                                |
+| Twig (>=1.41; >=2.10; >=3.0)                                                       | ✓   | REBT | PHP        | Default                                                |
+| PHP (code eval)                                                                    | ✓   | REBT | PHP        | Default                                                |
+| PHP-based generic templates                                                        | ✓   | REBT | PHP        | Default                                                |
+| Jinja2                                                                             | ✓   | REBT | Python     | Default                                                |
+| Python (code eval)                                                                 | ✓   | REBT | Python     | Default                                                |
+| Python-based generic templates                                                     | ✓   | REBT | Python     | Default                                                |
+| ERB                                                                                | ✓   | REBT | Ruby       | Default                                                |
+| Slim                                                                               | ✓   | REBT | Ruby       | Default                                                |
+| Ruby (code eval)                                                                   | ✓   | REBT | Ruby       | Default                                                |
+| Generic evaluating templates                                                       | ×   | Reb_ | *          | Default                                                |
+| doT                                                                                | ✓   | REBT | JavaScript | Generic                                                |
+| EJS                                                                                | ✓   | REBT | JavaScript | Generic                                                |
+| Marko                                                                              | ✓   | REBT | JavaScript | Generic                                                |
+| Pug                                                                                | ✓   | REBT | JavaScript | Generic                                                |
+| Smarty                                                                             | ✓   | REBT | PHP        | Generic                                                |
+| Cheetah                                                                            | ✓   | REBT | Python     | Generic                                                |
+| Mako                                                                               | ✓   | REBT | Python     | Generic                                                |
+| Tornado                                                                            | ✓   | REBT | Python     | Generic                                                |
+| Dust (<= dustjs-helpers@1.5.0)                                                     | ✓   | REBT | JavaScript | Legacy                                                 |
+| Twig (<=1.19)                                                                      | ✓   | REBT | PHP        | Legacy                                                 |
+| [expr-eval](https://huntr.com/bounties/1-npm-expr-eval)                            | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
+| [CVE-2025-1302](https://gist.github.com/nickcopi/11ba3cb4fdee6f89e02e6afae8db6456) | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
+| [CVE-2022-23614](https://nvd.nist.gov/vuln/detail/CVE-2022-23614)                  | ✓   | R_BT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
+| [CVE_2024_6386](https://sec.stealthcopter.com/wpml-rce-via-twig-ssti/)             | ✓   | REBT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
+
+Techniques: (R)endered, (E)rror-based, (B)oolean error-based blind and (T)ime-based blind; Lowercase letter marks partially supported technique
 
 More plugins and payloads can be found in [SSTImap Extra Plugins](https://github.com/vladko312/extras) repository.
 

