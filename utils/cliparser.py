@@ -1,5 +1,5 @@
 import argparse
-from sstimap import version
+from utils.config import version
 
 
 def banner():

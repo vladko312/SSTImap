@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+from pathlib import Path
 if sys.version_info.major != 3 or sys.version_info.minor < 6:
     print('\033[91m[!]\033[0m SSTImap was created for Python3.6 and above. Python'+str(sys.version_info.major)+'.'+str(sys.version_info.minor)+' is not supported!')
     sys.exit()
@@ -13,6 +14,10 @@ from core.interactive import InteractiveShell
 from utils.loggers import log
 from utils.config import config_args, version
 import traceback
+
+PROJECT_ROOT = Path(__file__).resolve().parent
+PLUGINS_DIR = PROJECT_ROOT / "plugins"
+DATA_TYPES_DIR = PROJECT_ROOT / "data_types"
 
 def main():
     args = vars(cliparser.options)
@@ -48,22 +53,23 @@ def main():
 
 def load_plugins():
     importlib.invalidate_caches()
-    groups = os.scandir(f"{sys.path[0]}/plugins")
-    groups = filter(lambda x: x.is_dir(), groups)
-    for g in groups:
-        modules = os.scandir(f"{sys.path[0]}/plugins/{g.name}")
-        modules = filter(lambda x: (x.name.endswith(".py") and not x.name.startswith("_")), modules)
-        for m in modules:
-            importlib.import_module(f"plugins.{g.name}.{m.name[:-3]}")
+    if not PLUGINS_DIR.is_dir():
+        return
+    for g in PLUGINS_DIR.iterdir():
+        if not g.is_dir():
+            continue
+        for m in g.iterdir():
+            if m.name.endswith(".py") and not m.name.startswith("_"):
+                importlib.import_module(f"plugins.{g.name}.{m.stem}")
 
 
 def load_data_types():
     importlib.invalidate_caches()
-    modules = os.scandir(f"{sys.path[0]}/data_types")
-    modules = filter(lambda x: (x.name.endswith(".py") and not x.name.startswith("_")), modules)
-    for m in modules:
-        importlib.import_module(f"data_types.{m.name[:-3]}")
-
+    if not DATA_TYPES_DIR.is_dir():
+        return
+    for m in DATA_TYPES_DIR.iterdir():
+        if m.name.endswith(".py") and not m.name.startswith("_"):
+            importlib.import_module(f"data_types.{m.stem}")
 
 if __name__ == '__main__':
     try:
