@@ -12,6 +12,15 @@ dependencies = [
     "html5lib (>=1.1,<2.0)"
 ]
 
+[tool.poetry]
+packages = [
+    { include = "sstimap.py" },
+    { include = "core" },
+    { include = "utils" },
+    { include = "plugins" },
+    { include = "data_types" },
+]
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"

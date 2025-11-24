@@ -7,7 +7,6 @@ if sys.version_info.major != 3 or sys.version_info.minor < 6:
 if sys.version_info.minor > 13:
     print('\033[33m[!]\033[0m This version of SSTImap was not tested with Python3.'+str(sys.version_info.minor))
 import importlib
-import os
 from utils import cliparser
 from core import checks
 from core.interactive import InteractiveShell
