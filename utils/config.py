@@ -1,9 +1,16 @@
 import os
-import sys
 import json
+from importlib.metadata import version as pkg_version, PackageNotFoundError
+from pathlib import Path
 
+try:
+    version = pkg_version("sstimap")
+except PackageNotFoundError:
+    version = "unknown"
 
-version = '1.3.0'
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+CONFIG_PATH = PROJECT_ROOT / "config.json"
+
 min_version = {
     'plugin': '1.2.3',
     'data_type': '1.2.0'
@@ -46,11 +53,12 @@ defaults = {
 config = {}
 user_config = {}
 
-with open(f"{sys.path[0]}/config.json", 'r') as stream:
-    try:
-        config = json.load(stream)
-    except json.JSONDecodeError as e:
-        print(f'[!][config] {repr(e)}')
+if CONFIG_PATH.exists():
+    with CONFIG_PATH.open("r") as stream:
+        try:
+            config = json.load(stream)
+        except json.JSONDecodeError as e:
+            print(f'[!][config] {repr(e)}')
 
 base_path = os.path.expanduser(config.get("base_path", "~/.sstimap/"))
 if not os.path.isdir(base_path):
