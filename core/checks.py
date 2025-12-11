@@ -178,9 +178,14 @@ def detect_template_injection(channel):
                                                          channel.args.get('boolean_regex_err')):
             log.log(28, f"Creating page profile for boolean error-based blind detection")
             page_profile, page_vector, success = profile(channel)
-            if not success:
-                log.log(22, f"Website seems to be highly dynamic, boolean error-based blind detection will be skipped. "
-                            f"Try lowering --bool-min parameter.")
+            if not success and page_profile:
+                log.log(22, "Website seems to be highly dynamic, boolean error-based blind detection will be skipped. "
+                            "Try lowering --bool-min parameter or using --bool-ok or --bool-err for RegEx-based testing.")
+                channel.boolean_enabled = False
+            elif not success:
+                log.log(22, "Connection to the website seems unstable, "
+                            "boolean error-based blind detection will be skipped. "
+                            "Try using --bool-ok or --bool-err for RegEx-based testing.")
                 channel.boolean_enabled = False
             else:
                 channel.boolean_enabled = True

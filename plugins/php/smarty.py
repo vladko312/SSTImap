@@ -30,9 +30,8 @@ class Smarty(php.Php):
             'render_error': {
                 'render': """{code}""",
                 'wrapper_type': "global",
-                # File path "Y:/A:/..." is unlikely to exist
-                'header': """{{* 1 / 0 *}}{{fopen("Y:/A:/"|cat:strval({header[0]}+{header[1]})|cat:rtrim(strval(""",
-                'trailer': """))|cat:strval({trailer[0]}+{trailer[1]}), "r")}}""",
+                'header': """{{* 1 / 0 *}}{{call_user_func(strval({header[0]}+{header[1]})|cat:rtrim(strval(""",
+                'trailer': """))|cat:strval({trailer[0]}+{trailer[1]}))}}""",
                 'test_render': f'"{rand.randints[0]}"+"{rand.randints[1]}"',
                 'test_render_expected': f'{rand.randints[0] + rand.randints[1]}'
             },

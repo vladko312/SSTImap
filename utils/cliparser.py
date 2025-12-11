@@ -103,7 +103,7 @@ detection.add_argument("--bool-match-min", dest="boolean_match_min", type=int,
 detection.add_argument("--bool-fuzzy", dest="boolean_fuzzy", nargs=2, type=float, metavar=("STABLE", "ERROR",),
                        help="Allow small deviations in some of the matching parameters. Default: 0.05 0.1")
 detection.add_argument("--bool-samples", dest="boolean_samples", nargs=3, type=int, metavar=("COUNT", "MIN", "MAX",),
-                       help="Amount of tests to profile the page and payload sizes. Default: 10 1 200")
+                       help="Amount of tests to profile the page and payload sizes. Default: 10 1 7")
 detection.add_argument("--blind-delay", dest="time_based_blind_delay", type=int,
                        help="Delay to detect time-based blind injection (Default: 4 seconds)")
 detection.add_argument("--verify-blind-delay", dest="time_based_verify_blind_delay", type=int,

@@ -165,23 +165,23 @@ You can try to detect the template engine to search for the RCE payloads.""",
 
 ctx_closures = {
     1: [
-        closures.close_single_double_quotes + closures.integer,
+        closures.close_single_double_quotes + closures.integer + closures.empty,
         closures.close_function + closures.empty
     ],
     2: [
-        closures.close_single_double_quotes + closures.integer + closures.string + closures.var,
+        closures.close_single_double_quotes + closures.integer + closures.string + closures.var + closures.empty,
         closures.close_function + closures.empty
     ],
     3: [
-        closures.close_single_double_quotes + closures.integer + closures.string + closures.close_triple_quotes + closures.var,
+        closures.close_single_double_quotes + closures.integer + closures.string + closures.close_triple_quotes + closures.var + closures.empty,
         closures.close_function + closures.close_list + closures.close_dict + closures.empty
     ],
     4: [
-        closures.close_single_double_quotes + closures.integer + closures.string + closures.close_triple_quotes + closures.var,
+        closures.close_single_double_quotes + closures.integer + closures.string + closures.close_triple_quotes + closures.var + closures.empty,
         closures.close_function + closures.close_list + closures.close_dict + closures.empty
     ],
     5: [
-        closures.close_single_double_quotes + closures.integer + closures.string + closures.close_triple_quotes + closures.var,
+        closures.close_single_double_quotes + closures.integer + closures.string + closures.close_triple_quotes + closures.var + closures.empty,
         closures.close_function + closures.close_list + closures.close_dict + closures.empty,
         closures.close_function + closures.close_list + closures.empty,
         closures.if_loops + closures.empty

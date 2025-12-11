@@ -28,9 +28,8 @@ class Php(Plugin):
             'render_error': {
                 'call': 'inject',
                 'render': """{code}""",
-                # "abc"() tries to call function abc
-                'header': """fopen(join("",["Y:/A:/",strval({header[0]}+{header[1]}),rtrim(strval(""",
-                'trailer': """)),strval({trailer[0]}+{trailer[1]})]),"r");""",
+                'header': """call_user_func(join("",[strval({header[0]}+{header[1]}),rtrim(strval(""",
+                'trailer': """)),strval({trailer[0]}+{trailer[1]})]));""",
                 'test_render': f'{rand.randints[0]}+{rand.randints[1]}',
                 'test_render_expected': f'{rand.randints[0]+rand.randints[1]}'
             },

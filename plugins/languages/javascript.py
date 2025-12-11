@@ -101,6 +101,8 @@ class Javascript(Plugin):
         self.set_contexts([
             # Text context, no closures
             {'level': 0},
+            # Add as strings
+            {'level': 1, 'prefix': '{closure}+', 'suffix': '+{rclosure}', 'closures': ctx_closures},
             # This terminates the statement with ;
             {'level': 1, 'prefix': '{closure};', 'suffix': '//', 'closures': ctx_closures},
             # This does not need termination e.g. if(%s) {}

@@ -230,6 +230,7 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | Engine                                                                             | RCE | Tech | Language   | Type                                                   |
 |------------------------------------------------------------------------------------|-----|------|------------|--------------------------------------------------------|
 | Freemarker                                                                         | ✓   | REBT | Java       | Default                                                |
+| OGNL (Object-Graph Navigation Language code eval)                                  | ✓   | REBT | Java       | Default                                                |
 | SpEL (Spring EL code eval)                                                         | ✓   | REBT | Java       | Default                                                |
 | Velocity                                                                           | ✓   | REBT | Java       | Default                                                |
 | Nunjucks                                                                           | ✓   | REBT | JavaScript | Default                                                |
@@ -255,9 +256,10 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | Tornado                                                                            | ✓   | REBT | Python     | Generic                                                |
 | Dust (<= dustjs-helpers@1.5.0)                                                     | ✓   | REBT | JavaScript | Legacy                                                 |
 | Twig (<=1.19)                                                                      | ✓   | REBT | PHP        | Legacy                                                 |
-| [expr-eval](https://huntr.com/bounties/1-npm-expr-eval)                            | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
+| SSI (Server-Side Includes injection)                                               | ✓   | R__T | SSI        | Legacy                                                 |
 | [CVE-2025-1302](https://gist.github.com/nickcopi/11ba3cb4fdee6f89e02e6afae8db6456) | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
-| [CVE-2022-23614](https://nvd.nist.gov/vuln/detail/CVE-2022-23614)                  | ✓   | R_BT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
+| [CVE-2025-13204](https://huntr.com/bounties/1-npm-expr-eval)                       | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
+| [CVE-2022-23614](https://nvd.nist.gov/vuln/detail/CVE-2022-23614)                  | ✓   | REBT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE_2024_6386](https://sec.stealthcopter.com/wpml-rce-via-twig-ssti/)             | ✓   | REBT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
 
 Techniques: (R)endered, (E)rror-based, (B)oolean error-based blind and (T)ime-based blind; Lowercase letter marks partially supported technique

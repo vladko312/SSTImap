@@ -265,15 +265,15 @@ class Plugin(object):
             if ctx.get('closures'):
                 closures = self._generate_closures(ctx)
             else:
-                closures = ['']
+                closures = [('', '')]
             if len(closures)*len(wrappers) > 1:
                 log.log(26, f'''{self.plugin} plugin is testing {ctx.get('prefix', '').format(closure='')}*{suffix_text} code context escape with {len(closures)*len(wrappers)} variations{f' (level {ctx.get("level", 1)})' if self.get('level') else ''}''')
             for wrapper in wrappers:
-                for closure in closures:
+                for closure, rclosure in closures:
                     # Format the prefix with closure
                     prefix = ctx.get('prefix', '{closure}').format(closure=closure)
                     if suffix_format:
-                        suffix = ctx.get('suffix', '').format(closure=closure, rclosure=closure[::-1])
+                        suffix = ctx.get('suffix', '').format(closure=closure, rclosure=rclosure)
                     yield prefix, suffix, wrapper
 
     """
@@ -572,8 +572,9 @@ class Plugin(object):
             # Skip any closure list which is above the required level
             if not force_level and ctx_closure_level > self.channel.args.get('level'):
                 continue
-            closures += [''.join(x) for x in itertools.product(*ctx_closure_matrix)]
-        closures = sorted(set(closures), key=len)
+            closures += [(''.join([y[0] for y in x]), ''.join([y[1] for y in x][::-1]))
+                         for x in itertools.product(*ctx_closure_matrix)]
+        closures = sorted(set(closures), key=lambda x: len(x[0]+x[1]))
         # Return it
         return closures
 

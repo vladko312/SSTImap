@@ -104,7 +104,7 @@ Detection:
   bool_match [PARAMS]                     Comma-separated list of matching params or 'all'. Default: code,header_count,cookie_count,byte_len,body_len,body_words,body_lines,encoding,redirects,time,url,content_type,server
   bool_match_min [MIN_PARAMS]             Minimum amount of usable params for matching. Default: 7
   bool_fuzzy [STABLE] [ERROR]             Allow small deviations in some of the matching parameters. Default: 0.05 0.1
-  bool_samples [COUNT] [MIN] [MAX]        Amount of tests to profile the page and payload sizes. Default: 10 1 200
+  bool_samples [COUNT] [MIN] [MAX]        Amount of tests to profile the page and payload sizes. Default: 10 1 7
   blind_delay [DELAY]                     Delay to detect time-based blind injection (Default: 4 seconds)
   verify_delay [DELAY]                    Delay to verify and exploit time-based blind injection (Default: 30 seconds)
   legacy                                  Toggle including old payloads, that no longer work with newer versions of the engines
@@ -163,6 +163,8 @@ Exploitation:
                         f'{len(self.sstimap_options["loaded_urls"]) + (1 if self.sstimap_options["url"] else 0)}')
         else:
             log.log(26, f'URL: {self.sstimap_options["url"]}')
+            if self.checked:
+                log.log(24, f'Injection found')
         log.log(26, f'Injection marker: {self.sstimap_options["marker"]}')
         if self.sstimap_options["data"]:
             data = "\n    ".join(self.sstimap_options["data"])
@@ -399,7 +401,8 @@ Exploitation:
             self.checked = True
         self.sstimap_options["loaded_urls"] = None
         self.sstimap_options["loaded_forms"] = None
-        self.set_module(f'\033[31m{parse.urlparse(self.sstimap_options["url"]).netloc}'
+        self.set_module(f'\033[3{"2" if self.checked else "1"}m'
+                        f'{parse.urlparse(self.sstimap_options["url"]).netloc}'
                         f'\033[0m' if self.sstimap_options["url"] else "")
 
     do_check = do_run
