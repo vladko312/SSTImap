@@ -26,7 +26,7 @@ class Php_generic(php.Php):
             'render_error': {
                 # Just use the wrapped payload for eval, but without ; in the end
                 'wrapper_type': "global",
-                'trailer': """)),strval({trailer[0]}+{trailer[1]})]),"r")""",
+                'trailer': """)),strval({trailer[0]}+{trailer[1]})]))""",
             },
             'evaluate': {
                 # Dirty hack from Twig

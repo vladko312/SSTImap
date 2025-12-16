@@ -37,7 +37,7 @@ You can try to detect the template engine to search for the RCE payloads.""",
                 'header': '',
                 'trailer': '',
                 'test_render': f"({rand.randints[0]}/0).zxy.zxy",
-                'test_render_expected': f'zxy'
+                'test_render_expected': f'{rand.randints[0]}+{rand.randints[1]}*{rand.randints[2]}'
             },
             'boolean': {
                 'call': 'inject',
@@ -106,6 +106,7 @@ You can try to detect the template engine to search for the RCE payloads.""",
         log.log(23, f'{self.plugin} plugin is testing reflection for error-based injection')
         for prefix, suffix, wrapper in self._generate_contexts():
             payload = render_action.get('test_render')
+            verify_payload = render_action.get('test_render_expected')
             wrapper_type = render_action.get(f'wrapper_type', 'local')
             header_rand = [rand.randint_n(10, 4), rand.randint_n(10, 4)]
             header = render_action.get('header')
@@ -116,37 +117,46 @@ You can try to detect the template engine to search for the RCE payloads.""",
                                  trailer_rand=trailer_rand, prefix=prefix, suffix=suffix, wrapper=wrapper,
                                  wrapper_type=wrapper_type, error=True)
             resultl = result.lower()
-            if "ZeroDivisionError" in result:
+            vresult = self.render(code=verify_payload, header=header, trailer=trailer, header_rand=header_rand,
+                                  trailer_rand=trailer_rand, prefix=prefix, suffix=suffix, wrapper=wrapper,
+                                  wrapper_type=wrapper_type, error=True)
+            vresultl = result.lower()
+            if "ZeroDivisionError" in result and "ZeroDivisionError" not in vresult:
                 log.log(24, f'{self.plugin} plugin detected reflection of Python error message')
                 discovered = True
                 self.language = "python"
-            elif "java.lang.ArithmeticException" in result:
+            elif "java.lang.ArithmeticException" in result and "java.lang.ArithmeticException" not in vresult:
                 log.log(24, f'{self.plugin} plugin detected reflection of Java error message')
                 discovered = True
                 self.language = "java"
-            elif "Arithmetic operation failed" in result:
+            elif "Arithmetic operation failed" in result and "Arithmetic operation failed" not in vresult:
                 log.log(24, f'{self.plugin} plugin detected reflection of Freemarker (Java) error message')
                 discovered = True
                 self.language = "java"
-            elif "ReferenceError" in result or "TypeError" in result:
+            elif ("ReferenceError" in result and "ReferenceError" not in vresult) or \
+                    ("TypeError" in result and "TypeError" not in vresult):
                 log.log(24, f'{self.plugin} plugin detected reflection of JavaScript error message')
                 discovered = True
                 self.language = "javascript"
-            elif "Division by zero" in result or "DivisionByZeroError" in result:
+            elif ("Division by zero" in result and "Division by zero" not in vresult) or \
+                    ("DivisionByZeroError" in result and "DivisionByZeroError" not in vresult):
                 log.log(24, f'{self.plugin} plugin detected possible reflection of PHP error message')
                 discovered = True
                 self.language = "php"
-            elif "divided by 0" in result:
+            elif "divided by 0" in result and "divided by 0" not in vresult:
                 log.log(24, f'{self.plugin} plugin detected possible reflection of Ruby error message')
                 discovered = True
                 self.language = "ruby"
-            elif "divi" in resultl and ("0" in resultl or "zero" in resultl):
+            elif "divi" in resultl and ("0" in resultl or "zero" in resultl) and\
+                    not ("divi" in vresultl and ("0" in vresultl or "zero" in vresultl)):
                 log.log(24, f'{self.plugin} plugin detected possible reflection of a generic zero division error message')
                 discovered = True
-            elif "function" in resultl and ("error" in resultl or "exception" in resultl or "unknown" in resultl):
+            elif "function" in resultl and ("error" in resultl or "exception" in resultl or "unknown" in resultl) and \
+                    not ("function" in vresultl and ("error" in vresultl or "exception" in vresultl or "unknown" in vresultl)):
                 log.log(24, f'{self.plugin} plugin detected possible reflection of a generic unknown function error message')
                 discovered = True
-            elif "template" in resultl and ("error" in resultl or "exception" in resultl):
+            elif "template" in resultl and ("error" in resultl or "exception" in resultl) and \
+                    not ("template" in vresultl and ("error" in vresultl or "exception" in vresultl)):
                 log.log(24, f'{self.plugin} plugin detected possible reflection of a generic template error message')
                 discovered = True
             if discovered:
@@ -165,23 +175,23 @@ You can try to detect the template engine to search for the RCE payloads.""",
 
 ctx_closures = {
     1: [
-        closures.close_single_double_quotes + closures.integer,
+        closures.close_single_double_quotes + closures.integer + closures.empty,
         closures.close_function + closures.empty
     ],
     2: [
-        closures.close_single_double_quotes + closures.integer + closures.string + closures.var,
+        closures.close_single_double_quotes + closures.integer + closures.string + closures.var + closures.empty,
         closures.close_function + closures.empty
     ],
     3: [
-        closures.close_single_double_quotes + closures.integer + closures.string + closures.close_triple_quotes + closures.var,
+        closures.close_single_double_quotes + closures.integer + closures.string + closures.close_triple_quotes + closures.var + closures.empty,
         closures.close_function + closures.close_list + closures.close_dict + closures.empty
     ],
     4: [
-        closures.close_single_double_quotes + closures.integer + closures.string + closures.close_triple_quotes + closures.var,
+        closures.close_single_double_quotes + closures.integer + closures.string + closures.close_triple_quotes + closures.var + closures.empty,
         closures.close_function + closures.close_list + closures.close_dict + closures.empty
     ],
     5: [
-        closures.close_single_double_quotes + closures.integer + closures.string + closures.close_triple_quotes + closures.var,
+        closures.close_single_double_quotes + closures.integer + closures.string + closures.close_triple_quotes + closures.var + closures.empty,
         closures.close_function + closures.close_list + closures.close_dict + closures.empty,
         closures.close_function + closures.close_list + closures.empty,
         closures.if_loops + closures.empty

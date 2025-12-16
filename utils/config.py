@@ -3,7 +3,7 @@ import sys
 import json
 
 
-version = '1.3.0'
+version = '1.3.1'
 min_version = {
     'plugin': '1.2.3',
     'data_type': '1.2.0'
@@ -14,7 +14,7 @@ defaults = {
     "base_path": "~/.sstimap/",
     "crawl_depth": 0,
     "marker": '*',
-    "data_type": "form",
+    "data_type": "auto",
     "level": 1,
     "technique": "REBT",
     "crawl_domains": "S",
@@ -41,7 +41,7 @@ defaults = {
     "boolean_match": "",
     "boolean_match_min": 7,
     "boolean_fuzzy": [0.05, 0.1],
-    "boolean_samples": [10, 1, 200],
+    "boolean_samples": [10, 1, 7],
 }
 config = {}
 user_config = {}

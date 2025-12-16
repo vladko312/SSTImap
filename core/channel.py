@@ -3,6 +3,8 @@ from datetime import timedelta
 
 import requests
 import urllib3
+import urllib3.exceptions
+
 from utils.loggers import log
 from core.matcher import vector
 from urllib import parse
@@ -192,9 +194,11 @@ class Channel:
         if self.args['delay']:
             time.sleep(self.args['delay'])
         try:
+            start = time.perf_counter()
             result_raw = requests.request(method=self.http_method, url=url_params, params=get_params, data=post_params,
                                           headers=header_params, cookies=cookie_params, proxies=self.proxies,
                                           verify=self.args.get('verify_ssl'))
+            stop = time.perf_counter()
         except requests.exceptions.ConnectionError as e:
             if e and e.args[0] and e.args[0].args[0] == 'Connection aborted.':
                 log.log(25, 'Error: connection aborted, bad status line.')
@@ -204,11 +208,20 @@ class Channel:
                 result = ("", 0.0, {})
             else:
                 raise e
-        except requests.exceptions.TooManyRedirects as tmr:
+        except requests.exceptions.TooManyRedirects as e:
                 log.log(25, 'Error: Too Many redirects.')
                 result = ("", 0.0, {})
+        except urllib3.exceptions.ProtocolError as e:
+                log.log(25, f'Error: Connection failed: {repr(e)}')
+                result = ("", 0.0, {})
+        except requests.exceptions.RequestException as e:
+                log.log(25, f'Error: Request failed: {repr(e)}')
+                result = ("", 0.0, {})
+        except urllib3.exceptions.HTTPError as e:
+                log.log(25, f'Error: {repr(e)}')
+                result = ("", 0.0, {})
         else:
-            result = (result_raw.text, (result_raw.elapsed / timedelta(microseconds=1)) / 1000000, vector(result_raw))
+            result = (result_raw.text, stop - start, vector(result_raw))
         if self.args.get("log_response", False):
             log.debug(f"< {result[0]}")
         return result

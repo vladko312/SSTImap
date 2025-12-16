@@ -58,8 +58,9 @@ def crawl(targets, args):
             if args['delay']:
                 time.sleep(args['delay'])
             try:
-                content = requests.request(method='GET', url=current, headers={'User-Agent': user_agent}, verify=args.get('verify_ssl'),
-                                           proxies={'http': args.get('proxy'), 'https': args.get('proxy')}).text
+                response = requests.request(method='GET', url=current, headers={'User-Agent': user_agent}, verify=args.get('verify_ssl'),
+                                            proxies={'http': args.get('proxy'), 'https': args.get('proxy')})
+                content = response.text
             except requests.exceptions.ConnectionError as e:
                 if e and e.args[0] and e.args[0].args[0] == 'Connection aborted.':
                     log.log(25, 'Error: connection aborted, bad status line.')
@@ -73,6 +74,28 @@ def crawl(targets, args):
                 log.log(25, f'URL with unsupported scema: {current}')
                 return
         if content:
+            # Redirect history can expose new URLs and GET params to test
+            if response.history:
+                for url in ([h.url for h in response.history[1:]] + [response.url]):
+                    host = urllib.parse.urlparse(url).netloc.split(":")[0]
+                    if url in visited or url in worker[curr_depth] or url in worker[curr_depth + 1]:
+                        continue
+                    elif args.get('crawl_exclude') and pattern.search(url):
+                        log.log(26, f"Skipping: {url}")
+                        visited.add(url)  # Skip silently next time
+                        continue
+                    elif args.get('crawl_domains').upper() == "N" and host != target_host:
+                        log.log(26, f"Skipping: {url}")
+                        visited.add(url)  # Skip silently next time
+                        continue
+                    elif args.get('crawl_domains').upper() != "Y" and not (host == target_host or
+                                                                           host.endswith(f".{target_host}")):
+                        log.log(26, f"Skipping: {url}")
+                        visited.add(url)  # Skip silently next time
+                        continue
+                    else:
+                        worker[curr_depth + 1].add(url)
+                        log.log(24, f"URL found: {url}")
             try:
                 match = re.search(r"(?si)<html[^>]*>(.+)</html>", content)
                 if match:
@@ -91,7 +114,7 @@ def crawl(targets, args):
                             pass 
                         if url:
                             host = urllib.parse.urlparse(url).netloc.split(":")[0]
-                            if url in visited or url in worker[curr_depth+1]:
+                            if url in visited or url in worker[curr_depth] or url in worker[curr_depth + 1]:
                                 continue
                             elif args.get('crawl_exclude') and pattern.search(url):
                                 log.log(26, f"Skipping: {url}")
@@ -107,7 +130,7 @@ def crawl(targets, args):
                                 visited.add(url)  # Skip silently next time
                                 continue
                             else:
-                                worker[curr_depth+1].add(url)
+                                worker[curr_depth + 1].add(url)
                                 log.log(24, f"URL found: {url}")
             except UnicodeEncodeError:  # for non-HTML files
                 pass
@@ -197,7 +220,7 @@ def find_page_forms(url, args):
             url = urllib.parse.urljoin(url, html.unescape(match.group(1)))
             data = ""
             for name, value in re.findall(r"['\"]?(\w+)['\"]?\s*:\s*(['\"][^'\"]+)?", match.group(2)):
-                data += "%s=%s%s" % (name, value, '&')
+                data += f"{name}={value}&"
             data = data.rstrip('&')
             target = (url, "POST", data)
             retVal.add(target)

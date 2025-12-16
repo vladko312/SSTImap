@@ -14,14 +14,14 @@ SSTImap is a penetration testing software that can check websites for Code Injec
 
 This tool was developed to be used as an interactive penetration testing tool for SSTI detection and exploitation, which allows more advanced exploitation. More payloads for SSTImap can be found [here](https://github.com/vladko312/extras).
 
-Sandbox break-out techniques came from:
+Payloads and techniques came from:
 - James Kettle 's [Server-Side Template Injection: RCE For The Modern Web App][5]
-- Other public researches [\[1\]][1] [\[2\]][2]
+- Other public researches [\[1\]][1] [\[2\]][2] [\[8\]][8]
 - Contributions to Tplmap [\[3\]][3] [\[4\]][4].
 
-This tool is capable of exploiting some code context escapes and blind injection scenarios. It also supports _eval()_-like code injections in Python, Ruby, PHP, Java and generic unsandboxed template engines.
+This tool is capable of exploiting some code context escapes and blind injection scenarios. It also supports _eval()_-like code injections in Java, JavaScript, PHP, Python, Ruby and generic unsandboxed template engines.
 
-Differences with Tplmap
+Key differences with Tplmap
 -----------------------
 
 Even though this software is based on Tplmap's code, backwards compatibility is not provided.
@@ -29,11 +29,12 @@ Even though this software is based on Tplmap's code, backwards compatibility is 
 - Interactive mode (`-i`) allowing for easier exploitation and detection
 - Simple evaluation payloads as response markers in case of payload reflection
 - Added new payloads for generic templates, to test all contexts use `--generic`
+- Generic evaluating template injection detection using `Eval_generic` module
 - Base language _eval()_-like shell (`-x`) or single command (`-X`) execution
-- Added new payload for _Smarty_ without enabled `{php}{/php}`.
-- Added new payload for newer versions of _Twig_. Payload for older version is available as `Twig_v1`.
-- User-Agent can be randomly selected from a list of desktop browser agents using `-A`
-- SSL verification can now be enabled using `--verify-ssl`
+- Added new payloads for more templates and updated many existing payloads
+- Modular plugin structure that allows additional plugin installation
+- Support for different POST data types
+- Added crawling and form detection
 - Short versions added to many arguments
 - Some old command line arguments were changed, check `-h` for help
 - Code is changed to use newer python features
@@ -230,7 +231,8 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | Engine                                                                             | RCE | Tech | Language   | Type                                                   |
 |------------------------------------------------------------------------------------|-----|------|------------|--------------------------------------------------------|
 | Freemarker                                                                         | ✓   | REBT | Java       | Default                                                |
-| SpEL (Spring EL code eval)                                                         | ✓   | REBT | Java       | Default                                                |
+| Java EL generic injections                                                         | ✓   | REBT | Java       | Default                                                |
+| OGNL (Object-Graph Navigation Language code eval)                                  | ✓   | REBT | Java       | Default                                                |
 | Velocity                                                                           | ✓   | REBT | Java       | Default                                                |
 | Nunjucks                                                                           | ✓   | REBT | JavaScript | Default                                                |
 | JavaScript (code eval)                                                             | ✓   | REBT | JavaScript | Default                                                |
@@ -245,6 +247,7 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | Slim                                                                               | ✓   | REBT | Ruby       | Default                                                |
 | Ruby (code eval)                                                                   | ✓   | REBT | Ruby       | Default                                                |
 | Generic evaluating templates                                                       | ×   | Reb_ | *          | Default                                                |
+| SpEL (Spring EL code eval)                                                         | ✓   | REBT | Java       | Generic                                                |
 | doT                                                                                | ✓   | REBT | JavaScript | Generic                                                |
 | EJS                                                                                | ✓   | REBT | JavaScript | Generic                                                |
 | Marko                                                                              | ✓   | REBT | JavaScript | Generic                                                |
@@ -255,9 +258,10 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | Tornado                                                                            | ✓   | REBT | Python     | Generic                                                |
 | Dust (<= dustjs-helpers@1.5.0)                                                     | ✓   | REBT | JavaScript | Legacy                                                 |
 | Twig (<=1.19)                                                                      | ✓   | REBT | PHP        | Legacy                                                 |
-| [expr-eval](https://huntr.com/bounties/1-npm-expr-eval)                            | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
+| SSI (Server-Side Includes injection)                                               | ✓   | R__T | SSI        | Legacy                                                 |
 | [CVE-2025-1302](https://gist.github.com/nickcopi/11ba3cb4fdee6f89e02e6afae8db6456) | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
-| [CVE-2022-23614](https://nvd.nist.gov/vuln/detail/CVE-2022-23614)                  | ✓   | R_BT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
+| [CVE-2025-13204](https://huntr.com/bounties/1-npm-expr-eval)                       | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
+| [CVE-2022-23614](https://nvd.nist.gov/vuln/detail/CVE-2022-23614)                  | ✓   | REBT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE_2024_6386](https://sec.stealthcopter.com/wpml-rce-via-twig-ssti/)             | ✓   | REBT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
 
 Techniques: (R)endered, (E)rror-based, (B)oolean error-based blind and (T)ime-based blind; Lowercase letter marks partially supported technique
@@ -290,6 +294,7 @@ If you plan to contribute something big from this list, inform me to avoid worki
 - [ ] Reports in HTML or other format
 - [ ] Multiline language evaluation?
 - [ ] Avoid platform dependency in payloads
+- [ ] Test multiple shells in exec-based RCE scenarios
 - [ ] Update NodeJS payloads as process.mainModule may be undefined
 - [x] Spider/crawler automation (by [fantesykikachu](https://github.com/fantesykikachu))
 - [x] Automatic languages and engines import
@@ -304,3 +309,4 @@ If you plan to contribute something big from this list, inform me to avoid worki
 [5]: http://blog.portswigger.net/2015/08/server-side-template-injection.html
 [6]: http://flask.pocoo.org/
 [7]: http://jinja.pocoo.org/
+[8]: https://gist.github.com/n1nj4sec/5e3fffdfa322f4c23053359fc8100ab9
