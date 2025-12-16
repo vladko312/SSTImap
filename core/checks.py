@@ -432,7 +432,10 @@ def scan_website(args):
             url_args = args.copy()
             url_args['url'] = form[0]
             url_args['method'] = form[1]
-            url_args['data'] = parse.parse_qs(form[2], keep_blank_values=True)
+            # url_args['data'] contains body as dictionary of user-supplied parts
+            url_args['data'] = []
+            if form[1].upper() != "GET" and form[2] != "":
+                url_args['data'] = [form[2]]
             channel = Channel(url_args)
             result = check_template_injection(channel)
             if channel.data.get('engine'):

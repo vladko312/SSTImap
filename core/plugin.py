@@ -96,10 +96,14 @@ class Plugin(object):
         if module[0] == "plugins":
             if config.compare_versions(cls.sstimap_version, config.min_version['plugin']) == "<":
                 log.log(22, f'''{cls.__name__} plugin is outdated and cannot be loaded''')
+                log.log(29, f"{cls.__name__} made for version {cls.sstimap_version}, "
+                            f"expected {config.min_version['plugin']} - {config.version}")
                 failed_plugins.append(cls)
                 return
             if config.compare_versions(cls.sstimap_version, config.version) == ">":
                 log.log(22, f'''{cls.__name__} plugin requires SSTImap update and cannot be loaded''')
+                log.log(29, f"{cls.__name__} made for version {cls.sstimap_version}, "
+                            f"expected {config.min_version['plugin']} - {config.version}")
                 failed_plugins.append(cls)
                 return
             if module[1] in loaded_plugins:
@@ -118,46 +122,109 @@ class Plugin(object):
         pass
 
     def rendered_detected(self):
+        call = self.get_call_sequence('render')
         error = self.get('error', False)
         action_evaluate = self.actions.get('evaluate', {}).copy()
         if error and 'evaluate_error' in self.actions:
             action_evaluate.update(self.actions.get('evaluate_error', {}))
         test_os_code = action_evaluate.get('test_os')
         test_os_code_expected = action_evaluate.get('test_os_expected')
+        test_eval_code = action_evaluate.get('test_eval')
+        test_eval_expected = action_evaluate.get('test_eval_expected')
+        if "evaluate" in call:
+            self.set('evaluate', self.language)
+        # Using rstrip in case of trailing newline
+        if not self.get('evaluate') and test_eval_code and test_eval_expected \
+                and test_eval_expected == self.evaluate(test_eval_code).rstrip():
+            self.set('evaluate', self.language)
+            call += self.get_call_sequence('evaluate')
         if test_os_code and test_os_code_expected:
             os = self.evaluate(test_os_code)
             if os and re.search(test_os_code_expected, os):
                 self.set('os', os)
-                self.set('evaluate', self.language)
-                if self.actions.get('write'):
-                    self.set('write', True)
-                if self.actions.get('read') or (error and self.actions.get('read_error')):
-                    self.set('read', True)
-                action_execute = self.actions.get('execute', {}).copy()
-                if error and 'execute_error' in self.actions:
-                    action_execute.update(self.actions.get('execute_error', {}))
-                test_cmd_code = action_execute.get('test_cmd')
-                test_cmd_code_expected = action_execute.get('test_cmd_expected')
-                # Using rstrip in case of trailing newline
-                if test_cmd_code and test_cmd_code_expected and test_cmd_code_expected == self.execute(test_cmd_code).rstrip():
+                if not self.get('evaluate'):
+                    self.set('evaluate', self.language)
+                    call += self.get_call_sequence('evaluate')
+        action_execute = self.actions.get('execute', {}).copy()
+        if error and 'execute_error' in self.actions:
+            action_execute.update(self.actions.get('execute_error', {}))
+        test_cmd_code = action_execute.get('test_cmd')
+        test_cmd_code_expected = action_execute.get('test_cmd_expected')
+        test_cmd_os = action_execute.get('test_os')
+        test_cmd_os_expected = action_execute.get('test_os_expected')
+        # Using rstrip in case of trailing newline
+        if "execute" in call:
+            self.set('execute', True)
+        if not self.get('execute') and test_cmd_code and test_cmd_code_expected \
+                and test_cmd_code_expected == self.execute(test_cmd_code).rstrip():
+            self.set('execute', True)
+        if test_cmd_os and test_cmd_os_expected and not (self.get('execute') and self.get('os')):
+            os = self.execute(test_cmd_os)
+            if os and re.search(test_cmd_os_expected, os):
+                self.set('os', os)
+                if not self.get('execute'):
                     self.set('execute', True)
-                    if self.actions.get('bind_shell'):
-                        self.set('bind_shell', True)
-                    if self.actions.get('reverse_shell'):
-                        self.set('reverse_shell', True)
+        if self.check_call_sequence('write'):
+            self.set('write', True)
+        if self.check_call_sequence('read'):
+            self.set('read', True)
+        if self.check_call_sequence('bind_shell'):
+            self.set('bind_shell', True)
+        if self.check_call_sequence('reverse_shell'):
+            self.set('reverse_shell', True)
 
     def blind_detected(self):
-        # Blind has been detected so code has been already evaluated
-        self.set('evaluate_blind', self.language)
+        call = self.get_call_sequence('blind')
+        test_eval_code = self.actions.get('evaluate', {}).get('test_eval')
+        if "evaluate_blind" in call or (test_eval_code and self.evaluate_blind(test_eval_code)):
+            self.set('evaluate_blind', self.language)
+            call += self.get_call_sequence('evaluate_blind')
         test_cmd_code = self.actions.get('execute', {}).get('test_cmd')
-        if test_cmd_code and self.execute_blind(test_cmd_code):
+        if "execute_blind" in call or (test_cmd_code and self.execute_blind(test_cmd_code)):
             self.set('execute_blind', True)
-            if self.actions.get('write'):
-                self.set('write', True)
-            if self.actions.get('bind_shell'):
-                self.set('bind_shell', True)
-            if self.actions.get('reverse_shell'):
-                self.set('reverse_shell', True)
+        if self.check_call_sequence('write'):
+            self.set('write', True)
+        if self.check_call_sequence('bind_shell'):
+            self.set('bind_shell', True)
+        if self.check_call_sequence('reverse_shell'):
+            self.set('reverse_shell', True)
+
+    def get_call_sequence(self, action):
+        res = [action]
+        if action in ["render"]:
+            res += ["inject"]
+        elif action not in ["inject"]:
+            payload = self.actions.get(action, {}).copy()
+            action_base = action.split("_")[0]
+            if self.get('error', False) and f'{action_base}_error' in self.actions:
+                payload.update(self.actions.get(f'{action_base}_error', {}))
+            elif self.get('boolean', False) and f'{action_base}_boolean' in self.actions:
+                payload.update(self.actions.get(f'{action_base}_boolean', {}))
+            elif self.get('blind', False) and f'{action_base}_blind' in self.actions:
+                payload.update(self.actions.get(f'{action_base}_blind', {}))
+            elif action == 'blind' and self.get('boolean', False) and f'boolean' in self.actions:
+                payload.update(self.actions.get(f'boolean', {}))
+            default = 'render' if action in ['execute', 'evaluate', 'read', 'md5'] else 'inject'
+            call_name = payload.get('call', default)
+            res += self.get_call_sequence(call_name)
+        return res
+
+    def check_call_sequence(self, action):
+        if action == "inject":
+            return True
+        action_base = action.split("_")[0]
+        if action in ["evaluate", "execute", "evaluate_blind", "execute_blind"] and \
+                not (self.get(f"{action_base}_blind") or self.get(action_base)):
+            return False
+        error = self.get('error', False)
+        boolean = self.get('boolean', False)
+        if not (self.actions.get(action) or (error and self.actions.get(f'{action_base}_error')) or
+                (boolean and self.actions.get(f'{action_base}_boolean'))):
+            return False
+        call = self.get_call_sequence(action)
+        if len(call) > 1:
+            return self.check_call_sequence(call[1])
+        return True
 
     def detect(self):
         # Get user-provided techniques
@@ -260,14 +327,15 @@ class Plugin(object):
             # If the context has no closures, generate one closure with a zero-length string
             suffix = ctx.get('suffix', '')
             suffix_format = "{closure}" in suffix or "{rclosure}" in suffix
-            suffix_text = suffix.format(closure='', rclosure='') if suffix_format else suffix
+            suffix_text = (suffix.format(closure='', rclosure='') if suffix_format else suffix).replace('\n', '\\n')
+            prefix_text = ctx.get('prefix', '').format(closure='').replace('\n', '\\n')
             wrappers = ctx.get('wrappers', ['{code}'])
             if ctx.get('closures'):
                 closures = self._generate_closures(ctx)
             else:
                 closures = [('', '')]
             if len(closures)*len(wrappers) > 1:
-                log.log(26, f'''{self.plugin} plugin is testing {ctx.get('prefix', '').format(closure='')}*{suffix_text} code context escape with {len(closures)*len(wrappers)} variations{f' (level {ctx.get("level", 1)})' if self.get('level') else ''}''')
+                log.log(26, f'''{self.plugin} plugin is testing {prefix_text}*{suffix_text} code context escape with {len(closures)*len(wrappers)} variations{f' (level {ctx.get("level", 1)})' if self.get('level') else ''}''')
             for wrapper in wrappers:
                 for closure, rclosure in closures:
                     # Format the prefix with closure
@@ -315,7 +383,7 @@ class Plugin(object):
         payload_false = action.get('test_bool_false')
         call_name = action.get('call', 'inject')
         # Skip if something is missing or call function is not set
-        if not action or not payload_true or not payload_false or not call_name or not hasattr(self, call_name):
+        if self.no_tests or not (action and payload_true and payload_false and call_name and hasattr(self, call_name)):
             return
         # Print what it's going to be tested
         log.log(23, f'{self.plugin} plugin is testing '
@@ -367,7 +435,7 @@ class Plugin(object):
     """
     def _detect_render(self, reflection="render"):
         render_action = self.actions.get(reflection)
-        if not render_action:
+        if self.no_tests or not render_action:
             return
         # Print what it's going to be tested
         if reflection == "render":

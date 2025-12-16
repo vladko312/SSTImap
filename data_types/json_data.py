@@ -44,7 +44,7 @@ Appropriate Content-Type header is often required by the server.""",
             "Vladislav Korchagin @vladko312 https://github.com/vladko312",
         ],
         "Options": [
-            "deep_update=True - recursively update dictionaries."
+            "deep_update=True - recursively update dictionaries"
         ],
     }
 

@@ -46,7 +46,7 @@ request.add_argument("-M", "--marker", dest="marker",
 request.add_argument("-d", "--data", action="append", dest="data",
                      help="Request body data param to send (e.g. 'param=value') [Stackable]", default=[])
 request.add_argument("--data-type", dest="data_type",
-                     help="Request body data type (default 'form')")
+                     help="Request body data type (default 'auto')")
 request.add_argument("--data-params", action="append", dest="data_params", metavar="KEY=VALUE",
                      help="Request body data processing params", default=[])
 request.add_argument("-H", "--header", action="append", dest="headers", metavar="HEADER",

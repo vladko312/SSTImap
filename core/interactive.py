@@ -73,7 +73,7 @@ Target:
 Request:
   mark, marker [MARKER]                   Set string as injection marker (default '*')
   data, post {rm} [DATA]                  Add request body data to send (e.g. 'param=value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, clears all data
-  type, data_type [TYPE]                  Select request body processing script for a specific data type (default 'form')
+  type, data_type [TYPE]                  Select request body processing script for a specific data type (default 'auto')
   data_params {rm} [PARAM]                Add request body processing param as KEY=VALUE. To remove by key, use "data_params rm KEY". Whithout arguments, clears all params
   header, headers {rm} [HEADER]           Add header to send (e.g. 'Header: Value'). To remove by prefix, use "header rm PREFIX". Whithout arguments, clears all headers
   cookie, cookies {rm} [COOKIE]           Cookie to send (e.g. 'Field=Value'). To remove by prefix, use "cookie rm PREFIX". Whithout arguments, clears all cookies
@@ -506,8 +506,7 @@ Exploitation:
     def do_data_type(self, line):
         """Set request body type"""
         if line == '':
-            log.log(22, 'Request body type cannot be empty.')
-            return
+            line = 'auto'
         line = line.lower()
         log.log(24, f'Request body type is set to {line}')
         self.sstimap_options["data_type"] = line

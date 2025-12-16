@@ -68,46 +68,10 @@ class SSI(Plugin):
         self.set_contexts([
             {'level': 0},
             # SSI shares tag endings with HTML comment
-            {'level': 2, 'prefix': '{closure} -->', 'suffix': '<!-- a', 'closures': ctx_closures},
+            {'level': 1, 'prefix': '{closure} -->', 'suffix': '<!-- a', 'closures': ctx_closures},
         ])
 
     language = 'SSI'
-
-    def rendered_detected(self):
-        # SSI has no real evaluation, hence the checks are done using the command execution action.
-        error = self.get('error', False)
-        action_execute = self.actions.get('execute', {}).copy()
-        if error and 'execute_error' in self.actions:
-            action_execute.update(self.actions.get('execute_error', {}))
-        test_cmd_code = action_execute.get('test_cmd')
-        test_cmd_code_expected = action_execute.get('test_cmd_expected')
-        if test_cmd_code and test_cmd_code_expected and test_cmd_code_expected == self.execute(test_cmd_code).rstrip():
-            self.set('execute', True)
-            if self.actions.get('write'):
-                self.set('write', True)
-            if self.actions.get('read') or (error and self.actions.get('read_error')):
-                self.set('read', True)
-            if self.actions.get('bind_shell'):
-                self.set('bind_shell', True)
-            if self.actions.get('reverse_shell'):
-                self.set('reverse_shell', True)
-            test_os_code = action_execute.get('test_os')
-            test_os_code_expected = action_execute.get('test_os_expected')
-            if test_os_code and test_os_code_expected:
-                os = self.execute(test_os_code)
-                if os and re.search(test_os_code_expected, os):
-                    self.set('os', os)
-
-    def blind_detected(self):
-        # SSI has no real evaluation, hence the checks are done using the command execution action.
-        # Since execution has been used to detect blind injection, let's assume execute_blind as set.
-        self.set('execute_blind', True)
-        if self.actions.get('write'):
-            self.set('write', True)
-        if self.actions.get('bind_shell'):
-            self.set('bind_shell', True)
-        if self.actions.get('reverse_shell'):
-            self.set('reverse_shell', True)
 
 
 ctx_closures = {

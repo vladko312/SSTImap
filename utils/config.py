@@ -14,7 +14,7 @@ defaults = {
     "base_path": "~/.sstimap/",
     "crawl_depth": 0,
     "marker": '*',
-    "data_type": "form",
+    "data_type": "auto",
     "level": 1,
     "technique": "REBT",
     "crawl_domains": "S",
