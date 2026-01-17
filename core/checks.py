@@ -9,6 +9,7 @@ from core.tcpclient import TcpClient
 from utils.crawler import crawl, find_forms
 from core.channel import Channel
 from core.matcher import profile
+from utils.strings import formatters
 
 
 def module_info(line):
@@ -48,17 +49,17 @@ def module_info(line):
                     found = True
                     message = f"Plugin \033[1m{plugin.__name__}\033[0m: {plugin.plugin_info['Description']}\n"
                     mod = []
-                    if plugin.legacy_plugin:
+                    if plugin.__dict__.get("legacy_plugin", False):
                         mod.append("\033[91mL\033[0megacy")
-                    if plugin.generic_plugin:
+                    if plugin.__dict__.get("generic_plugin", False):
                         mod.append("\033[93mG\033[0meneric")
                     if plugin.__name__.endswith("_generic"):
                         mod.append("\033[96mU\033[0mniversal")
                     if plugin.__mro__[1].__name__ == "Plugin":
                         mod.append("\033[92mB\033[0mase")
-                        if plugin.no_tests:
-                            mod.append("\033[95mN\033[0mo tests")
-                    if plugin.extra_plugin:
+                    if plugin.__dict__.get("no_tests", False):
+                        mod.append("\033[95mN\033[0mo tests")
+                    if plugin.__dict__.get("extra_plugin", False):
                         mod.append("\033[94mE\033[0mxtra")
                     if mod:
                         message += f"{'; '.join(mod)}\n"
@@ -130,10 +131,11 @@ def print_injection_summary(channel):
         technique = "error-based"
     else:
         technique = "rendered"
+    formatter = formatters[channel.data.get("formatter", "default")]
     prefix = channel.data.get('prefix', '').replace('\n', '\\n')
-    render = channel.data.get('render', '{code}').replace('\n', '\\n').format(code='*')
+    render = formatter(channel.data.get('render', channel.default_wrapper), {"code": "*"}).replace('\n', '\\n')
     suffix = channel.data.get('suffix', '').replace('\n', '\\n')
-    wrapper = channel.data.get('wrapper', '{code}').replace('\n', '\\n').format(code=render)
+    wrapper = formatter(channel.data.get('wrapper', channel.default_wrapper), {"code": render}).replace('\n', '\\n')
     if channel.data.get('evaluate_blind'):
         evaluation = f"\033[92mok\033[0m, {channel.data.get('language')} code (blind)"
     elif channel.data.get('evaluate'):
@@ -362,26 +364,32 @@ def scan_website(args):
     if preloaded_forms:
         forms.update(preloaded_forms)
     if args['load_forms']:
-        if os.path.isdir(args['load_forms']):
+        if args['load_forms'] == "-":
+            args['load_forms'] = 0
+        elif os.path.isdir(args['load_forms']):
             args['load_forms'] = f"{args['load_forms']}/forms.json"
-        if os.path.exists(args['load_forms']):
+        if args['load_forms'] == 0 or os.path.exists(args['load_forms']):
             try:
                 with open(args['load_forms'], 'r') as stream:
                     loaded_forms = set([tuple(x) for x in json.load(stream)])
                 forms.update(loaded_forms)
-                log.log(21, f"Loaded {len(loaded_forms)} forms from file: {args['load_forms']}")
+                log.log(21, f"Loaded {len(loaded_forms)} forms from "
+                            f"{'STDIN' if args['load_forms'] == 0 else ('file: ' + args['load_forms'])}")
             except Exception as e:
                 log.log(22, f"Error occurred while loading forms from file:\n{repr(e)}")
     if not forms or args['forms']:
         if args['load_urls']:
-            if os.path.isdir(args['load_urls']):
+            if args['load_urls'] == "-":
+                args['load_urls'] = 0
+            elif os.path.isdir(args['load_urls']):
                 args['load_urls'] = f"{args['load_urls']}/urls.txt"
-            if os.path.exists(args['load_urls']):
+            if args['load_urls'] == 0 or os.path.exists(args['load_urls']):
                 try:
                     with open(args['load_urls'], 'r') as stream:
                         loaded_urls = set([x.strip() for x in stream.readlines()])
                     urls.update(loaded_urls)
-                    log.log(21, f"Loaded {len(loaded_urls)} URL(s) from file: {args['load_urls']}")
+                    log.log(21, f"Loaded {len(loaded_urls)} URL(s) from "
+                                f"{'STDIN' if args['load_urls'] == 0 else ('file: ' + args['load_urls'])}")
                 except Exception as e:
                     log.log(22, f"Error occurred while loading URLs from file:\n{repr(e)}")
         if args['crawl_depth']:
@@ -425,7 +433,7 @@ def scan_website(args):
             channel = Channel(url_args)
             result = check_template_injection(channel)
             if channel.data.get('engine'):
-                return result, channel # TODO: save vulnerabilities
+                return result, channel  # TODO: save vulnerabilities
     else:
         for form in forms:
             log.log(27, f'Scanning form with url: {form[0]}')
@@ -439,5 +447,5 @@ def scan_website(args):
             channel = Channel(url_args)
             result = check_template_injection(channel)
             if channel.data.get('engine'):
-                return result, channel # TODO: save vulnerabilities
+                return result, channel  # TODO: save vulnerabilities
     return None, None

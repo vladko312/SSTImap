@@ -19,7 +19,7 @@ Appropriate Content-Type header is often required by the server.""",
         params_list = self._process_values(data)
         for idx, param in enumerate(params_list):
             self.params.append(param)
-            if all_injectable or self.tag in param:
+            if all_injectable or self.tag.encode() in param:
                 injs.append({'field': 'Body', 'param': idx})
         return injs
 

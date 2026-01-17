@@ -1,6 +1,7 @@
 import cmd
 import json
 import os
+import sys
 
 from utils import config
 from utils.loggers import log, no_colour
@@ -72,6 +73,7 @@ Target:
 
 Request:
   mark, marker [MARKER]                   Set string as injection marker (default '*')
+  injection_points [POINTS]               Injection points to test without markers: Q(uery) B(ody) H(eaders) C(ookies). Default: QBHC
   data, post {rm} [DATA]                  Add request body data to send (e.g. 'param=value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, clears all data
   type, data_type [TYPE]                  Select request body processing script for a specific data type (default 'auto')
   data_params {rm} [PARAM]                Add request body processing param as KEY=VALUE. To remove by key, use "data_params rm KEY". Whithout arguments, clears all params
@@ -618,6 +620,23 @@ Exploitation:
         log.log(24, f'Attack technique is set to {technique}')
         self.sstimap_options["technique"] = technique
 
+    def do_injection_points(self, line):
+        """Set injection_points to check"""
+        line = line.upper()
+        points = ""
+        for p in line:
+            if p in ["Q", "B", "H", "C"] and p not in points:
+                points += p
+                line = line.replace(p, "")
+        if points == "":
+            log.log(22, 'Invalid POINTS value. It must contain at least one of \'Q\', \'B\', \'H\' or \'C\'.')
+            return
+        if line != "":
+            log.log(22, 'Invalid POINTS value. It must only contain \'Q\', \'B\', \'H\' and \'C\'.')
+            return
+        log.log(24, f'Injection points are set to {points}')
+        self.sstimap_options["injection_points"] = points
+
     def do_remote_shell(self, line):
         """Set expected remote shell"""
         log.log(24, f'Expected remote shell is set to {line}')
@@ -1029,17 +1048,13 @@ Exploitation:
 
     def do_reload_modules(self, line):
         """Reload all modules"""
-        from core.plugin import unload_plugins
-        from sstimap import load_plugins
+        from core.plugin import unload_plugins, load_plugins,  loaded_plugins
         unload_plugins()
         load_plugins()
-        from core.plugin import loaded_plugins
         log.log(23, f"Reloaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
-        from core.data_type import unload_data_types
-        from sstimap import load_data_types
+        from core.data_type import unload_data_types, load_data_types,  loaded_data_types
         unload_data_types()
         load_data_types()
-        from core.data_type import loaded_data_types
-        log.log(26, f"Loaded request body types: {len(loaded_data_types)}")
+        log.log(26, f"Reloaded request body types: {len(loaded_data_types)}")
 
     do_reload = do_reload_modules

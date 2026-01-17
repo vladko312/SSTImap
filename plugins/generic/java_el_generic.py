@@ -69,7 +69,7 @@ class Java_EL_generic(java.Java):
 
         self.set_contexts([
             # Text context, no closures
-            {'level': 0, 'wrappers': ["{{{code}}}", "{{{{{code}}}}}", "#{{{code}}}", "@{{{code}}}", "*{{{code}}}",
+            {'level': 0, 'wrappers': ["{code}", "{{{code}}}", "{{{{{code}}}}}", "#{{{code}}}", "@{{{code}}}", "*{{{code}}}",
                                       "{{={code}}}", "{{{{={code}}}}}", "\n={code}\n", "${{{code}}}", "<%={code}%>"]},
             {'level': 1, 'prefix': '{closure}+', 'suffix': '+{rclosure}', 'closures': java.ctx_closures},
             {'level': 2, 'prefix': '{closure}}}', 'wrappers': ["{{{code}}}"], 'suffix': '{"1"',

@@ -2,9 +2,19 @@ import base64
 import sys
 from utils import config
 from utils.loggers import log
+import importlib
+import os
 
 loaded_data_types = {}
 failed_data_types = []
+
+
+def load_data_types():
+    importlib.invalidate_caches()
+    modules = os.scandir(f"{sys.path[0]}/data_types")
+    modules = filter(lambda x: (x.name.endswith(".py") and not x.name.startswith("_")), modules)
+    for m in modules:
+        importlib.import_module(f"data_types.{m.name[:-3]}")
 
 
 def unload_data_types():

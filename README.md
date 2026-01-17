@@ -6,7 +6,7 @@ SSTImap
 [![Python 3.6](https://img.shields.io/badge/python-3.6+-yellow.svg?logo=python)](https://www.python.org/downloads/release/python-360/)
 [![GitHub](https://img.shields.io/github/license/vladko312/sstimap?color=green&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.txt)
 [![GitHub last commit](https://img.shields.io/github/last-commit/vladko312/sstimap?color=green&logo=github)](https://github.com/vladko312/sstimap/commits/)
-[![Maintenance](https://img.shields.io/maintenance/yes/2025?logo=github)](https://github.com/vladko312/sstimap)
+[![Maintenance](https://img.shields.io/maintenance/yes/2026?logo=github)](https://github.com/vladko312/sstimap)
 
 > This project is based on [Tplmap](https://github.com/epinna/tplmap/).
 
@@ -15,9 +15,10 @@ SSTImap is a penetration testing software that can check websites for Code Injec
 This tool was developed to be used as an interactive penetration testing tool for SSTI detection and exploitation, which allows more advanced exploitation. More payloads for SSTImap can be found [here](https://github.com/vladko312/extras).
 
 Payloads and techniques came from:
-- James Kettle 's [Server-Side Template Injection: RCE For The Modern Web App][5]
+- James Kettle's [Server-Side Template Injection: RCE For The Modern Web App][5]
 - Other public researches [\[1\]][1] [\[2\]][2] [\[8\]][8]
-- Contributions to Tplmap [\[3\]][3] [\[4\]][4].
+- Contributions to Tplmap [\[3\]][3] [\[4\]][4]
+- My own research [\[9\]][9]
 
 This tool is capable of exploiting some code context escapes and blind injection scenarios. It also supports _eval()_-like code injections in Java, JavaScript, PHP, Python, Ruby and generic unsandboxed template engines.
 
@@ -262,7 +263,7 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | [CVE-2025-1302](https://gist.github.com/nickcopi/11ba3cb4fdee6f89e02e6afae8db6456) | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE-2025-13204](https://huntr.com/bounties/1-npm-expr-eval)                       | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE-2022-23614](https://nvd.nist.gov/vuln/detail/CVE-2022-23614)                  | ✓   | REBT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
-| [CVE_2024_6386](https://sec.stealthcopter.com/wpml-rce-via-twig-ssti/)             | ✓   | REBT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
+| [CVE-2024-6386](https://sec.stealthcopter.com/wpml-rce-via-twig-ssti/)             | ✓   | REBT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
 
 Techniques: (R)endered, (E)rror-based, (B)oolean error-based blind and (T)ime-based blind; Lowercase letter marks partially supported technique
 
@@ -279,12 +280,13 @@ Future plans
 If you plan to contribute something big from this list, inform me to avoid working on the same thing as me or other contributors.
 
 - [ ] Add more payloads for different engines
+- [ ] Make plugins less dependent on base plugins
 - [ ] Parse raw HTTP request from file
 - [ ] Variable dumping functionality
 - [ ] Blind/side-channel value extraction
 - [ ] Better documentation (or at least any documentation)
 - [ ] Short arguments as interactive commands?
-- [ ] JSON/plaintext API modes for scripting integrations?
+- [ ] JSONL/plaintext API modes for scripting integrations?
 - [ ] Better integration for Python scripts
 - [ ] Multipart POST data type support
 - [ ] Modules for more customisable requests (second order, reset, non-HTTP)
@@ -310,3 +312,4 @@ If you plan to contribute something big from this list, inform me to avoid worki
 [6]: http://flask.pocoo.org/
 [7]: http://jinja.pocoo.org/
 [8]: https://gist.github.com/n1nj4sec/5e3fffdfa322f4c23053359fc8100ab9
+[9]: https://github.com/vladko312/Research_Successful_Errors
