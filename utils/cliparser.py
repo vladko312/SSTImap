@@ -36,13 +36,15 @@ target.add_argument("-u", "--url", dest="url",
                     help="Target URL (e.g. 'https://example.com/?name=test')")
 target.add_argument("-i", "--interactive", action="store_const", const=True, dest="interactive",
                     help="Run SSTImap in interactive mode")
-target.add_argument("--load-urls", dest="load_urls", help="File or directory to load URLs from")
-target.add_argument("--load-forms", dest="load_forms", help="File or directory to load forms from")
+target.add_argument("--load-urls", dest="load_urls", help="File or directory to load URLs from (use '-' for STDIN)")
+target.add_argument("--load-forms", dest="load_forms", help="File or directory to load forms from (use '-' for STDIN)")
 
 request = parser.add_argument_group(title="request", description="These options can specify how to connect to the "
                                                                  "target URL and add possible attack vectors")
 request.add_argument("-M", "--marker", dest="marker",
                      help="Use string as injection marker (default '*')")
+request.add_argument("-P", "--injection-points", dest="injection_points",
+                     help="Injection points to test without markers: Q(uery) B(ody) H(eaders) C(ookies). Default: QBHC")
 request.add_argument("-d", "--data", action="append", dest="data",
                      help="Request body data param to send (e.g. 'param=value') [Stackable]", default=[])
 request.add_argument("--data-type", dest="data_type",

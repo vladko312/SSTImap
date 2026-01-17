@@ -5,14 +5,13 @@ if sys.version_info.major != 3 or sys.version_info.minor < 6:
     sys.exit()
 if sys.version_info.minor > 13:
     print('\033[33m[!]\033[0m This version of SSTImap was not tested with Python3.'+str(sys.version_info.minor))
-import importlib
-import os
 from utils import cliparser
 from core import checks
 from core.interactive import InteractiveShell
 from utils.loggers import log
 from utils.config import config_args, version
 import traceback
+
 
 def main():
     args = vars(cliparser.options)
@@ -24,11 +23,11 @@ def main():
         print(cliparser.banner())
     else:
         print(no_colour(cliparser.banner()))
+    from core.plugin import load_plugins, loaded_plugins
     load_plugins()
-    from core.plugin import loaded_plugins
     log.log(26, f"Loaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
+    from core.data_type import load_data_types, loaded_data_types
     load_data_types()
-    from core.data_type import loaded_data_types
     log.log(26, f"Loaded request body types: {len(loaded_data_types)}\n")
     if not (args['url'] or args['interactive'] or args['load_urls'] or args['load_forms'] or args['module']):
         # no target specified
@@ -46,25 +45,6 @@ def main():
         checks.scan_website(args)
 
 
-def load_plugins():
-    importlib.invalidate_caches()
-    groups = os.scandir(f"{sys.path[0]}/plugins")
-    groups = filter(lambda x: x.is_dir(), groups)
-    for g in groups:
-        modules = os.scandir(f"{sys.path[0]}/plugins/{g.name}")
-        modules = filter(lambda x: (x.name.endswith(".py") and not x.name.startswith("_")), modules)
-        for m in modules:
-            importlib.import_module(f"plugins.{g.name}.{m.name[:-3]}")
-
-
-def load_data_types():
-    importlib.invalidate_caches()
-    modules = os.scandir(f"{sys.path[0]}/data_types")
-    modules = filter(lambda x: (x.name.endswith(".py") and not x.name.startswith("_")), modules)
-    for m in modules:
-        importlib.import_module(f"data_types.{m.name[:-3]}")
-
-
 if __name__ == '__main__':
     try:
         main()
@@ -72,6 +52,6 @@ if __name__ == '__main__':
         print()
         log.log(22, 'Exiting')
     except Exception as e:
-        log.critical('Error: {}'.format(e))
+        log.critical(f'Error: {repr(e)}')
         log.debug(traceback.format_exc())
         raise e
