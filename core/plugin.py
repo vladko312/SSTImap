@@ -225,15 +225,16 @@ class Plugin(object):
         if action == "inject":
             return True
         action_base = action.split("_")[0]
-        if action in ["evaluate", "execute", "evaluate_blind", "execute_blind"] and \
-                not (self.get(f"{action_base}_blind") or self.get(action_base)):
-            return False
         if error is None:
             error = self.get('error', False)
         if boolean is None:
             boolean = self.get('boolean', False)
         if blind is None:
             blind = self.get('blind', False)
+        if action in ["evaluate", "execute", "evaluate_blind", "execute_blind"] and \
+                not ((self.actions.get(f"{action_base}_boolean") and boolean)
+                     or self.actions.get(f"{action_base}_blind") or self.actions.get(action_base)):
+            return False
         if not (self.actions.get(action) or (error and self.actions.get(f'{action_base}_error')) or
                 (boolean and self.actions.get(f'{action_base}_boolean'))):
             return False

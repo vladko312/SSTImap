@@ -1,7 +1,6 @@
 import cmd
 import json
 import os
-import sys
 
 from utils import config
 from utils.loggers import log, no_colour
@@ -1049,12 +1048,12 @@ Exploitation:
     def do_reload_modules(self, line):
         """Reload all modules"""
         from core.plugin import unload_plugins, load_plugins,  loaded_plugins
+        from core.data_type import unload_data_types, load_data_types,  loaded_data_types_by_categories
         unload_plugins()
-        load_plugins()
-        log.log(23, f"Reloaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
-        from core.data_type import unload_data_types, load_data_types,  loaded_data_types
         unload_data_types()
+        load_plugins()
         load_data_types()
-        log.log(26, f"Reloaded request body types: {len(loaded_data_types)}")
+        log.log(26, f"Reloaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
+        log.log(26, f"Reloaded request body types by categories: {'; '.join([f'{x}: {len(loaded_data_types_by_categories[x])}' for x in loaded_data_types_by_categories])}")
 
     do_reload = do_reload_modules

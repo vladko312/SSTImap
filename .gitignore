@@ -1,6 +1,17 @@
 # SSTImap custom plugins
-plugins/custom/*
-plugins/SEP/*
+data_types/*
+!data_types/auto
+!data_types/http
+!data_types/object
+!data_types/raw
+plugins/*
+!plugins/generic
+!plugins/java
+!plugins/javascript
+!plugins/languages
+!plugins/php
+!plugins/python
+!plugins/ruby
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
