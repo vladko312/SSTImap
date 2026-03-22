@@ -43,6 +43,7 @@ def compatible_url_safe_base64_encode(code):
 
 
 class DataType(object):
+    extra_data_type = False
     sstimap_version = config.version
     data_type_info = {
         "Description": """This data type has no description.""",
@@ -61,6 +62,7 @@ class DataType(object):
     def __init_subclass__(cls, **kwargs):
         module = cls.__module__.split(".")
         name = cls.__name__
+        cls.group = module[1]
         if config.compare_versions(cls.sstimap_version, config.min_version['data_type']) == "<":
             log.log(22, f'''{name} data type is outdated and cannot be loaded''')
             failed_data_types.append(cls)
@@ -69,7 +71,7 @@ class DataType(object):
             log.log(22, f'''{name} data type requires SSTImap update and cannot be loaded''')
             failed_data_types.append(cls)
             return
-        if module[0] == "data_types":
+        if module[0] in ["plugins", "data_types"]:
             loaded_data_types[name.lower()] = cls
             if module[1] in loaded_data_types_by_categories:
                 loaded_data_types_by_categories[module[1]].append(cls)

@@ -75,4 +75,4 @@ class SpEL(java.Java):
             {'level': 3, 'prefix': '{closure}}}#{{', 'suffix': '}}#{{{rclosure}', 'closures': java.ctx_closures},
         ])
 
-        self.language += ':spel'
+    language_variant = 'spel'

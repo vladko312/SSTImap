@@ -147,4 +147,4 @@ $s.getClass().forName("java.util.Base64").getDecoder().decode("{chunk_b64p}"), "
                 {'level': 5, 'prefix': '*#', 'suffix': '#*'},
         ])
 
-        self.language += ':script'
+    language_variant = 'script'

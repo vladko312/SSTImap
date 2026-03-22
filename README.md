@@ -259,6 +259,7 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | Tornado                                                                            | ✓   | REBT | Python     | Generic                                                |
 | Dust (<= dustjs-helpers@1.5.0)                                                     | ✓   | REBT | JavaScript | Legacy                                                 |
 | Twig (<=1.19)                                                                      | ✓   | REBT | PHP        | Legacy                                                 |
+| Templite                                                                           | ✓   | REBT | Python     | Legacy                                                 |
 | SSI (Server-Side Includes injection)                                               | ✓   | R__T | SSI        | Legacy                                                 |
 | [CVE-2025-1302](https://gist.github.com/nickcopi/11ba3cb4fdee6f89e02e6afae8db6456) | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE-2025-13204](https://huntr.com/bounties/1-npm-expr-eval)                       | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |

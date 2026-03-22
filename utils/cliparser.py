@@ -90,7 +90,7 @@ detection.add_argument("-l", "--level", dest="level", type=int,
 detection.add_argument("-L", "--force-level", dest="force_level", metavar=("LEVEL", "CLEVEL",),
                        help="Force a LEVEL and CLEVEL to test", nargs=2, type=int)
 detection.add_argument("-e", "--engine", dest="engine",
-                       help="Check only this backend template engine")
+                       help="Comma-separated list of template engines to test: [language:[variant:]][category/]engine,...  For all, use '*'")
 detection.add_argument("-r", "--technique", dest="technique",
                        help="Techniques: R(endered) E(rror-based) B(oolean error-based blind) T(ime-based blind). Default: REBT")
 detection.add_argument("--bool-ok", dest="boolean_regex_ok",

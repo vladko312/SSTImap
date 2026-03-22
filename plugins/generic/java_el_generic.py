@@ -104,4 +104,4 @@ class Java_EL_generic(java.Java):
              'suffix': '{#'},
         ])
 
-        self.language += ':script'
+    language_variant = 'script'

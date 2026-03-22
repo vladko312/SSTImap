@@ -98,7 +98,7 @@ Crawler:
 Detection:
   lvl, level [LEVEL]                      Set level of escaping to perform (1-5, Default: 1)
   force, force_level [LEVEL] [CLEVEL]     Force a LEVEL and CLEVEL to test
-  engine [ENGINE]                         Check only this backend template engine. For all, use '*'
+  engine [ENGINE]                         Comma-separated list of template engines to test: [language:[variant:]][category/]engine,... For all, use '*'
   technique [TECHNIQUE]                   Use techniques: R(endered) E(rror-based) B(oolean error-based blind) T(ime-based blind). Default: REBT
   bool_ok [PATTERN]                       RegEx to match when boolean error-based blind payload evaluates correctly, empty to disable
   bool_err [PATTERN]                      RegEx to match when boolean error-based blind payload causes an error, empty to disable
@@ -197,7 +197,7 @@ Exploitation:
             log.log(26, f'Forced context level: {self.sstimap_options["force_level"][1]}')
         else:
             log.log(26, f'Level: {self.sstimap_options["level"]}')
-        log.log(26, f'Engine: {self.sstimap_options["engine"] if self.sstimap_options["engine"] else "*"}'
+        log.log(26, f'Engine filter: {self.sstimap_options["engine"] if self.sstimap_options["engine"] else "*"}'
                     f'{"+" if not self.sstimap_options["engine"] and self.sstimap_options["legacy"] else ""}'
                     f'{"»" if not self.sstimap_options["engine"] and not self.sstimap_options["generic"] else ""}')
         if self.sstimap_options["crawl_depth"] > 0:
@@ -599,7 +599,7 @@ Exploitation:
         """Set template ENGINE to check"""
         if line.lower() in ['', '*', 'all']:
             line = None
-        log.log(24, f'Template engine is set to {line if line else "*"}')
+        log.log(24, f'Template engine filter is set to {line if line else "*"}')
         self.sstimap_options["engine"] = line
 
     def do_technique(self, line):

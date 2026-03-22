@@ -88,8 +88,6 @@ class Freemarker(java.Java):
             },
         })
 
-        self.language += ':freemarker'
-
         self.set_contexts([
             # Text context, no closures
             {'level': 0},
@@ -99,4 +97,6 @@ class Freemarker(java.Java):
             {'level': 5, 'prefix': '-->', 'suffix': '<#--'},
             {'level': 5, 'prefix': '{closure} as a></#list><#list [1] as a>', 'suffix': '', 'closures': java.ctx_closures},
         ])
+
+    language_variant = 'freemarker'
 
