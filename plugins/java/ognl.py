@@ -70,4 +70,4 @@ class OGNL(java.Java):
             {'level': 1, 'prefix': '{closure}+', 'suffix': '+{rclosure}', 'closures': java.ctx_closures},
         ])
 
-        self.language += ':ognl'
+    language_variant = 'ognl'

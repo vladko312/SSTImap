@@ -72,12 +72,12 @@ class Plugin(object):
         "References": [],
         "Engine": [],
     }
+    language = ""
+    language_variant = ""
 
     def __init__(self, channel):
         # HTTP channel
         self.channel = channel
-        # Plugin name
-        self.plugin = self.__class__.__name__
         # Collect the HTTP response time into a deque to be used to
         # tune the average response time for blind values.
         # Estimate 0.5s for a safe start.
@@ -99,7 +99,12 @@ class Plugin(object):
 
     def __init_subclass__(cls, **kwargs):
         module = cls.__module__.split(".")
-        if module[0] == "plugins":
+        # Plugin, group and language names
+        cls.plugin = cls.__name__
+        cls.group = module[1]
+        if cls.language_variant:
+            cls.language += f":{cls.language_variant}"
+        if module[0] in ["plugins", "data_types"]:
             if config.compare_versions(cls.sstimap_version, config.min_version['plugin']) == "<":
                 log.log(22, f'''{cls.__name__} plugin is outdated and cannot be loaded''')
                 log.log(29, f"{cls.__name__} made for version {cls.sstimap_version}, "
@@ -221,25 +226,27 @@ class Plugin(object):
             res += self.get_call_sequence(call_name, error, boolean, blind)
         return res
 
-    def check_call_sequence(self, action, error=None, boolean=None, blind=None):
+    def check_call_sequence(self, action, error=None, boolean=None, blind=None, test=False):
         if action == "inject":
             return True
         action_base = action.split("_")[0]
-        if action in ["evaluate", "execute", "evaluate_blind", "execute_blind"] and \
-                not (self.get(f"{action_base}_blind") or self.get(action_base)):
-            return False
         if error is None:
             error = self.get('error', False)
         if boolean is None:
             boolean = self.get('boolean', False)
         if blind is None:
             blind = self.get('blind', False)
+        # Check if action is achieved, run only after detection
+        if not test and action in ["evaluate", "execute", "evaluate_blind", "execute_blind"] and \
+                not (self.get(f"{action_base}_blind") or self.get(action_base)):
+            return False
+        # Check if payload exist
         if not (self.actions.get(action) or (error and self.actions.get(f'{action_base}_error')) or
                 (boolean and self.actions.get(f'{action_base}_boolean'))):
             return False
         call = self.get_call_sequence(action, error, boolean, blind)
         if len(call) > 1:
-            return self.check_call_sequence(call[1], error, boolean, blind)
+            return self.check_call_sequence(call[1], error, boolean, blind, test)
         return True
 
     def detect(self):
@@ -357,7 +364,7 @@ class Plugin(object):
             for wrapper in wrappers:
                 for closure, rclosure in closures:
                     # Format the prefix with closure
-                    prefix = formatter(ctx.get('prefix', '{closure}'), {'closure': closure})
+                    prefix = formatter(ctx.get('prefix', ''), {'closure': closure})
                     if suffix_format:
                         suffix = formatter(ctx.get('suffix', ''), {'closure': closure, 'rclosure': rclosure})
                     yield prefix, suffix, wrapper
@@ -403,7 +410,7 @@ class Plugin(object):
         call_name = action.get('call', 'inject')
         # Skip if something is missing or call function is not set
         if not (action and payload_true and payload_false and call_name and hasattr(self, call_name) and
-                self.check_call_sequence(variant, boolean=(variant == "boolean"))):
+                self.check_call_sequence(variant, boolean=(variant == "boolean"), test=True)):
             return
         # Print what it's going to be tested
         log.log(23, f'{self.plugin} plugin is testing '
@@ -456,7 +463,7 @@ class Plugin(object):
     def _detect_render(self, reflection="render"):
         render_action = self.actions.get(reflection)
         if not (render_action and
-                self.check_call_sequence(reflection, error=(reflection == "render_error"))):
+                self.check_call_sequence(reflection, error=(reflection == "render_error"), test=True)):
             return
         # Print what it's going to be tested
         if reflection == "render":

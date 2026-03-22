@@ -14,32 +14,41 @@ from utils.strings import formatters
 
 def module_info(line):
     from core.plugin import loaded_plugins
-    from core.data_type import loaded_data_types
+    from core.data_type import loaded_data_types_by_categories
     if line == '':
         plugin_message = ""
         for category in loaded_plugins:
             plugin_message += f"\033[1m\033[4m{category}\033[0m\n"
             for plugin in loaded_plugins[category]:
                 mod = ""
-                if plugin.legacy_plugin:
+                if plugin.__dict__.get("legacy_plugin", False):
                     mod += "\033[91mL\033[0m"
-                if plugin.generic_plugin:
+                if plugin.__dict__.get("generic_plugin", False):
                     mod += "\033[93mG\033[0m"
                 if plugin.__name__.endswith("_generic"):
                     mod += "\033[96mU\033[0m"
                 if plugin.__mro__[1].__name__ == "Plugin":
                     mod += "\033[92mB\033[0m"
-                    if plugin.no_tests:
-                        mod += "\033[95mN\033[0m"
-                if plugin.extra_plugin:
+                if plugin.__dict__.get("no_tests", False):
+                    mod += "\033[95mN\033[0m"
+                if plugin.__dict__.get("extra_plugin", False):
                     mod += "\033[94mE\033[0m"
                 if mod:
                     mod = f"[{mod}]"
                 plugin_message += f" - {mod}\033[1m{plugin.__name__}\033[0m: {plugin.plugin_info['Description']}\n"
         log.log(26, f'Plugins by categories:\n{plugin_message}')
         data_type_message = ""
-        for data_type in loaded_data_types:
-            data_type_message += f" - \033[1m{data_type}\033[0m: {loaded_data_types[data_type].data_type_info['Description']}\n"
+        for category in loaded_data_types_by_categories:
+            data_type_message += f"\033[1m\033[4m{category}\033[0m\n"
+            for data_type in loaded_data_types_by_categories[category]:
+                mod = ""
+                if data_type.__name__.lower().endswith("auto"):
+                    mod += "\033[96mU\033[0m"
+                if data_type.__dict__.get("extra_data_type", False):
+                    mod += "\033[94mE\033[0m"
+                if mod:
+                    mod = f"[{mod}]"
+                data_type_message += f" - {mod}\033[1m{data_type.__name__}\033[0m: {data_type.data_type_info['Description']}\n"
         log.log(26, f'Data types:\n{data_type_message}')
     else:
         found = False
@@ -63,6 +72,7 @@ def module_info(line):
                         mod.append("\033[94mE\033[0mxtra")
                     if mod:
                         message += f"{'; '.join(mod)}\n"
+                    message += f"Language: {plugin.language}\nCategory: {plugin.group}\n"
                     if "Usage notes" in plugin.plugin_info:
                         message += f"{plugin.plugin_info['Usage notes']}\n"
                     if "Authors" in plugin.plugin_info:
@@ -78,27 +88,68 @@ def module_info(line):
                         for ref in plugin.plugin_info['Engine']:
                             message += f" - {ref}\n"
                     log.log(24, message)
-        for data_type in loaded_data_types:
-            if data_type.lower() == line.lower():
-                found = True
-                message = f"Data type \033[1m{data_type}\033[0m: {loaded_data_types[data_type].data_type_info['Description']}\n"
-                if "Usage notes" in loaded_data_types[data_type].data_type_info:
-                    message += f"{loaded_data_types[data_type].data_type_info['Usage notes']}\n"
-                if "Authors" in loaded_data_types[data_type].data_type_info:
-                    message += "Authors:\n"
-                    for author in loaded_data_types[data_type].data_type_info['Authors']:
-                        message += f" - {author}\n"
-                if "References" in loaded_data_types[data_type].data_type_info:
-                    message += "References:\n"
-                    for ref in loaded_data_types[data_type].data_type_info['References']:
-                        message += f" - {ref}\n"
-                if "Options" in loaded_data_types[data_type].data_type_info:
-                    message += "Data type options:\n"
-                    for ref in loaded_data_types[data_type].data_type_info['Options']:
-                        message += f" - {ref}\n"
-                log.log(24, message)
+        for category in loaded_data_types_by_categories:
+            for data_type in loaded_data_types_by_categories[category]:
+                if data_type.__name__.lower() == line.lower():
+                    found = True
+                    message = f"Data type \033[1m{data_type.__name__}\033[0m: {data_type.data_type_info['Description']}\n"
+                    mod = []
+                    if data_type.__name__.lower().endswith("auto"):
+                        mod.append("\033[96mU\033[0mniversal")
+                    if data_type.__dict__.get("extra_data_type", False):
+                        mod.append("\033[94mE\033[0mxtra")
+                    if mod:
+                        message += f"{'; '.join(mod)}\n"
+                    message += f"Category: {data_type.group}\n"
+                    if "Usage notes" in data_type.data_type_info:
+                        message += f"{data_type.data_type_info['Usage notes']}\n"
+                    if "Authors" in data_type.data_type_info:
+                        message += "Authors:\n"
+                        for author in data_type.data_type_info['Authors']:
+                            message += f" - {author}\n"
+                    if "References" in data_type.data_type_info:
+                        message += "References:\n"
+                        for ref in data_type.data_type_info['References']:
+                            message += f" - {ref}\n"
+                    if "Options" in data_type.data_type_info:
+                        message += "Data type options:\n"
+                        for ref in data_type.data_type_info['Options']:
+                            message += f" - {ref}\n"
+                    log.log(24, message)
         if not found:
             log.log(25, "No module found with provided name.")
+
+
+def get_ruleset(engine_str):
+    ruleset = []
+    engine_str = engine_str.replace(";", ",").replace(" ", "").replace("\\", "/")
+    for rule in engine_str.split(","):
+        rule = rule.split(":")
+        engine = rule[-1].split("/")
+        # Replacing - with _ the way it is done in class names
+        ruleset.append({
+            "engine": engine[-1].lower().replace('-', '_') if engine[-1] else "*",
+            "group": engine[0].lower().replace('-', '_') if len(engine) > 1 and engine[0] else "*",
+            "language": rule[0].lower().replace('-', '_') if len(rule) > 1 and rule[0] else "*",
+            "language_variant": rule[1].lower().replace('-', '_') if len(rule) > 2 and rule[1] else "*",
+        })
+    return ruleset
+
+
+def check_ruleset(ruleset, engine):
+    for rule in ruleset:
+        if rule["engine"] not in ["*", engine.plugin.lower().replace('-', '_')]:
+            continue
+        if rule["group"] not in ["*", engine.group.lower().replace('-', '_')]:
+            continue
+        if rule["language"] not in ["*", engine.language.split(":")[0].lower().replace('-', '_')]:
+            continue
+        # Rule is never empty, so language without variant will only be matched by *
+        language_variant = engine.language.split(":")[1] if len(engine.language.split(":")) > 1 else ""
+        if rule["language_variant"] not in ["*", language_variant.lower().replace('-', '_')]:
+            continue
+        return True
+    return False
 
 
 def plugins(args):
@@ -117,6 +168,13 @@ def plugins(args):
         plugin_list = []
         for p in all_plugin_list:
             if not p.legacy_plugin:
+                plugin_list.append(p)
+    if args.get('engine'):
+        ruleset = get_ruleset(args.get('engine'))
+        all_plugin_list = plugin_list
+        plugin_list = []
+        for p in all_plugin_list:
+            if check_ruleset(ruleset, p):
                 plugin_list.append(p)
     plugin_list.sort(key=lambda x: x.priority)
     return plugin_list
@@ -197,9 +255,6 @@ def detect_template_injection(channel):
             channel.boolean_enabled = True
         for plugin in plugins(channel.args):
             current_plugin = plugin(channel)
-            # Replacing - with _ the way it is done in class names
-            if channel.args.get('engine') and channel.args.get('engine').lower().replace('-', '_') != current_plugin.plugin.lower():
-                continue
             current_plugin.detect()
             if channel.data.get('engine'):
                 return current_plugin

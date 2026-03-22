@@ -1,6 +1,7 @@
 from core.data_type import DataType, loaded_data_types
 from urllib import parse
 import json
+import xml.etree.ElementTree as xml
 from utils.loggers import log
 
 
@@ -16,6 +17,9 @@ This data type also supports passing options to detected data types.""",
         "Options": [
             "special=False - also test for 'fromhex' and 'fromfile' data types",
             "['json' only] deep_update=True - recursively update dictionaries",
+            "['xml' only] html=False - output data as HTML instead of XML",
+            "['xml' only, html=False] declaration=True - add XML declaration",
+            "['xml' only, html=False] short_empty=False - use <tag /> syntax",
             "['form' only] keep_blank_values=True - keep empty values (e.g. in a=&b=5, param 'a' will not be removed)",
         ],
     }
@@ -37,8 +41,20 @@ This data type also supports passing options to detected data types.""",
                 test_json = False
                 break
         if test_json:
-            log.log(24, "POST data type detected as 'json'")
+            log.log(24, "POST data type detected as 'JSON'")
             self._detected = loaded_data_types["json"](self.args, self.tag)
+            return
+        test_xml = True
+        for v in values:
+            try:
+                # Ensure tag exists
+                xml.fromstring(v.replace(self.tag, "")).tag
+            except:
+                test_xml = False
+                break
+        if test_xml:
+            log.log(24, "POST data type detected as 'XML'")
+            self._detected = loaded_data_types["xml"](self.args, self.tag)
             return
         test_form = True
         try:
@@ -47,7 +63,7 @@ This data type also supports passing options to detected data types.""",
         except:
             test_form = False
         if test_form:
-            log.log(24, "POST data type detected as 'form'")
+            log.log(24, "POST data type detected as 'Form'")
             self._detected = loaded_data_types["form"](self.args, self.tag)
             return
         if self.args.get("data_params", {}).get("special", False):
@@ -59,7 +75,7 @@ This data type also supports passing options to detected data types.""",
                     test_hex = False
                     break
             if test_hex:
-                log.log(24, "POST data type detected as 'fromhex'")
+                log.log(24, "POST data type detected as 'FromHex'")
                 self._detected = loaded_data_types["fromhex"](self.args, self.tag)
                 return
             test_file = True
@@ -70,10 +86,10 @@ This data type also supports passing options to detected data types.""",
                     test_file = False
                     break
             if test_file:
-                log.log(24, "POST data type detected as 'fromfile'")
+                log.log(24, "POST data type detected as 'FromFile'")
                 self._detected = loaded_data_types["fromfile"](self.args, self.tag)
                 return
-        log.log(25, "POST data type not detected, assuming 'text'")
+        log.log(25, "POST data type not detected, assuming 'Text'")
         self._detected = loaded_data_types["text"](self.args, self.tag)
         return
 

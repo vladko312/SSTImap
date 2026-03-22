@@ -35,7 +35,7 @@ def update(a, b):
     return a
 
 
-class Json(DataType):
+class JSON(DataType):
     data_type_info = {
         "Description": """JSON data (application/json MIME type)""",
         "Usage notes": """Supply JSON objects to be merged into one.
