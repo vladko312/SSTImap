@@ -521,7 +521,7 @@ class Plugin(object):
             if self.channel.args.get("boolean_regex_ok"):
                 try:
                     pattern = re.compile(self.channel.args.get('boolean_regex_ok'))
-                except:
+                except Exception:
                     log.log(22, f'Invalid RE: "{self.channel.args.get("boolean_regex_ok")}"')
                     return
                 result = not not pattern.search(text)
@@ -532,7 +532,7 @@ class Plugin(object):
             elif self.channel.args.get("boolean_regex_err"):
                 try:
                     pattern = re.compile(self.channel.args.get('boolean_regex_err'))
-                except:
+                except Exception:
                     log.log(22, f'Invalid RE: "{self.channel.args.get("boolean_regex_err")}"')
                     return
                 result = not pattern.search(text)
@@ -646,7 +646,7 @@ class Plugin(object):
             if exfiltrate == 'base64':
                 try:
                     result = base64.b64decode(result).decode()
-                except:
+                except Exception:
                     pass
             return result.strip() if result else result
 
@@ -695,7 +695,7 @@ class Plugin(object):
         if exfiltrate == 'base64':
             try:
                 result = base64.b64decode(result).decode()
-            except:
+            except Exception:
                 pass
         # Check md5 result format
         if re.match(r"([a-fA-F\d]{32})", result):
@@ -791,7 +791,7 @@ class Plugin(object):
             if exfiltrate == 'base64':
                 try:
                     result = base64.b64decode(result).decode()
-                except:
+                except Exception:
                     pass
         return result
 
@@ -821,7 +821,7 @@ class Plugin(object):
             if exfiltrate == 'base64':
                 try:
                     result = base64.b64decode(result).decode()
-                except:
+                except Exception:
                     pass
         return result
 
