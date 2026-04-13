@@ -37,7 +37,7 @@ This data type also supports passing options to detected data types.""",
             try:
                 # Ensure dict at top level
                 json.loads(v.replace(self.tag, "")).keys()
-            except:
+            except Exception:
                 test_json = False
                 break
         if test_json:
@@ -49,7 +49,7 @@ This data type also supports passing options to detected data types.""",
             try:
                 # Ensure tag exists
                 xml.fromstring(v.replace(self.tag, "")).tag
-            except:
+            except Exception:
                 test_xml = False
                 break
         if test_xml:
@@ -60,7 +60,7 @@ This data type also supports passing options to detected data types.""",
         try:
             # TODO: even more strict detection
             parse.parse_qs('&'.join(values), strict_parsing=True)
-        except:
+        except Exception:
             test_form = False
         if test_form:
             log.log(24, "POST data type detected as 'Form'")
@@ -71,7 +71,7 @@ This data type also supports passing options to detected data types.""",
             for v in values:
                 try:
                     bytes.fromhex(v.replace(self.tag, ""))
-                except:
+                except Exception:
                     test_hex = False
                     break
             if test_hex:
@@ -82,7 +82,7 @@ This data type also supports passing options to detected data types.""",
             for v in values:
                 try:
                     open(v, "rb").close()
-                except:
+                except Exception:
                     test_file = False
                     break
             if test_file:

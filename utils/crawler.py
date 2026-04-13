@@ -37,7 +37,7 @@ def crawl(targets, args):
     if args.get('crawl_exclude'):
         try:
             pattern = re.compile(args.get('crawl_exclude'))
-        except:
+        except Exception:
             log.log(22, f'Invalid RE: "{args.get("crawl_exclude")}"')
             return
 
@@ -195,7 +195,7 @@ def find_page_forms(url, args):
         try:
             parsed = parse(raw, namespaceHTMLElements=False)
             forms, global_form = parse_forms(parsed, request.url)
-        except:
+        except Exception:
             raise       # TODO: find out what error types these two functions might raise
     for form in forms or []:
         try:

@@ -536,7 +536,7 @@ Exploitation:
         """Set DELAY between requests"""
         try:
             self.sstimap_options["delay"] = max(float(line), 0)
-        except:
+        except Exception:
             log.log(22, 'Invalid delay time.')
             return
         log.log(24, f'Delay between requests is set to {self.sstimap_options["delay"]}')
@@ -709,7 +709,7 @@ Exploitation:
         line = line.split(" ")
         try:
             boolean_fuzzy = (float(line[0]), float(line[1]),)
-        except:
+        except Exception:
             log.log(22, 'Invalid STABLE or ERROR value.')
             return
         self.sstimap_options["boolean_fuzzy"] = boolean_fuzzy
@@ -726,7 +726,7 @@ Exploitation:
         line = line.split(" ")
         try:
             boolean_samples = (int(line[0]), int(line[1]), int(line[2]),)
-        except:
+        except Exception:
             log.log(22, 'Invalid COUNT, MIN or MAX value.')
             return
         self.sstimap_options["boolean_samples"] = boolean_samples
@@ -743,7 +743,7 @@ Exploitation:
         """Set DELAY for blind SSTI detection"""
         try:
             self.sstimap_options["time_based_blind_delay"] = max(int(line), 1)
-        except:
+        except Exception:
             log.log(22, 'Invalid time-based blind injection delay time.')
             return
         log.log(24, f'Delay for time-based blind injection detection is set to {self.sstimap_options["time_based_blind_delay"]}')
@@ -754,7 +754,7 @@ Exploitation:
         """Set DELAY for blind SSTI detection"""
         try:
             self.sstimap_options["time_based_verify_blind_delay"] = max(int(line), 1)
-        except:
+        except Exception:
             log.log(22, 'Invalid time-based blind injection delay time.')
             return
         log.log(24, f'Delay for time-based blind injection verification and exploitation is set to {self.sstimap_options["time_based_verify_blind_delay"]}')
