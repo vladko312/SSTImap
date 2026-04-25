@@ -75,7 +75,7 @@ Request:
   injection_points [POINTS]               Injection points to test without markers: Q(uery) B(ody) H(eaders) C(ookies). Default: QBHC
   data, post {rm} [DATA]                  Add request body data to send (e.g. 'param=value'). To remove by prefix, use "data rm PREFIX". Whithout arguments, clears all data
   type, data_type [TYPE]                  Select request body processing script for a specific data type (default 'auto')
-  data_params {rm} [PARAM]                Add request body processing param as KEY=VALUE. To remove by key, use "data_params rm KEY". Whithout arguments, clears all params
+  module_params {rm} [PARAM]              Add module param as KEY=VALUE. To remove by key, use "module_params rm KEY". Whithout arguments, clears all params
   header, headers {rm} [HEADER]           Add header to send (e.g. 'Header: Value'). To remove by prefix, use "header rm PREFIX". Whithout arguments, clears all headers
   cookie, cookies {rm} [COOKIE]           Cookie to send (e.g. 'Field=Value'). To remove by prefix, use "cookie rm PREFIX". Whithout arguments, clears all cookies
   method, http_method [METHOD]            Set HTTP method to use (default 'GET')
@@ -171,10 +171,10 @@ Exploitation:
             data = "\n    ".join(self.sstimap_options["data"])
             log.log(26, f'Request body data:\n    {data}')
             log.log(26, f'Request body type: {self.sstimap_options["data_type"]}')
-            if self.sstimap_options["data_params"]:
-                params = "\n    ".join([f"{x}: {self.sstimap_options['data_params'][x]}"
-                                        for x in self.sstimap_options["data_params"]])
-                log.log(26, f'Request body type params:\n    {params}')
+            if self.sstimap_options["module_params"]:
+                params = "\n    ".join([f"{x}: {self.sstimap_options['module_params'][x]}"
+                                        for x in self.sstimap_options["module_params"]])
+                log.log(26, f'Module params:\n    {params}')
         if self.sstimap_options["headers"]:
             headers = "\n    ".join(self.sstimap_options["headers"])
             log.log(26, f'HTTP headers:\n    {headers}')
@@ -198,8 +198,8 @@ Exploitation:
         else:
             log.log(26, f'Level: {self.sstimap_options["level"]}')
         log.log(26, f'Engine filter: {self.sstimap_options["engine"] if self.sstimap_options["engine"] else "*"}'
-                    f'{"+" if not self.sstimap_options["engine"] and self.sstimap_options["legacy"] else ""}'
-                    f'{"»" if not self.sstimap_options["engine"] and not self.sstimap_options["generic"] else ""}')
+                    f'{"+" if self.sstimap_options["legacy"] else ""}'
+                    f'{"»" if not self.sstimap_options["generic"] else ""}')
         if self.sstimap_options["crawl_depth"] > 0:
             log.log(26, f'Crawler depth: {self.sstimap_options["crawl_depth"]}')
             if self.sstimap_options["crawl_exclude"]:
@@ -395,16 +395,17 @@ Exploitation:
             log.log(22, 'Target URL cannot be empty.')
             return
         try:
-            self.current_plugin, self.channel = checks.scan_website(self.sstimap_options)
+            plugin, channel = checks.scan_website(self.sstimap_options)
         except (KeyboardInterrupt, EOFError):
+            plugin, channel = None, None
             log.log(26, 'Exiting SSTI detection')
-        if self.current_plugin:
+        if plugin:
+            self.current_plugin, self.channel = plugin, channel
             self.checked = True
-        self.sstimap_options["loaded_urls"] = None
-        self.sstimap_options["loaded_forms"] = None
-        self.set_module(f'\033[3{"2" if self.checked else "1"}m'
-                        f'{parse.urlparse(self.sstimap_options["url"]).netloc}'
-                        f'\033[0m' if self.sstimap_options["url"] else "")
+            self.sstimap_options["loaded_urls"] = None
+            self.sstimap_options["loaded_forms"] = None
+            self.sstimap_options["url"] = self.channel.url
+            self.set_module(f'\033[32m{parse.urlparse(self.sstimap_options["url"]).netloc}\033[0m')
 
     do_check = do_run
     do_test = do_run
@@ -440,20 +441,20 @@ Exploitation:
 
     do_post = do_data
 
-    def do_data_params(self, line):
-        """Modify request body data processing params"""
+    def do_module_params(self, line):
+        """Modify module params"""
         if line == "":
-            log.log(24, f'Clearing all request body data processing params...')
-            self.sstimap_options["data_params"] = {}
+            log.log(24, f'Clearing all module params...')
+            self.sstimap_options["module_params"] = {}
             return
         command = line.split(" ", 1)
         if (command[0] == "remove" or command[0] == "rm") and len(command) == 2 and command[1] != "":
-            log.log(24, f'Removing data param {command[1]}:')
-            self.sstimap_options["data_params"].pop(command[1], None)
+            log.log(24, f'Removing module param {command[1]}:')
+            self.sstimap_options["module_params"].pop(command[1], None)
         else:
             param = line.split("=", 1)
-            log.log(24, f'Adding data param: {param[0]}')
-            self.sstimap_options["data_params"][param[0]] = param[1]
+            log.log(24, f'Adding module param: {param[0]}')
+            self.sstimap_options["module_params"][param[0]] = param[1]
 
     def do_header(self, line):
         """Modify HTTP headers"""
@@ -536,7 +537,7 @@ Exploitation:
         """Set DELAY between requests"""
         try:
             self.sstimap_options["delay"] = max(float(line), 0)
-        except:
+        except ValueError:
             log.log(22, 'Invalid delay time.')
             return
         log.log(24, f'Delay between requests is set to {self.sstimap_options["delay"]}')
@@ -709,7 +710,10 @@ Exploitation:
         line = line.split(" ")
         try:
             boolean_fuzzy = (float(line[0]), float(line[1]),)
-        except:
+        except IndexError:
+            log.log(22, 'Both STABLE and ERROR values must be provided.')
+            return
+        except ValueError:
             log.log(22, 'Invalid STABLE or ERROR value.')
             return
         self.sstimap_options["boolean_fuzzy"] = boolean_fuzzy
@@ -726,7 +730,10 @@ Exploitation:
         line = line.split(" ")
         try:
             boolean_samples = (int(line[0]), int(line[1]), int(line[2]),)
-        except:
+        except IndexError:
+            log.log(22, 'COUNT, MIN and MAX values must be provided.')
+            return
+        except ValueError:
             log.log(22, 'Invalid COUNT, MIN or MAX value.')
             return
         self.sstimap_options["boolean_samples"] = boolean_samples
@@ -743,7 +750,7 @@ Exploitation:
         """Set DELAY for blind SSTI detection"""
         try:
             self.sstimap_options["time_based_blind_delay"] = max(int(line), 1)
-        except:
+        except ValueError:
             log.log(22, 'Invalid time-based blind injection delay time.')
             return
         log.log(24, f'Delay for time-based blind injection detection is set to {self.sstimap_options["time_based_blind_delay"]}')
@@ -754,7 +761,7 @@ Exploitation:
         """Set DELAY for blind SSTI detection"""
         try:
             self.sstimap_options["time_based_verify_blind_delay"] = max(int(line), 1)
-        except:
+        except ValueError:
             log.log(22, 'Invalid time-based blind injection delay time.')
             return
         log.log(24, f'Delay for time-based blind injection verification and exploitation is set to {self.sstimap_options["time_based_verify_blind_delay"]}')

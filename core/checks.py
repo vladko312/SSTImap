@@ -73,19 +73,23 @@ def module_info(line):
                     if mod:
                         message += f"{'; '.join(mod)}\n"
                     message += f"Language: {plugin.language}\nCategory: {plugin.group}\n"
-                    if "Usage notes" in plugin.plugin_info:
+                    if plugin.plugin_info.get("Usage notes"):
                         message += f"{plugin.plugin_info['Usage notes']}\n"
-                    if "Authors" in plugin.plugin_info:
+                    if plugin.plugin_info.get("Authors"):
                         message += "Authors:\n"
                         for author in plugin.plugin_info['Authors']:
                             message += f" - {author}\n"
-                    if "References" in plugin.plugin_info:
+                    if plugin.plugin_info.get("References"):
                         message += "References:\n"
                         for ref in plugin.plugin_info['References']:
                             message += f" - {ref}\n"
-                    if "Engine" in plugin.plugin_info:
+                    if plugin.plugin_info.get("Engine"):
                         message += "Engine documentation:\n"
                         for ref in plugin.plugin_info['Engine']:
+                            message += f" - {ref}\n"
+                    if plugin.plugin_info.get('Options'):
+                        message += "Plugin options:\n"
+                        for ref in plugin.plugin_info['Options']:
                             message += f" - {ref}\n"
                     log.log(24, message)
         for category in loaded_data_types_by_categories:
@@ -101,17 +105,17 @@ def module_info(line):
                     if mod:
                         message += f"{'; '.join(mod)}\n"
                     message += f"Category: {data_type.group}\n"
-                    if "Usage notes" in data_type.data_type_info:
+                    if data_type.data_type_info.get("Usage notes"):
                         message += f"{data_type.data_type_info['Usage notes']}\n"
-                    if "Authors" in data_type.data_type_info:
+                    if data_type.data_type_info.get("Authors"):
                         message += "Authors:\n"
                         for author in data_type.data_type_info['Authors']:
                             message += f" - {author}\n"
-                    if "References" in data_type.data_type_info:
+                    if data_type.data_type_info.get("References"):
                         message += "References:\n"
                         for ref in data_type.data_type_info['References']:
                             message += f" - {ref}\n"
-                    if "Options" in data_type.data_type_info:
+                    if data_type.data_type_info.get("Options"):
                         message += "Data type options:\n"
                         for ref in data_type.data_type_info['Options']:
                             message += f" - {ref}\n"
@@ -136,7 +140,7 @@ def get_ruleset(engine_str):
     return ruleset
 
 
-def check_ruleset(ruleset, engine):
+def check_ruleset(ruleset, engine, legacy, generic):
     for rule in ruleset:
         if rule["engine"] not in ["*", engine.plugin.lower().replace('-', '_')]:
             continue
@@ -148,6 +152,11 @@ def check_ruleset(ruleset, engine):
         language_variant = engine.language.split(":")[1] if len(engine.language.split(":")) > 1 else ""
         if rule["language_variant"] not in ["*", language_variant.lower().replace('-', '_')]:
             continue
+        # Check legacy and generic engines, allow if flag is set or explicit name is given
+        if engine.legacy_plugin and not (legacy or rule["engine"] != '*'):
+            continue
+        if engine.generic_plugin and not (generic or rule["engine"] != '*'):
+            continue
         return True
     return False
 
@@ -157,25 +166,15 @@ def plugins(args):
     plugin_list = []
     for group in loaded_plugins:
         plugin_list += loaded_plugins.get(group, [])
-    if not args.get('engine') and not args.get('generic'):
-        all_plugin_list = plugin_list
-        plugin_list = []
-        for p in all_plugin_list:
-            if not p.generic_plugin:
-                plugin_list.append(p)
-    if not args.get('engine') and not args.get('legacy'):
-        all_plugin_list = plugin_list
-        plugin_list = []
-        for p in all_plugin_list:
-            if not p.legacy_plugin:
-                plugin_list.append(p)
-    if args.get('engine'):
-        ruleset = get_ruleset(args.get('engine'))
-        all_plugin_list = plugin_list
-        plugin_list = []
-        for p in all_plugin_list:
-            if check_ruleset(ruleset, p):
-                plugin_list.append(p)
+    engine = args.get('engine')
+    if not engine:
+        engine = '*'
+    ruleset = get_ruleset(engine)
+    all_plugin_list = plugin_list
+    plugin_list = []
+    for p in all_plugin_list:
+        if check_ruleset(ruleset, p, args.get('legacy'), args.get('generic')):
+            plugin_list.append(p)
     plugin_list.sort(key=lambda x: x.priority)
     return plugin_list
 

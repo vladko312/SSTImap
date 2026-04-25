@@ -30,7 +30,7 @@ Sometimes, appropriate Content-Type header is required by the server.""",
         return injs
 
     def _process_values(self, values):
-        return parse.parse_qs('&'.join(values), keep_blank_values=self.args.get("data_params", {}).get("keep_blank_values", True))
+        return parse.parse_qs('&'.join(values), keep_blank_values=self.args.get("module_params", {}).get("keep_blank_values", True))
 
     def get_params(self):
         return deepcopy(self.params)

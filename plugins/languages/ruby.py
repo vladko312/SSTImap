@@ -91,6 +91,11 @@ class Ruby(Plugin):
                 'call': 'evaluate',
                 'md5': """require'digest';Digest::MD5.file("{path}")"""
             },
+            'md5_blind': {
+                'call': 'evaluate_blind',
+                'md5_blind': """require'digest';Digest::MD5.file("{path}")=='{md5}'""",
+                'exists_blind': """File::file?("{path}")"""
+            },
         })
 
         self.set_contexts([

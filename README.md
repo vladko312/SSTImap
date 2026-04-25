@@ -2,7 +2,7 @@ SSTImap
 ======
 
 [![Version 1.3](https://img.shields.io/badge/version-1.3-green.svg?logo=github)](https://github.com/vladko312/sstimap)
-[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg?logo=python)](https://www.python.org/downloads/release/python-3130/)
+[![Python 3.14](https://img.shields.io/badge/python-3.14-blue.svg?logo=python)](https://www.python.org/downloads/release/python-3140/)
 [![Python 3.6](https://img.shields.io/badge/python-3.6+-yellow.svg?logo=python)](https://www.python.org/downloads/release/python-360/)
 [![GitHub](https://img.shields.io/github/license/vladko312/sstimap?color=green&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.txt)
 [![GitHub last commit](https://img.shields.io/github/last-commit/vladko312/sstimap?color=green&logo=github)](https://github.com/vladko312/sstimap/commits/)
@@ -32,6 +32,7 @@ Even though this software is based on Tplmap's code, backwards compatibility is 
 - Added new payloads for generic templates, to test all contexts use `--generic`
 - Generic evaluating template injection detection using `Eval_generic` module
 - Base language _eval()_-like shell (`-x`) or single command (`-X`) execution
+- Blind file upload now supports MD5 confirmation and file existence check
 - Added new payloads for more templates and updated many existing payloads
 - Modular plugin structure that allows additional plugin installation
 - Support for different POST data types
@@ -232,10 +233,11 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | Engine                                                                             | RCE | Tech | Language   | Type                                                   |
 |------------------------------------------------------------------------------------|-----|------|------------|--------------------------------------------------------|
 | Freemarker                                                                         | ✓   | REBT | Java       | Default                                                |
-| Java EL generic injections                                                         | ✓   | REBT | Java       | Default                                                |
+| Java generic EL injections                                                         | ✓   | REBT | Java       | Default                                                |
 | OGNL (Object-Graph Navigation Language code eval)                                  | ✓   | REBT | Java       | Default                                                |
 | Velocity                                                                           | ✓   | REBT | Java       | Default                                                |
 | Nunjucks                                                                           | ✓   | REBT | JavaScript | Default                                                |
+| Velocity.js                                                                        | ✓   | REBT | JavaScript | Default                                                |
 | JavaScript (code eval)                                                             | ✓   | REBT | JavaScript | Default                                                |
 | JavaScript-based generic templates                                                 | ✓   | REBT | JavaScript | Default                                                |
 | Twig (>=1.41; >=2.10; >=3.0)                                                       | ✓   | REBT | PHP        | Default                                                |

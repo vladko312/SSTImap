@@ -55,6 +55,11 @@ class SSI(Plugin):
                 'call': 'execute',
                 'md5': """$(type -p md5 md5sum)<'SSTIMAP:path;'|head -c 32"""
             },
+            'md5_blind': {
+                'call': 'execute_blind',
+                'md5_blind': """[ $($(type -p md5 md5sum)<'SSTIMAP:path;'|head -c 32) == "SSTIMAP:md5;" ]""",
+                'exists_blind': """[ -f 'SSTIMAP:path;' ]"""
+            },
             'bind_shell': {
                 'call': 'execute_blind'
             },

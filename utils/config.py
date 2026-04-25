@@ -3,7 +3,7 @@ import sys
 import json
 
 
-version = '1.3.3'
+version = '1.3.3.7'
 min_version = {
     'plugin': '1.2.3',
     'data_type': '1.2.0'
@@ -87,7 +87,7 @@ def config_args(args):
                 except json.JSONDecodeError as e:
                     print(f'[!][custom config] {repr(e)}')
             config_update(res, custom_config)
-    args["data_params"] = {x.split("=", 1)[0]: x.split("=", 1)[1] for x in args["data_params"]}
+    args["module_params"] = {x.split("=", 1)[0]: x.split("=", 1)[1] for x in args["module_params"]}
     config_update(res, args)
     return res
 

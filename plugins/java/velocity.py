@@ -23,21 +23,21 @@ class Velocity(java.Java):
                 'render': '{code}',
                 'header': '#set($h={header[0]}+{header[1]})${{h}}',
                 'trailer': '#set($t={trailer[0]}+{trailer[1]})${{t}}',
-                'test_render': f'#set($c={rand.randints[0]}*{rand.randints[1]})${{c}}',
-                'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
+                'test_render': f'#set($c={rand.randints[0]}*{rand.randints[1]})${{h.class.name}}${{c}}',
+                'test_render_expected': f'java.lang.Integer{rand.randints[0]*rand.randints[1]}'
             },
             'render_error': {
                 'render': '{code}',
                 'header': '#set($h={header[0]}+{header[1]})',
                 # Body needs to set b as the output
                 'trailer': '#set($t={trailer[0]}+{trailer[1]})#set($r=("Y:/A:/"+$h+$b+$t))#include($r)',
-                'test_render': f'#set($b={rand.randints[0]}*{rand.randints[1]})',
-                'test_render_expected': f'{rand.randints[0]*rand.randints[1]}'
+                'test_render': f'#set($b=$h.class.name+({rand.randints[0]}*{rand.randints[1]}))',
+                'test_render_expected': f'java.lang.Integer{rand.randints[0]*rand.randints[1]}'
             },
             'boolean': {
                 'call': 'inject',
-                'test_bool_true':  '#if(false)#include("Y:/A:/true")#end',
-                'test_bool_false': '#if(true)#include("Y:/A:/false")#end',
+                'test_bool_true':  "#set($o=1)#if($o.getClass().valueOf('1')==2)#include('Y:/A:/zxy')#end",
+                'test_bool_false': "#set($o=2)#if($o.getClass().valueOf('1')==1)#include('Y:/A:/zxy')#end",
                 'verify_bool_true':  '#set($o=1.0)#if($o.equals(0.1))#include("Y:/A:/xxx")#end',
                 'verify_bool_false': '#set($o=1.0)#if($o.equals(1.0))#include("Y:/A:/xxx")#end'
             },

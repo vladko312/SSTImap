@@ -37,7 +37,8 @@ You can try to detect the template engine to search for the RCE payloads.""",
                 'header': '',
                 'trailer': '',
                 'test_render': f"({rand.randints[0]}/0).zxy.zxy",
-                'test_render_expected': f'{rand.randints[0]}+{rand.randints[1]}*{rand.randints[2]}'
+                'test_render_expected': 'error',
+                'test_render_verify': f'({rand.randints[0]}+{rand.randints[1]})*{rand.randints[2]}'
             },
             'boolean': {
                 'call': 'inject',
@@ -117,7 +118,7 @@ You can try to detect the template engine to search for the RCE payloads.""",
         log.log(23, f'{self.plugin} plugin is testing reflection for error-based injection')
         for prefix, suffix, wrapper in self._generate_contexts():
             payload = render_action.get('test_render')
-            verify_payload = render_action.get('test_render_expected')
+            verify_payload = render_action.get('test_render_verify')
             wrapper_type = render_action.get(f'wrapper_type', 'local')
             header_rand = [rand.randint_n(10, 4), rand.randint_n(10, 4)]
             header = render_action.get('header')

