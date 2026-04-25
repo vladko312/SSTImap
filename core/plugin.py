@@ -24,7 +24,10 @@ def load_plugins():
         modules = os.scandir(f"{sys.path[0]}/plugins/{g.name}")
         modules = filter(lambda x: (x.name.endswith(".py") and not x.name.startswith("_")), modules)
         for m in modules:
-            importlib.import_module(f"plugins.{g.name}.{m.name[:-3]}")
+            try:
+                importlib.import_module(f"plugins.{g.name}.{m.name[:-3]}")
+            except Exception as e:
+                log.log(22, f'''Error while loading plugin {g.name}/{m.name[:-3]}: {e}''')
 
 
 def unload_plugins():
@@ -39,6 +42,7 @@ def unload_plugins():
         if p.__module__ in sys.modules:
             del sys.modules[p.__module__]
     failed_plugins = []
+    importlib.invalidate_caches()
 
 
 def _recursive_update(d, u):
@@ -71,6 +75,7 @@ class Plugin(object):
         "Authors": [],
         "References": [],
         "Engine": [],
+        "Options": [],
     }
     language = ""
     language_variant = ""
@@ -145,10 +150,6 @@ class Plugin(object):
         if "evaluate" in call:
             self.set('evaluate', self.language)
         # Using rstrip in case of trailing newline
-        if not self.get('evaluate') and test_eval_code and test_eval_expected \
-                and test_eval_expected == self.evaluate(test_eval_code).rstrip():
-            self.set('evaluate', self.language)
-            call += self.get_call_sequence('evaluate')
         if test_os_code and test_os_code_expected:
             os = self.evaluate(test_os_code)
             if os and re.search(test_os_code_expected, os):
@@ -156,6 +157,10 @@ class Plugin(object):
                 if not self.get('evaluate'):
                     self.set('evaluate', self.language)
                     call += self.get_call_sequence('evaluate')
+        if not self.get('evaluate') and test_eval_code and test_eval_expected \
+                and test_eval_expected == self.evaluate(test_eval_code).rstrip():
+            self.set('evaluate', self.language)
+            call += self.get_call_sequence('evaluate')
         action_execute = self.actions.get('execute', {}).copy()
         if error and 'execute_error' in self.actions:
             action_execute.update(self.actions.get('execute_error', {}))
@@ -166,15 +171,15 @@ class Plugin(object):
         # Using rstrip in case of trailing newline
         if "execute" in call:
             self.set('execute', True)
-        if not self.get('execute') and test_cmd_code and test_cmd_code_expected \
-                and test_cmd_code_expected == self.execute(test_cmd_code).rstrip():
-            self.set('execute', True)
         if test_cmd_os and test_cmd_os_expected and not (self.get('execute') and self.get('os')):
             os = self.execute(test_cmd_os)
             if os and re.search(test_cmd_os_expected, os):
                 self.set('os', os)
                 if not self.get('execute'):
                     self.set('execute', True)
+        if not self.get('execute') and test_cmd_code and test_cmd_code_expected \
+                and test_cmd_code_expected == self.execute(test_cmd_code).rstrip():
+            self.set('execute', True)
         if self.check_call_sequence('write'):
             self.set('write', True)
         if self.check_call_sequence('read'):
@@ -215,10 +220,8 @@ class Plugin(object):
                 blind = self.get('blind', False)
             if error and f'{action_base}_error' in self.actions:
                 payload.update(self.actions.get(f'{action_base}_error', {}))
-            elif boolean and f'{action_base}_boolean' in self.actions:
+            elif boolean and action != action_base and f'{action_base}_boolean' in self.actions:
                 payload.update(self.actions.get(f'{action_base}_boolean', {}))
-            elif blind and f'{action_base}_blind' in self.actions:
-                payload.update(self.actions.get(f'{action_base}_blind', {}))
             elif action == 'blind' and self.get('boolean', False) and f'boolean' in self.actions:
                 payload.update(self.actions.get(f'boolean', {}))
             default = 'render' if action in ['execute', 'evaluate', 'read', 'md5'] else 'inject'
@@ -242,7 +245,7 @@ class Plugin(object):
             return False
         # Check if payload exist
         if not (self.actions.get(action) or (error and self.actions.get(f'{action_base}_error')) or
-                (boolean and self.actions.get(f'{action_base}_boolean'))):
+                (action != action_base and (boolean and self.actions.get(f'{action_base}_boolean')))):
             return False
         call = self.get_call_sequence(action, error, boolean, blind)
         if len(call) > 1:
@@ -521,7 +524,7 @@ class Plugin(object):
             if self.channel.args.get("boolean_regex_ok"):
                 try:
                     pattern = re.compile(self.channel.args.get('boolean_regex_ok'))
-                except:
+                except Exception:
                     log.log(22, f'Invalid RE: "{self.channel.args.get("boolean_regex_ok")}"')
                     return
                 result = not not pattern.search(text)
@@ -532,7 +535,7 @@ class Plugin(object):
             elif self.channel.args.get("boolean_regex_err"):
                 try:
                     pattern = re.compile(self.channel.args.get('boolean_regex_err'))
-                except:
+                except Exception:
                     log.log(22, f'Invalid RE: "{self.channel.args.get("boolean_regex_err")}"')
                     return
                 result = not pattern.search(text)
@@ -646,8 +649,8 @@ class Plugin(object):
             if exfiltrate == 'base64':
                 try:
                     result = base64.b64decode(result).decode()
-                except:
-                    pass
+                except Exception:
+                    log.log(25, 'Error decoding exfiltrated base64 string, check manually.')
             return result.strip() if result else result
 
     def set(self, key, value):
@@ -678,7 +681,7 @@ class Plugin(object):
         # Return it
         return closures
 
-    """ Overridable function to get MD5 hash of remote files. """
+    """ Overridable function to get MD5 hash of remote files."""
     def md5(self, remote_path):
         error = self.get('error', False)
         action = self.actions.get('md5', {}).copy()
@@ -695,13 +698,43 @@ class Plugin(object):
         if exfiltrate == 'base64':
             try:
                 result = base64.b64decode(result).decode()
-            except:
-                pass
+            except Exception:
+                log.log(25, 'Error decoding exfiltrated base64 string, check manually.')
         # Check md5 result format
         if re.match(r"([a-fA-F\d]{32})", result):
             return result
         else:
-            return None
+            return False
+
+    """ Overridable function to remotely compare MD5 hash of files."""
+    def md5_blind(self, remote_path, expected):
+        boolean = self.get('boolean', False)
+        action = self.actions.get('md5_blind', {}).copy()
+        if boolean and 'md5_boolean' in self.actions:
+            action.update(self.actions.get('md5_boolean', {}))
+        payload = action.get('md5_blind')
+        call_name = action.get('call', 'inject')
+        # Skip if something is missing or call function is not set
+        if not action or not payload or not call_name or not hasattr(self, call_name):
+            return
+        data = {'path': remote_path, 'md5': expected, "delay": self._get_expected_delay()}
+        execution_code = formatters[self.get("formatter", "default")](payload, data)
+        return getattr(self, call_name)(code=execution_code)
+
+    """ Overridable function to remotely check existence of files."""
+    def exists_blind(self, remote_path):
+        boolean = self.get('boolean', False)
+        action = self.actions.get('md5_blind', {}).copy()
+        if boolean and 'md5_boolean' in self.actions:
+            action.update(self.actions.get('md5_boolean', {}))
+        payload = action.get('exists_blind')
+        call_name = action.get('call', 'inject')
+        # Skip if something is missing or call function is not set
+        if not action or not payload or not call_name or not hasattr(self, call_name):
+            return
+        data = {'path': remote_path, "delay": self._get_expected_delay()}
+        execution_code = formatters[self.get("formatter", "default")](payload, data)
+        return getattr(self, call_name)(code=execution_code)
 
     """ Overridable function to detect read capabilities. """
     def detect_read(self):
@@ -746,24 +779,30 @@ class Plugin(object):
         if not action or not payload_write or not payload_truncate or not call_name or not hasattr(self, call_name):
             return
         # Check existence and overwrite with --force-overwrite
-        if self.get('blind') or self.get('boolean') or self.md5(remote_path):
-            if not self.channel.args.get('force_overwrite'):
-                if self.get('blind') or self.get('boolean'):
-                    log.log(25, 'Blind upload might overwrite files, run with --force-overwrite to continue')
-                else:
-                    log.log(25, 'Remote file already exists, run with --force-overwrite to overwrite')
-                return
-            else:
-                execution_code = formatter(payload_truncate, {'path': remote_path})
-                getattr(self, call_name)(code=execution_code)
+        if self.get('blind') or self.get('boolean'):
+            res = self.exists_blind(remote_path)
+        else:
+            res = self.md5(remote_path)
+        if res is None:
+            log.log(25, 'Plugin might overwrite files, run with --force-overwrite to continue')
+            return
+        elif res and not self.channel.args.get('force_overwrite'):
+            log.log(25, 'Remote file already exists, run with --force-overwrite to overwrite')
+            return
+        execution_code = formatter(payload_truncate, {'path': remote_path})
+        getattr(self, call_name)(code=execution_code)
         # Upload file in chunks of 500 characters
         for chunk in chunk_seq(data, 500):
             log.debug(f'[b64 encoding] {chunk}')
             execution_code = formatter(payload_write, {'path': remote_path, 'chunk': chunk})
             getattr(self, call_name)(code=execution_code)
         if self.get('blind') or self.get('boolean'):
-            log.log(25, 'Blind upload can\'t check the upload correctness, check manually')
-        elif not md5(data) == self.md5(remote_path):
+            res = self.md5_blind(remote_path, md5(data))
+        else:
+            res = md5(data) == self.md5(remote_path)
+        if res is None:
+            log.log(25, 'Plugin can\'t check the upload correctness, check manually')
+        elif not res:
             log.log(25, 'Remote file md5 mismatch, check manually')
         else:
             log.log(21, 'File uploaded correctly')
@@ -791,8 +830,8 @@ class Plugin(object):
             if exfiltrate == 'base64':
                 try:
                     result = base64.b64decode(result).decode()
-                except:
-                    pass
+                except Exception:
+                    log.log(25, 'Error decoding exfiltrated base64 string, check manually.')
         return result
 
     def execute(self, code, **kwargs):
@@ -805,8 +844,6 @@ class Plugin(object):
         action = self.actions.get('execute', {}).copy()
         if error and 'execute_error' in self.actions:
             action.update(self.actions.get('execute_error', {}))
-        #if boolean and 'execute_boolean' in self.actions:
-        #    action.update(self.actions.get('execute_boolean', {}))
         payload = action.get('execute')
         call_name = action.get('call', 'render')
         # Skip if something is missing or call function is not set
@@ -821,8 +858,8 @@ class Plugin(object):
             if exfiltrate == 'base64':
                 try:
                     result = base64.b64decode(result).decode()
-                except:
-                    pass
+                except Exception:
+                    log.log(25, 'Error decoding exfiltrated base64 string, check manually.')
         return result
 
     def evaluate_blind(self, code, **kwargs):
@@ -831,7 +868,7 @@ class Plugin(object):
         wrapper = kwargs.get('wrapper', self.get('wrapper', self.default_wrapper))
         blind = kwargs.get('blind', self.get('blind', False))
         boolean = kwargs.get('boolean', self.get('boolean', False))
-        action = self.actions.get('evaluate_blind', {})
+        action = self.actions.get('evaluate_blind', {}).copy()
         if boolean and 'evaluate_boolean' in self.actions:
             action.update(self.actions.get('evaluate_boolean', {}))
         payload_action = action.get('evaluate_blind')
@@ -850,7 +887,7 @@ class Plugin(object):
         wrapper = kwargs.get('wrapper', self.get('wrapper', self.default_wrapper))
         blind = kwargs.get('blind', self.get('blind', False))
         boolean = kwargs.get('boolean', self.get('boolean', False))
-        action = self.actions.get('execute_blind', {})
+        action = self.actions.get('execute_blind', {}).copy()
         if boolean and 'execute_boolean' in self.actions:
             action.update(self.actions.get('execute_boolean', {}))
         payload_action = action.get('execute_blind')

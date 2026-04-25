@@ -9,19 +9,19 @@ def quote(command):
 
 
 def compatible_url_safe_base64_encode(code):
-    code_b64 = code if code is bytes else code.encode(encoding='UTF-8')
+    code_b64 = code if type(code) is bytes else code.encode(encoding='UTF-8')
     code_b64 = base64.urlsafe_b64encode(code_b64).decode(encoding='UTF-8')
     return code_b64
 
 
 def compatible_base64_encode(code):
-    code_b64p = code if code is bytes else code.encode(encoding='UTF-8')
+    code_b64p = code if type(code) is bytes else code.encode(encoding='UTF-8')
     code_b64p = base64.b64encode(code_b64p).decode(encoding='UTF-8')
     return code_b64p
 
 
 def compatible_hex_encode(code):
-    return (code if code is bytes else code.encode(encoding='UTF-8')).hex()
+    return (code if type(code) is bytes else code.encode(encoding='UTF-8')).hex()
 
 
 def compatible_getter(code, key):
@@ -47,7 +47,7 @@ def python_formatter(payload, data):
     for key in data:
         if type(data[key]) in [list, dict]:
             continue
-        value = data[key] if data[key] is bytes else str(data[key])
+        value = data[key] if type(data[key]) is bytes else str(data[key])
         format_data.update({
             f'{key}_b64': compatible_url_safe_base64_encode(value),
             f'{key}_b64p': compatible_base64_encode(value)
@@ -97,7 +97,7 @@ def sstimap_formatter(payload, data):
                         log.log(22, f'''Skipping formatting filter '{f}', error: {repr(e)}''')
                 else:
                     log.log(22, f'''Skipping unknown formatting filter '{filter[0]}', payload might work incorrectly''')
-        return value.decode(encoding='UTF-8') if value is bytes else str(value)
+        return value.decode(encoding='UTF-8') if type(value) is bytes else str(value)
     return re.sub(r"SSTIMAP:([a-zA-Z0-9\-_.]+)((:[a-zA-Z0-9\-_.]+(,[a-zA-Z0-9\-_.])*)*);", _sstimap_process, payload)
 
 

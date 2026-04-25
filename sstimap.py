@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import sys
-if sys.version_info.major != 3 or sys.version_info.minor < 6:
+if sys.version_info[:2] < (3, 6):
     print('\033[91m[!]\033[0m SSTImap was created for Python3.6 and above. Python'+str(sys.version_info.major)+'.'+str(sys.version_info.minor)+' is not supported!')
     sys.exit()
-if sys.version_info.minor > 13:
-    print('\033[33m[!]\033[0m This version of SSTImap was not tested with Python3.'+str(sys.version_info.minor))
+if sys.version_info[:2] > (3, 14):
+    print('\033[33m[!]\033[0m This version of SSTImap was not tested with Python'+str(sys.version_info.major)+'.'+str(sys.version_info.minor))
 from utils import cliparser
 from core import checks
 from core.interactive import InteractiveShell

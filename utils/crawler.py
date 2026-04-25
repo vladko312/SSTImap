@@ -37,7 +37,7 @@ def crawl(targets, args):
     if args.get('crawl_exclude'):
         try:
             pattern = re.compile(args.get('crawl_exclude'))
-        except:
+        except Exception:
             log.log(22, f'Invalid RE: "{args.get("crawl_exclude")}"')
             return
 
@@ -160,16 +160,16 @@ def crawl(targets, args):
         return results
 
 
-def find_page_forms(url, args):
+def find_page_forms(url, args, retVal):
     from mechanize._form import parse_forms
     from html5lib import parse
     if not args.get('verify_ssl'):
         urllib3.disable_warnings()
-    retVal = set()
     if args.get("empty_forms") or "?" in url:
         target = (url, "GET", "")
-        retVal.add(target)
-        log.log(24, f'Form found: GET {url} ""')
+        if target not in retVal:
+            retVal.add(target)
+            log.log(24, f'Form found: GET {url} ""')
     if args.get('random_agent'):
         user_agent = get_agent()
     else:
@@ -195,8 +195,8 @@ def find_page_forms(url, args):
         try:
             parsed = parse(raw, namespaceHTMLElements=False)
             forms, global_form = parse_forms(parsed, request.url)
-        except:
-            raise       # TODO: find out what error types these two functions might raise
+        except Exception as e:
+            raise e  # TODO: find out what error types these two functions might raise
     for form in forms or []:
         try:
             request = form.click()
@@ -211,8 +211,9 @@ def find_page_forms(url, args):
                     log.log(25, "Invalid POST form with blank data detected")
                     continue
                 target = (url, method, data)
-                retVal.add(target)
-                log.log(24, f'Form found: {method} {url} "{data if data else ""}"')
+                if target not in retVal:
+                    retVal.add(target)
+                    log.log(24, f'Form found: {method} {url} "{data if data else ""}"')
         except (ValueError, TypeError) as ex:
             log.log(25, f"There has been a problem while processing page forms ('{repr(ex)}')")
     try:
@@ -223,16 +224,18 @@ def find_page_forms(url, args):
                 data += f"{name}={value}&"
             data = data.rstrip('&')
             target = (url, "POST", data)
-            retVal.add(target)
-            log.log(24, f'Form found: POST {url} "{data if data else ""}"')
+            if target not in retVal:
+                retVal.add(target)
+                log.log(24, f'Form found: POST {url} "{data if data else ""}"')
         for match in re.finditer(r"(?s)(\w+)\.open\(['\"]POST['\"],\s*['\"]([^'\"]+)['\"]\).*?\1\.send\(([^)]+)\)", content):
             url = urllib.parse.urljoin(url, html.unescape(match.group(2)))
             data = match.group(3)
             data = re.sub(r"\s*\+\s*[^\s'\"]+|[^\s'\"]+\s*\+\s*", "", data)
             data = data.strip("['\"]")
             target = (url, "POST", data)
-            retVal.add(target)
-            log.log(24, f'Form found: POST {url} "{data if data else ""}"')
+            if target not in retVal:
+                retVal.add(target)
+                log.log(24, f'Form found: POST {url} "{data if data else ""}"')
     except UnicodeDecodeError:
         pass
     return retVal
@@ -243,7 +246,7 @@ def find_forms(urls, args):
     log.log(23, 'Starting form detection...')
     try:
         for url in urls:
-            forms.update(find_page_forms(url, args))
+            find_page_forms(url, args, forms)
     except ImportError:
         log.log(25, "Form detection requires 'mechanize' and 'html5lib' to be installed")
     return forms

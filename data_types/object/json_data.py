@@ -76,7 +76,7 @@ Appropriate Content-Type header is often required by the server.""",
 
     def _process_values(self, values):
         parts = [json.loads(x) for x in values]
-        updater = deepupdate if self.args.get("data_params", {}).get("deep_update", True) else update
+        updater = deepupdate if self.args.get("module_params", {}).get("deep_update", True) else update
         try:
             res = reduce(updater, parts)
         except TypeError:

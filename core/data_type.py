@@ -18,7 +18,10 @@ def load_data_types():
         modules = os.scandir(f"{sys.path[0]}/data_types/{g.name}")
         modules = filter(lambda x: (x.name.endswith(".py") and not x.name.startswith("_")), modules)
         for m in modules:
-            importlib.import_module(f"data_types.{g.name}.{m.name[:-3]}")
+            try:
+                importlib.import_module(f"data_types.{g.name}.{m.name[:-3]}")
+            except Exception as e:
+                log.log(22, f'''Error while loading data type {g.name}/{m.name[:-3]}: {e}''')
 
 
 def unload_data_types():
@@ -34,6 +37,7 @@ def unload_data_types():
         if p.__module__ in sys.modules:
             del sys.modules[p.__module__]
     failed_data_types = []
+    importlib.invalidate_caches()
 
 
 def compatible_url_safe_base64_encode(code):

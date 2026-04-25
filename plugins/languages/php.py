@@ -42,8 +42,8 @@ class Php(Plugin):
             },
             'blind': {
                 'call': 'evaluate_blind',
-                'test_bool_true': """True""",
-                'test_bool_false': """False"""
+                'test_bool_true': """true""",
+                'test_bool_false': """false"""
             },
             'evaluate': {
                 'call': 'render',
@@ -103,6 +103,11 @@ class Php(Plugin):
             'md5': {
                 'call': 'evaluate',
                 'md5': """is_file("{path}") && print(md5_file("{path}"));"""
+            },
+            'md5_blind': {
+                'call': 'evaluate_blind',
+                'md5_blind': """is_file("{path}") && (md5_file("{path}") == "{md5}")""",
+                'exists_blind': """is_file("{path}")"""
             },
         })
 

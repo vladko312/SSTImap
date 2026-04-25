@@ -55,9 +55,9 @@ Appropriate Content-Type header is often required by the server.""",
     def get_params(self):
         return xml.tostring(self.params,
                             encoding="unicode",
-                            method="html" if self.args.get("data_params", {}).get("html", False) else "xml",
-                            xml_declaration=self.args.get("data_params", {}).get("declaration", True),
-                            short_empty_elements=self.args.get("data_params", {}).get("short_empty", False))
+                            method="html" if self.args.get("module_params", {}).get("html", False) else "xml",
+                            xml_declaration=self.args.get("module_params", {}).get("declaration", True),
+                            short_empty_elements=self.args.get("module_params", {}).get("short_empty", False))
 
     def inject(self, injection, inj):
         params = xml.fromstring(self.get_params())
@@ -83,6 +83,6 @@ Appropriate Content-Type header is often required by the server.""",
                     element.tail = injection
         return xml.tostring(params,
                             encoding="unicode",
-                            method="html" if self.args.get("data_params", {}).get("html", False) else "xml",
-                            xml_declaration=self.args.get("data_params", {}).get("declaration", True),
-                            short_empty_elements=self.args.get("data_params", {}).get("short_empty", False))
+                            method="html" if self.args.get("module_params", {}).get("html", False) else "xml",
+                            xml_declaration=self.args.get("module_params", {}).get("declaration", True),
+                            short_empty_elements=self.args.get("module_params", {}).get("short_empty", False))
