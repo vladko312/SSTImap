@@ -51,15 +51,21 @@ def crawl(targets, args):
             visited.add(current)
         content = None
         if current:
+            headers = {}
+            if args.get('headers'):
+                headers = {x.split(":", 1)[0].strip(): x.split(":", 1)[1].strip() for x in args.get('headers')}
             if args.get('random_agent'):
-                user_agent = get_agent()
+                headers['User-Agent'] = get_agent()
             else:
-                user_agent = args.get('user_agent')
+                headers['User-Agent'] = args.get('user_agent')
+            cookies = {}
+            if args.get('cookies'):
+                cookies = {x.split("=", 1)[0].strip(): x.split("=", 1)[1].strip() for x in args.get('cookies')}
             if args['delay']:
                 time.sleep(args['delay'])
             try:
-                response = requests.request(method='GET', url=current, headers={'User-Agent': user_agent}, verify=args.get('verify_ssl'),
-                                            proxies={'http': args.get('proxy'), 'https': args.get('proxy')})
+                response = requests.request(method='GET', url=current, headers=headers, verify=args.get('verify_ssl'),
+                                            proxies={'http': args.get('proxy'), 'https': args.get('proxy')}, cookies=cookies)
                 content = response.text
             except requests.exceptions.ConnectionError as e:
                 if e and e.args[0] and e.args[0].args[0] == 'Connection aborted.':
@@ -170,15 +176,21 @@ def find_page_forms(url, args, retVal):
         if target not in retVal:
             retVal.add(target)
             log.log(24, f'Form found: GET {url} ""')
+    headers = {}
+    if args.get('headers'):
+        headers = {x.split(":", 1)[0].strip(): x.split(":", 1)[1].strip() for x in args.get('headers')}
     if args.get('random_agent'):
-        user_agent = get_agent()
+        headers['User-Agent'] = get_agent()
     else:
-        user_agent = args.get('user_agent')
+        headers['User-Agent'] = args.get('user_agent')
+    cookies = {}
+    if args.get('cookies'):
+        cookies = {x.split("=", 1)[0].strip(): x.split("=", 1)[1].strip() for x in args.get('cookies')}
     if args['delay']:
         time.sleep(args['delay'])
     try:
-        request = requests.request(method='GET', url=url, headers={'User-Agent': user_agent}, verify=args.get('verify_ssl'),
-                                   proxies={'http': args.get('proxy'), 'https': args.get('proxy')})
+        request = requests.request(method='GET', url=url, headers=headers, verify=args.get('verify_ssl'),
+                                   proxies={'http': args.get('proxy'), 'https': args.get('proxy')}, cookies=cookies)
         raw = request.content
         content = request.text
     except requests.exceptions.ConnectionError as e:

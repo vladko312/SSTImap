@@ -1,7 +1,7 @@
 SSTImap
 ======
 
-[![Version 1.3](https://img.shields.io/badge/version-1.3-green.svg?logo=github)](https://github.com/vladko312/sstimap)
+[![Version 1.4](https://img.shields.io/badge/version-1.4-green.svg?logo=github)](https://github.com/vladko312/sstimap)
 [![Python 3.14](https://img.shields.io/badge/python-3.14-blue.svg?logo=python)](https://www.python.org/downloads/release/python-3140/)
 [![Python 3.6](https://img.shields.io/badge/python-3.6+-yellow.svg?logo=python)](https://www.python.org/downloads/release/python-360/)
 [![GitHub](https://img.shields.io/github/license/vladko312/sstimap?color=green&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -115,7 +115,7 @@ $ ./sstimap.py -u https://example.com/page?name=John
     ╚══════╩══════╝  ╚═╝    ╚╦╝ |_| |_| |_|\__,_| .__/
                              │                  | |
                                                 |_|
-[*] Version: 1.3.0
+[*] Version: 1.4.0
 [*] Author: @vladko312
 [*] Based on Tplmap
 [!] LEGAL DISCLAIMER: Usage of SSTImap for attacking targets without prior mutual consent is illegal. 
@@ -170,12 +170,14 @@ $ ./sstimap.py -u https://example.com/page?name=John --os-shell
     ╚══════╩══════╝  ╚═╝    ╚╦╝ |_| |_| |_|\__,_| .__/
                              │                  | |
                                                 |_|
-[*] Version: 1.3.0
+[*] Version: 1.4.0
 [*] Author: @vladko312
 [*] Based on Tplmap
 [!] LEGAL DISCLAIMER: Usage of SSTImap for attacking targets without prior mutual consent is illegal. 
 It is the end user's responsibility to obey all applicable local, state and federal laws.
 Developers assume no liability and are not responsible for any misuse or damage caused by this program
+[*] Loaded plugins by categories: languages: 6; generic: 5; java: 4; javascript: 7; php: 3; python: 5; ruby: 2
+[*] Loaded request body types by categories: auto: 1; http: 1; object: 2; raw: 3
 
 
 [*] Testing if GET parameter 'name' is injectable
@@ -247,6 +249,7 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | Python (code eval)                                                                 | ✓   | REBT | Python     | Default                                                |
 | Python-based generic templates                                                     | ✓   | REBT | Python     | Default                                                |
 | ERB                                                                                | ✓   | REBT | Ruby       | Default                                                |
+| Mustache (<=1.1.2; detection only)                                                 | ×   | reb_ | Ruby       | Default                                                |
 | Slim                                                                               | ✓   | REBT | Ruby       | Default                                                |
 | Ruby (code eval)                                                                   | ✓   | REBT | Ruby       | Default                                                |
 | Generic evaluating templates                                                       | ×   | Reb_ | *          | Default                                                |
@@ -260,13 +263,16 @@ New payloads are welcome in PRs. Check out the [tips](https://github.com/vladko3
 | Mako                                                                               | ✓   | REBT | Python     | Generic                                                |
 | Tornado                                                                            | ✓   | REBT | Python     | Generic                                                |
 | Dust (<= dustjs-helpers@1.5.0)                                                     | ✓   | REBT | JavaScript | Legacy                                                 |
-| Twig (<=1.19)                                                                      | ✓   | REBT | PHP        | Legacy                                                 |
+| Twig (<=1.19.0)                                                                    | ✓   | REBT | PHP        | Legacy                                                 |
+| Pybars3 / Pybars4                                                                  | ✓   | REBT | Python     | Legacy                                                 |
 | Templite                                                                           | ✓   | REBT | Python     | Legacy                                                 |
 | SSI (Server-Side Includes injection)                                               | ✓   | R__T | SSI        | Legacy                                                 |
+| Obscure evaluating syntaxes                                                        | ×   | Reb_ | *          | Legacy                                                 |
 | [CVE-2025-1302](https://gist.github.com/nickcopi/11ba3cb4fdee6f89e02e6afae8db6456) | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE-2025-13204](https://huntr.com/bounties/1-npm-expr-eval)                       | ✓   | REBT | JavaScript | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE-2022-23614](https://nvd.nist.gov/vuln/detail/CVE-2022-23614)                  | ✓   | REBT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
 | [CVE-2024-6386](https://sec.stealthcopter.com/wpml-rce-via-twig-ssti/)             | ✓   | REBT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
+| [CVE-2026-46640](https://nvd.nist.gov/vuln/detail/CVE-2026-46640)                  | ✓   | REBT | PHP        | [Extra](https://github.com/vladko312/extras/tree/main) |
 
 Techniques: (R)endered, (E)rror-based, (B)oolean error-based blind and (T)ime-based blind; Lowercase letter marks partially supported technique
 

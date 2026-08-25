@@ -44,7 +44,64 @@ class Channel:
         self._parse_method()
         if not self.args.get('verify_ssl'):
             urllib3.disable_warnings()
-        
+
+    def _compact(self):
+        data = {
+            "args": {
+                "time_based_blind_delay": self.args["time_based_blind_delay"],
+                "time_based_verify_blind_delay": self.args["time_based_verify_blind_delay"],
+                "user_agent": self.args["user_agent"],
+                "random_agent": self.args["random_agent"],
+                "remote_shell": self.args["remote_shell"],
+                "boolean_regex_ok": self.args["boolean_regex_ok"],
+                "boolean_regex_err": self.args["boolean_regex_err"],
+                "boolean_match": self.args["boolean_match"],
+                "boolean_fuzzy": self.args["boolean_fuzzy"],
+                "url": self.args["url"],
+                "data": self.args["data"],
+                "module_params": self.args["module_params"],
+                "headers": self.args["headers"],
+                "cookies": self.args["cookies"],
+                "method": self.args["method"],
+            },
+            "boolean_enabled": getattr(self, "boolean_enabled", True),
+            "cookie_params": self.cookie_params,
+            "data": self.data,
+            "data_type": self.data_type._compact(),
+            "default_wrapper": getattr(self, "default_wrapper", "{code}"),
+            "get_params": self.get_params,
+            "header_params": self.header_params,
+            "http_method": self.http_method,
+            "inj_idx": self.inj_idx,
+            "injs": self.injs,
+            "page_profile": getattr(self, "page_profile", {}),
+            "page_vector": getattr(self, "page_vector", {}),
+            "post_params": self.post_params,
+        }
+        return data
+
+    def _restore(self, data):
+        self.boolean_enabled = data["channel"]["boolean_enabled"]
+        self.cookie_params = data["channel"]["cookie_params"]
+        self.data = data["channel"]["data"]
+        from core.data_type import loaded_data_types
+        data_type_name = data["channel"]["data_type"]["data_type"].lower()
+        if data_type_name in loaded_data_types:
+            self.data_type = self.data_type._restore(data)
+        else:
+            log.log(22, f'''{data["channel"]["data_type"]["data_type"]} request body type is not loaded, aborting''')
+            raise NotImplementedError(f'{data["channel"]["data_type"]["data_type"]} request body type is not loaded')
+        self.default_wrapper = data["channel"]["default_wrapper"]
+        self.get_params = data["channel"]["get_params"]
+        self.header_params = data["channel"]["header_params"]
+        self.http_method = data["channel"]["http_method"]
+        self.inj_idx = data["channel"]["inj_idx"]
+        self.injs = data["channel"]["injs"]
+        self.page_profile = data["channel"]["page_profile"]
+        self.page_vector = data["channel"]["page_vector"]
+        self.post_params = data["channel"]["post_params"]
+        return self
+
     def _parse_method(self):
         if self.args.get('method'):
             self.http_method = self.args.get('method')

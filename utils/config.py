@@ -3,7 +3,7 @@ import sys
 import json
 
 
-version = '1.3.3.7'
+version = '1.4.0'
 min_version = {
     'plugin': '1.2.3',
     'data_type': '1.2.0'

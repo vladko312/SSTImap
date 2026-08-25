@@ -29,10 +29,11 @@ def main():
     load_data_types()
     log.log(26, f"Loaded plugins by categories: {'; '.join([f'{x}: {len(loaded_plugins[x])}' for x in loaded_plugins])}")
     log.log(26, f"Loaded request body types by categories: {'; '.join([f'{x}: {len(loaded_data_types_by_categories[x])}' for x in loaded_data_types_by_categories])}")
-    if not (args['url'] or args['interactive'] or args['load_urls'] or args['load_forms'] or args['module']):
+    if not (args['url'] or args['interactive'] or args['load_urls'] or args['load_forms']
+            or args['module'] or args['load_vuln']):
         # no target specified
-        log.log(22, 'SSTImap requires target URL (-u, --url), URLs/forms file (--load-urls / --load-forms) '
-                    'or interactive mode (-i, --interactive)')
+        log.log(22, 'SSTImap requires target URL (-u, --url), URLs/forms file (--load-urls / --load-forms), '
+                    'saved vulnerability (--load-vuln) or interactive mode (-i, --interactive)')
     elif args['module']:
         # module list / help
         checks.module_info("" if args['module'] == 'list' else args['module'])

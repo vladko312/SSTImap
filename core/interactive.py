@@ -1,13 +1,16 @@
 import cmd
+import datetime
 import json
 import os
 
+from core.checks import print_injection_summary
 from utils import config
 from utils.loggers import log, no_colour
 from urllib import parse
 from core import checks
 from core.channel import Channel
 from core.clis import Shell, MultilineShell
+from core.plugin import restore_vuln
 from core.tcpserver import TcpServer
 from core.tcpclient import TcpClient
 import socket
@@ -23,7 +26,8 @@ class InteractiveShell(cmd.Cmd):
         self.sstimap_options.update({"tpl_shell": False, "tpl_cmd": None, "os_shell": False, "os_cmd": None,
                                      "bind_shell": None, "reverse_shell": None, "upload": None, "download": None,
                                      "eval_shell": False, "eval_cmd": None, "load_urls": None, "load_forms": None,
-                                     "save_urls": None, "save_forms": None, "loaded_urls": set(), "loaded_forms": set()})
+                                     "save_urls": None, "save_forms": None, "loaded_urls": set(), "loaded_forms": set(),
+                                     "load_vuln": None, "save_vuln": None})
         if self.sstimap_options["url"]:
             self.do_url(args.get("url"))
             self.channel = Channel(self.sstimap_options)
@@ -133,7 +137,7 @@ Exploitation:
         if line:
             if os.path.isdir(line):
                 line = f"{line}/config.json"
-            if os.path.exists(line):
+            if os.path.isfile(line):
                 custom_config = {}
                 with open(line, 'r') as stream:
                     try:
@@ -273,11 +277,49 @@ Exploitation:
 
     do_target = do_url
 
+    def do_save_vuln(self, line):
+        if line:
+            if self.current_plugin and self.checked:
+                if os.path.isdir(line):
+                    line = f"{line}/ssti_vulnerability_{datetime.datetime.now().timestamp()}.txt"
+                try:
+                    self.current_plugin.save_vuln(line)
+                    log.log(21, f"Saved vulnerability to file: {line}")
+                except Exception as e:
+                    log.log(22, f"Error occurred while saving vulnerability to file:\n{repr(e)}")
+            else:
+                log.log(25, 'No vulnerability detected to save.')
+            return
+        log.log(25, 'Provide valid file or directory to save vulnerability to.')
+
+    def do_load_vuln(self, line):
+        if line and (os.path.isfile(line) or line == "-"):
+            if line == "-":
+                line = 0
+            try:
+                restored = restore_vuln(line, self.sstimap_options)
+                if line == 0:
+                    line = "STDIN"
+                if restored:
+                    self.current_plugin = restored
+                    self.channel = self.current_plugin.channel
+                    self.sstimap_options["loaded_urls"] = None
+                    self.sstimap_options["loaded_forms"] = None
+                    self.sstimap_options["url"] = self.channel.url
+                    self.checked = True
+                    self.set_module(f'\033[32m{parse.urlparse(self.sstimap_options["url"]).netloc}\033[0m')
+                    log.log(21, f"Loaded vulnerability from file: {line}")
+                    print_injection_summary(self.channel)
+            except Exception as e:
+                log.log(22, f"Error occurred while loading vulnerability from file:\n{repr(e)}")
+            return
+        log.log(25, 'Provide valid file to load vulnerability from.')
+
     def do_load_urls(self, line):
         if line:
             if os.path.isdir(line):
                 line = f"{line}/urls.txt"
-            if os.path.exists(line):
+            if os.path.isfile(line):
                 try:
                     with open(line, 'r') as stream:
                         self.sstimap_options["loaded_urls"] = set([x.strip() for x in stream.readlines()])
@@ -299,7 +341,7 @@ Exploitation:
         if line:
             if os.path.isdir(line):
                 line = f"{line}/forms.json"
-            if os.path.exists(line):
+            if os.path.isfile(line):
                 try:
                     with open(line, 'r') as stream:
                         self.sstimap_options["loaded_forms"] = set([tuple(x) for x in json.load(stream)])

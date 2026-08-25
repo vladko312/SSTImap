@@ -1,7 +1,10 @@
+import datetime
 import json
 import os
 from urllib import parse
 import socket
+
+from core.plugin import restore_vuln
 from utils.loggers import log
 from core.clis import Shell, MultilineShell
 from core.tcpserver import TcpServer
@@ -260,17 +263,19 @@ def detect_template_injection(channel):
         channel.inj_idx += 1
 
 
-def check_template_injection(channel):
-    current_plugin = detect_template_injection(channel)
+def check_template_injection(channel, current_plugin=None):
+    if not current_plugin:
+        current_plugin = detect_template_injection(channel)
     if not channel.data.get('engine'):
         log.log(22, "Tested parameters appear to be not injectable.")
         return current_plugin
     print_injection_summary(channel)
     if not any(f for f, v in channel.args.items() if f in ('os_cmd', 'os_shell', 'upload', 'download', 'tpl_shell',
                                                            'tpl_code', 'bind_shell', 'reverse_shell', 'eval_shell',
-                                                           'eval_code', 'interactive') and v):
+                                                           'eval_code', 'interactive', 'save_vuln') and v):
         log.log(21, f"""Rerun SSTImap providing one of the following options:
-    \033[92m--interactive\033[0m                Run SSTImap in interactive mode to switch between exploitation modes without losing progress.{'''
+    \033[92m--interactive\033[0m                Run SSTImap in interactive mode to switch between exploitation modes without losing progress.
+    \033[92m--save-vuln DEST\033[0m             Save the detected vulnerability to file to use later{'''
     --os-shell                   Prompt for an interactive operating system shell.
     --os-cmd                     Execute an operating system command.''' if channel.data.get('execute') or channel.data.get('execute_blind') else ''}{'''
     --eval-shell                 Prompt for an interactive shell on the template engine base language.
@@ -282,6 +287,19 @@ def check_template_injection(channel):
     --upload LOCAL REMOTE        Upload files to the server.''' if channel.data.get('write') else ''}{'''
     --download REMOTE LOCAL      Download remote files.''' if channel.data.get('read') else ''}""")
         return current_plugin
+    # Save the vulnerability
+    if channel.args.get('save_vuln'):
+        if channel.data.get('engine'):
+            path = channel.args.get('save_vuln')
+            if os.path.isdir(path):
+                path = f"{path}/ssti_vulnerability_{datetime.datetime.now().timestamp()}.txt"
+            try:
+                current_plugin.save_vuln(path)
+                log.log(21, f"Saved vulnerability to file: {path}")
+            except Exception as e:
+                log.log(22, f"Error occurred while saving vulnerability to file:\n{repr(e)}")
+        else:
+            log.log(25, 'No vulnerability detected to save.')
     # Execute operating system commands
     if channel.args.get('os_cmd') or channel.args.get('os_shell'):
         if channel.data.get('execute_blind'):
@@ -406,6 +424,22 @@ def check_template_injection(channel):
 
 
 def scan_website(args):
+    if args.get('load_vuln'):
+        path = args.get('load_vuln')
+        if path == "-":
+            path = 0
+        try:
+            args["load_vuln"] = None
+            restored = restore_vuln(path, args)
+            if path == 0:
+                path = "STDIN"
+            if restored:
+                log.log(21, f"Loaded vulnerability from file: {path}")
+                restored.channel.args["load_vuln"] = None
+                check_template_injection(restored.channel, current_plugin=restored)
+                return restored, restored.channel
+        except Exception as e:
+            log.log(22, f"Error occurred while loading vulnerability from file:\n{repr(e)}")
     urls = set()
     forms = set()
     single_url = args.get('url', None)

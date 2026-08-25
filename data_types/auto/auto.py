@@ -26,6 +26,11 @@ This data type also supports passing options to detected data types.""",
 
     _detected = None
 
+    def _extra_compact(self, data):
+        if self._detected:
+            return self._detected._compact()
+        return data
+
     def injection_points(self, data, all_injectable=False):
         if not self._detected:
             self._detect(data)

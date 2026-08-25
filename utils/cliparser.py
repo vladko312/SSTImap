@@ -38,6 +38,9 @@ target.add_argument("-i", "--interactive", action="store_const", const=True, des
                     help="Run SSTImap in interactive mode")
 target.add_argument("--load-urls", dest="load_urls", help="File or directory to load URLs from (use '-' for STDIN)")
 target.add_argument("--load-forms", dest="load_forms", help="File or directory to load forms from (use '-' for STDIN)")
+target.add_argument("--load-vuln", dest="load_vuln", help="File or directory to load vulnerability from "
+                                                          "(use '-' for STDIN)")
+target.add_argument("--save-vuln", dest="save_vuln", help="File or directory to save detected vulnerability to")
 
 request = parser.add_argument_group(title="request", description="These options can specify how to connect to the "
                                                                  "target URL and add possible attack vectors")

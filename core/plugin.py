@@ -3,6 +3,7 @@ from utils.strings import chunk_seq, md5, formatters
 from utils import rand, config
 from utils.loggers import log
 from core.matcher import match
+from core.channel import Channel
 import re
 import itertools
 import base64
@@ -11,6 +12,7 @@ import threading
 import sys
 import importlib
 import os
+import json
 
 loaded_plugins = {}
 failed_plugins = []
@@ -59,6 +61,43 @@ def _recursive_update(d, u):
     return d
 
 
+def restore_vuln(path, args):
+    with open(path, "r") as file:
+        data = json.load(file)
+    recreate = False
+    cur_plugin = None
+    if not recreate:
+        for p in loaded_plugins.get(data["group"], []):
+            if p.plugin == data["plugin"]:
+                cur_plugin = p
+                break
+        if not cur_plugin:
+            for group in loaded_plugins:
+                for p in loaded_plugins[group]:
+                    if p.plugin == data["plugin"]:
+                        cur_plugin = p
+                        log.log(29, f'''{data["plugin"]} plugin is loaded from a different group: {group}''')
+                        break
+                if cur_plugin:
+                    break
+            if not cur_plugin:
+                recreate = True
+    if recreate:
+        log.log(29, f'''{data["plugin"]} plugin is not loaded, attempting to recreate''')
+        cur_plugin = Plugin
+    channel_args = args.copy()
+    data["channel"]["args"]["data_type"] = data["channel"]["data_type"]["data_type"]
+    channel_args.update(data["channel"]["args"])
+    channel = Channel(channel_args)
+    try:
+        channel._restore(data)
+        restored = cur_plugin(channel)._restore(data, recreate)
+    except (ImportError, NotImplementedError):
+        log.log(22, 'Unable to load the vulnerability')
+        return
+    return restored
+
+
 class Plugin(object):
     generic_plugin = False
     legacy_plugin = False
@@ -101,6 +140,51 @@ class Plugin(object):
         # Call user-defined inits
         self.language_init()
         self.init()
+
+    def _compact(self):
+        data = {
+            "actions": self.actions,
+            "channel": self.channel._compact(),
+            "default_wrapper": self.default_wrapper,
+            "formatter": self.formatter,
+            "header_length": self.header_length,
+            "header_type": self.header_type,
+            "language": self.language,
+            "plugin": self.plugin,
+            "render_req_tm": list(self.render_req_tm),
+            "sstimap_version": self.sstimap_version,
+            "tm_varied": self.tm_varied,
+            "group": self.group,
+        }
+        return data
+
+    def _restore(self, data, recreate=False):
+        self.render_req_tm = collections.deque(data["render_req_tm"], maxlen=5)
+        self.tm_varied = data["tm_varied"]
+        if recreate:
+            self.plugin = data["plugin"]
+            if config.compare_versions(data["sstimap_version"], config.min_version['plugin']) == "<":
+                log.log(22, f'''{self.plugin} plugin is outdated and cannot be recreated''')
+                log.log(29, f"{self.plugin} made for version {data['sstimap_version']}, "
+                            f"expected {config.min_version['plugin']} - {config.version}")
+                raise ImportError(f'{self.plugin} plugin is outdated and cannot be recreated')
+            if config.compare_versions(data["sstimap_version"], config.version) == ">":
+                log.log(22, f'''{self.plugin} plugin requires SSTImap update and cannot be recreated''')
+                log.log(29, f"{self.plugin} made for version {data['sstimap_version']}, "
+                            f"expected {config.min_version['plugin']} - {config.version}")
+                raise ImportError(f'{self.plugin} plugin requires SSTImap update and cannot be recreated')
+            self.actions = data["actions"]
+            self.default_wrapper = data["default_wrapper"]
+            self.formatter = data["formatter"]
+            self.set("formatter", self.formatter)
+            self.header_length = data["header_length"]
+            self.header_type = data["header_type"]
+            self.language = data["language"]
+        return self
+
+    def save_vuln(self, path):
+        with open(path, "w") as file:
+            json.dump(self._compact(), file, indent=4)
 
     def __init_subclass__(cls, **kwargs):
         module = cls.__module__.split(".")
