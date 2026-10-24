@@ -63,6 +63,7 @@ class Channel:
                 "headers": self.args["headers"],
                 "cookies": self.args["cookies"],
                 "method": self.args["method"],
+                "check_request": self.args.get("check_request"),
             },
             "boolean_enabled": getattr(self, "boolean_enabled", True),
             "cookie_params": self.cookie_params,
@@ -175,6 +176,48 @@ class Channel:
                 if self.tag in value or all_injectable:
                     self.injs.append({'field': 'Query', 'part': 'value', 'param': param, 'value': value, 'idx': idx})
             
+    @staticmethod
+    def _raw_request_values(request):
+        headers = {}
+        cookies = {}
+        for header in request.get('headers', []):
+            if ':' in header:
+                name, value = header.split(':', 1)
+                headers[name.strip()] = value.strip()
+        for cookie_header in request.get('cookies', []):
+            for cookie in cookie_header.split(';'):
+                if '=' in cookie:
+                    name, value = cookie.split('=', 1)
+                    cookies[name.strip()] = value.strip()
+        body = request.get('body')
+        if body is None:
+            body = ''.join(request.get('data', []))
+        return headers, cookies, body if body != '' else None
+
+    def _send_request(self, method, url, params=None, data=None, headers=None, cookies=None):
+        try:
+            start = time.perf_counter()
+            response = requests.request(method=method, url=url, params=params, data=data, headers=headers,
+                                        cookies=cookies, proxies=self.proxies, verify=self.args.get('verify_ssl'))
+            stop = time.perf_counter()
+            return response, stop - start
+        except requests.exceptions.ConnectionError as e:
+            if e and e.args[0] and getattr(e.args[0], 'args', None) and e.args[0].args[0] == 'Connection aborted.':
+                log.log(25, 'Error: connection aborted, bad status line.')
+            elif e and e.args[0] and getattr(e.args[0], 'args', None) and 'Max retries exceeded' in str(e.args[0].args[0]):
+                log.log(25, 'Error: max retries exceeded for a connection.')
+            else:
+                log.log(25, f'Error: connection failed: {repr(e)}')
+        except requests.exceptions.TooManyRedirects:
+            log.log(25, 'Error: Too Many redirects.')
+        except urllib3.exceptions.ProtocolError as e:
+            log.log(25, f'Error: Connection failed: {repr(e)}')
+        except requests.exceptions.RequestException as e:
+            log.log(25, f'Error: Request failed: {repr(e)}')
+        except urllib3.exceptions.HTTPError as e:
+            log.log(25, f'Error: {repr(e)}')
+        return None, 0.0
+
     def req(self, injection):
         get_params = deepcopy(self.get_params)
         post_params = self.data_type.get_params()
@@ -249,37 +292,30 @@ class Channel:
             header_params['User-Agent'] = user_agent
         if self.args['delay']:
             time.sleep(self.args['delay'])
-        try:
-            start = time.perf_counter()
-            result_raw = requests.request(method=self.http_method, url=url_params, params=get_params, data=post_params,
-                                          headers=header_params, cookies=cookie_params, proxies=self.proxies,
-                                          verify=self.args.get('verify_ssl'))
-            stop = time.perf_counter()
-        except requests.exceptions.ConnectionError as e:
-            if e and e.args[0] and e.args[0].args[0] == 'Connection aborted.':
-                log.log(25, 'Error: connection aborted, bad status line.')
-                result = ("", 0.0, {})
-            elif e and e.args[0] and 'Max retries exceeded' in e.args[0].args[0]:
-                log.log(25, 'Error: max retries exceeded for a connection.')
-                result = ("", 0.0, {})
-            else:
-                raise e
-        except requests.exceptions.TooManyRedirects as e:
-                log.log(25, 'Error: Too Many redirects.')
-                result = ("", 0.0, {})
-        except urllib3.exceptions.ProtocolError as e:
-                log.log(25, f'Error: Connection failed: {repr(e)}')
-                result = ("", 0.0, {})
-        except requests.exceptions.RequestException as e:
-                log.log(25, f'Error: Request failed: {repr(e)}')
-                result = ("", 0.0, {})
-        except urllib3.exceptions.HTTPError as e:
-                log.log(25, f'Error: {repr(e)}')
-                result = ("", 0.0, {})
-        else:
-            result = (result_raw.text, stop - start, vector(result_raw))
+        result_raw, delta = self._send_request(self.http_method, url_params, params=get_params, data=post_params,
+                                               headers=header_params, cookies=cookie_params)
+        if result_raw is None:
+            return "", 0.0, {}
+
+        check_request = self.args.get('check_request')
+        if check_request:
+            if self.args.get("log_response", False):
+                log.debug(f"< [injection] {result_raw.text}")
+            if self.args['delay']:
+                time.sleep(self.args['delay'])
+            check_headers, check_cookies, check_body = self._raw_request_values(check_request)
+            if 'user-agent' not in [name.lower() for name in check_headers]:
+                check_headers['User-Agent'] = get_agent() if self.args.get('random_agent') else self.args.get('user_agent')
+            log.debug(f"[check request] {repr(check_request['url'])}")
+            result_raw, delta = self._send_request(check_request['method'], check_request['url'], data=check_body,
+                                                   headers=check_headers, cookies=check_cookies)
+            if result_raw is None:
+                return "", 0.0, {}
+
+        result = (result_raw.text, delta, vector(result_raw))
         if self.args.get("log_response", False):
-            log.debug(f"< {result[0]}")
+            label = " [check]" if check_request else ""
+            log.debug(f"<{label} {result[0]}")
         return result
 
     def detected(self, technique, detail):

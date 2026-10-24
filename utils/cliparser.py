@@ -44,6 +44,12 @@ target.add_argument("--save-vuln", dest="save_vuln", help="File or directory to 
 
 request = parser.add_argument_group(title="request", description="These options can specify how to connect to the "
                                                                  "target URL and add possible attack vectors")
+request.add_argument("-r", "--request-file", dest="request_file", metavar="REQUESTFILE",
+                     help="Load an HTTP request from a file (use '-' for STDIN)")
+request.add_argument("--check-request", "--check-request-file", dest="check_request_file", metavar="REQUESTFILE",
+                     help="Load a second HTTP request whose response validates the injected payload")
+request.add_argument("--force-ssl", action="store_const", const=True, dest="force_ssl",
+                     help="Use HTTPS when raw requests contain relative URLs")
 request.add_argument("-M", "--marker", dest="marker",
                      help="Use string as injection marker (default '*')")
 request.add_argument("-P", "--injection-points", dest="injection_points",
@@ -94,7 +100,7 @@ detection.add_argument("-L", "--force-level", dest="force_level", metavar=("LEVE
                        help="Force a LEVEL and CLEVEL to test", nargs=2, type=int)
 detection.add_argument("-e", "--engine", dest="engine",
                        help="Comma-separated list of template engines to test: [language:[variant:]][category/]engine,...  For all, use '*'")
-detection.add_argument("-r", "--technique", dest="technique",
+detection.add_argument("--technique", dest="technique",
                        help="Techniques: R(endered) E(rror-based) B(oolean error-based blind) T(ime-based blind). Default: REBT")
 detection.add_argument("--bool-ok", dest="boolean_regex_ok",
                        help="RegEx to match when boolean error-based blind payload evaluates correctly")

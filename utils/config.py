@@ -3,7 +3,7 @@ import sys
 import json
 
 
-version = '1.4.0'
+version = '1.5.0'
 min_version = {
     'plugin': '1.2.3',
     'data_type': '1.2.0'
@@ -25,6 +25,8 @@ defaults = {
     "interactive": False,
     "random_agent": False,
     "verify_ssl": False,
+    "force_ssl": False,
+    "check_request": None,
     "forms": False,
     "empty_forms": False,
     "legacy": False,
