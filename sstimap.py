@@ -10,11 +10,28 @@ from core import checks
 from core.interactive import InteractiveShell
 from utils.loggers import log
 from utils.config import config_args, version
+from utils.raw_request import RawRequestError, apply_raw_request, parse_raw_request
 import traceback
 
 
 def main():
     args = vars(cliparser.options)
+    if args.get('check_request_file') and not args.get('request_file'):
+        log.log(25, 'A check request requires an injection request supplied with -r or --request-file')
+        return
+    if args.get('request_file') == '-' and args.get('check_request_file') == '-':
+        log.log(25, 'Injection and check requests cannot both be read from STDIN')
+        return
+    if args.get('request_file'):
+        try:
+            raw_request = parse_raw_request(args['request_file'], force_ssl=args.get('force_ssl', False))
+            args = apply_raw_request(args, raw_request)
+            if args.get('check_request_file'):
+                args['check_request'] = parse_raw_request(args['check_request_file'],
+                                                          force_ssl=args.get('force_ssl', False))
+        except RawRequestError as error:
+            log.log(25, f'Error loading raw HTTP request: {error}')
+            return
     args = config_args(args)
     args['version'] = version
     from utils.loggers import formatter, no_colour
@@ -32,7 +49,8 @@ def main():
     if not (args['url'] or args['interactive'] or args['load_urls'] or args['load_forms']
             or args['module'] or args['load_vuln']):
         # no target specified
-        log.log(22, 'SSTImap requires target URL (-u, --url), URLs/forms file (--load-urls / --load-forms), '
+        log.log(22, 'SSTImap requires target URL (-u, --url), raw request file (-r, --request-file), '
+                    'URLs/forms file (--load-urls / --load-forms), '
                     'saved vulnerability (--load-vuln) or interactive mode (-i, --interactive)')
     elif args['module']:
         # module list / help

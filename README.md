@@ -115,7 +115,7 @@ $ ./sstimap.py -u https://example.com/page?name=John
     ╚══════╩══════╝  ╚═╝    ╚╦╝ |_| |_| |_|\__,_| .__/
                              │                  | |
                                                 |_|
-[*] Version: 1.4.0
+[*] Version: 1.5.0
 [*] Author: @vladko312
 [*] Based on Tplmap
 [!] LEGAL DISCLAIMER: Usage of SSTImap for attacking targets without prior mutual consent is illegal. 
@@ -157,6 +157,61 @@ Developers assume no liability and are not responsible for any misuse or damage 
     --download REMOTE LOCAL      Download remote files
 ```
 
+Alternatively, load a raw HTTP request from a file with `-r`, similarly to sqlmap:
+
+```http
+POST /page HTTP/1.1
+Host: example.com
+Content-Type: application/x-www-form-urlencoded
+Cookie: session=example
+
+name=*
+```
+
+```console
+$ ./sstimap.py -r request.txt
+```
+
+The URL is built from the request target and the `Host` header. Relative request targets use HTTP by default;
+add `--force-ssl` for HTTPS. An explicit `-u`, `-m` or `-d` overrides the corresponding value loaded from the file,
+while command-line headers and cookies are appended and take precedence over duplicate values. The `Content-Length`
+and `Transfer-Encoding` headers are recalculated by the HTTP client. Use `--technique` to restrict detection
+techniques.
+
+For a stored or second-order SSTI, provide a second raw request that renders the value stored by the first one:
+
+`inject.txt`:
+
+```http
+POST /profile HTTP/1.1
+Host: example.com
+Content-Type: application/x-www-form-urlencoded
+
+bio=*
+```
+
+`render.txt`:
+
+```http
+GET /profile/view HTTP/1.1
+Host: example.com
+Cookie: session=example
+```
+
+```console
+$ ./sstimap.py -r inject.txt --check-request render.txt
+```
+
+For every payload, SSTImap sends `inject.txt` first and then `render.txt`. Cookies and authorization are reconstructed
+exclusively from their respective raw request on every send, so the files can represent different users and response
+cookies are never carried implicitly from one request to another. Detection uses only the response and request time
+of `render.txt`. This applies to rendered, error-based, boolean and time-based techniques. The check request requires
+`-r`; it cannot be used with a URL-only target. Both relative request targets use the scheme selected by
+`--force-ssl`, while an absolute URL in either request file keeps its own scheme. Place the injection marker only in
+the first request. The second request must identify the stored object without extracting a dynamic identifier from
+the first response. `--delay` also waits between the injection and check requests, which can help when persistence is
+not immediately visible.
+
 Use `--os-shell` option to launch a pseudo-terminal on the target.
 
 ```
@@ -170,7 +225,7 @@ $ ./sstimap.py -u https://example.com/page?name=John --os-shell
     ╚══════╩══════╝  ╚═╝    ╚╦╝ |_| |_| |_|\__,_| .__/
                              │                  | |
                                                 |_|
-[*] Version: 1.4.0
+[*] Version: 1.5.0
 [*] Author: @vladko312
 [*] Based on Tplmap
 [!] LEGAL DISCLAIMER: Usage of SSTImap for attacking targets without prior mutual consent is illegal. 
@@ -290,7 +345,7 @@ If you plan to contribute something big from this list, inform me to avoid worki
 
 - [ ] Add more payloads for different engines
 - [ ] Make plugins less dependent on base plugins
-- [ ] Parse raw HTTP request from file
+- [x] Parse raw HTTP request from file
 - [ ] Variable dumping functionality
 - [ ] Blind/side-channel value extraction
 - [ ] Better documentation (or at least any documentation)

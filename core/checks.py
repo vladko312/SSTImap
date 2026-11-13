@@ -196,6 +196,9 @@ def print_injection_summary(channel):
     render = formatter(channel.data.get('render', channel.default_wrapper), {"code": "*"}).replace('\n', '\\n')
     suffix = channel.data.get('suffix', '').replace('\n', '\\n')
     wrapper = formatter(channel.data.get('wrapper', channel.default_wrapper), {"code": render}).replace('\n', '\\n')
+    check_request = channel.args.get('check_request')
+    check_endpoint = (f"  Check endpoint: {check_request['method']} {check_request['url']}\n"
+                      if check_request else "")
     if channel.data.get('evaluate_blind'):
         evaluation = f"\033[92mok\033[0m, {channel.data.get('language')} code (blind)"
     elif channel.data.get('evaluate'):
@@ -220,7 +223,7 @@ def print_injection_summary(channel):
   {channel.injs[channel.inj_idx]['field']} parameter: {channel.injs[channel.inj_idx]['param']}
   Engine: {channel.data.get('engine')}
   Injection: {prefix}{wrapper}{suffix}
-  Context: {'text' if (not prefix and not suffix) else 'code'}
+{check_endpoint}  Context: {'text' if (not prefix and not suffix) else 'code'}
   OS: {channel.data.get('os', 'undetected')}
   Technique: {technique}
   Capabilities:
